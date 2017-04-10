@@ -4,16 +4,16 @@ package xyz.aornice.tofq.impl;
  * Created by robin on 10/04/2017.
  */
 public class Cargo {
-    private String topic;
+    private Topic topic;
     private long id;
     private byte[] data;
 
 
-    public String getTopic() {
+    public Topic getTopic() {
         return topic;
     }
 
-    public void setTopic(String topic) {
+    public void setTopic(Topic topic) {
         this.topic = topic;
     }
 
