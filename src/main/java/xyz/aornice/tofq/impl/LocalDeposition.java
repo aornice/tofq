@@ -27,12 +27,11 @@ public class LocalDeposition implements CargoDeposition {
     }
 
     @Override
-    public void write(String message) {
-        File file = new File(path + "/" + name + LocalTofQueue.SUFFIX);
-        try (FileWriter fw = new FileWriter(file, true)) {
-            fw.write(message + ",");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void write(Cargo cargo) {
+    }
+
+    @Override
+    public void write(Cargo[] cargo) {
+
     }
 }

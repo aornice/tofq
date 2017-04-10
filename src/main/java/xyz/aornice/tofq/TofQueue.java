@@ -1,5 +1,8 @@
 package xyz.aornice.tofq;
 
+import xyz.aornice.tofq.impl.Cargo;
+import xyz.aornice.tofq.impl.FurnisherData;
+
 import java.nio.file.Path;
 
 /**
@@ -7,9 +10,9 @@ import java.nio.file.Path;
  */
 public interface TofQueue {
 
-    boolean offer(String message);
+    boolean offer(FurnisherData furnisherData);
 
-    String elements();
+    Cargo[] elements();
 
     /**
      * @return the path of persistent files

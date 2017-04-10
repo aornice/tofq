@@ -27,15 +27,15 @@ public class LocalTofQueue implements TofQueue {
 
 
     @Override
-    public boolean offer(String message) {
-        furnisher.write(message);
+    public boolean offer(FurnisherData furnisherData) {
+        furnisher.write(new Cargo());
         return true;
     }
 
     @Override
-    public String elements() {
-        String messages = receiptor.readAll();
-        return messages;
+    public Cargo[] elements() {
+        Cargo[] cargos= receiptor.readAll();
+        return cargos;
     }
 
     @Override

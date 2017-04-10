@@ -17,21 +17,18 @@ public class LocalExtraction implements CargoExtraction {
     }
 
     @Override
-    public String readAll() {
-        File file = new File(path + "/" + name + LocalTofQueue.SUFFIX);
-        String line = null;
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            line = br.readLine();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return line;
+    public Cargo[] readAll() {
+        return null;
     }
 
     @Override
-    public String read() {
+    public Cargo read(String topic, long id) {
         return null;
     }
+
+    @Override
+    public Cargo[] read(String topic, long from, long to) {
+        return null;
+    }
+
 }
