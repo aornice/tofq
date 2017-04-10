@@ -1,4 +1,6 @@
 import xyz.aornice.tofq.TofQueue;
+import xyz.aornice.tofq.impl.Cargo;
+import xyz.aornice.tofq.impl.FurnisherData;
 import xyz.aornice.tofq.impl.LocalTofQueue;
 
 import java.util.Scanner;
@@ -16,11 +18,11 @@ public class BasicQueueTest {
             if (message.isEmpty()) {
                 break;
             }
-            queue.offer(message);
+            queue.offer(new FurnisherData());
         }
         System.out.println("---- furnish stage end ----");
         System.out.println("---- start receipt from harbour ----");
-        String cargo = queue.elements();
+        Cargo[] cargo = queue.elements();
         System.out.println(cargo);
     }
 }
