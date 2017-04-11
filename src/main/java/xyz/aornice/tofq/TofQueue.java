@@ -1,6 +1,5 @@
 package xyz.aornice.tofq;
 
-import xyz.aornice.tofq.impl.Cargo;
 import xyz.aornice.tofq.impl.FurnisherData;
 
 import java.nio.file.Path;
