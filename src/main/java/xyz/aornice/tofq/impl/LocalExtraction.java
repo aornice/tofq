@@ -1,9 +1,7 @@
 package xyz.aornice.tofq.impl;
 
 import xyz.aornice.tofq.CargoExtraction;
-import xyz.aornice.tofq.utils.TopicScanner;
-
-import java.io.*;
+import xyz.aornice.tofq.utils.TopicCenter;
 
 /**
  * Created by drfish on 09/04/2017.
@@ -29,7 +27,7 @@ public class LocalExtraction implements CargoExtraction {
 
     @Override
     public Cargo[] read(String topic, long from, long to) {
-        if (! TopicScanner.getTopics().contains(topic)){
+        if (! TopicCenter.getTopics().contains(topic)){
             return null;
         }
 
