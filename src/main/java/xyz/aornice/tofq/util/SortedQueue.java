@@ -5,7 +5,7 @@ import java.util.Iterator;
 /**
  * Created by robin on 11/04/2017.
  */
-public interface SortedList<E> {
+public interface SortedQueue<E> {
 
     /**
      * Insert the specified element to the sorted list, waiting for space to become available if the queue it full.
@@ -20,9 +20,8 @@ public interface SortedList<E> {
     int size();
 
     /**
-     * Take at most spread elements from the list.
-     * @param spread - the number of elements at most to be taken
+     * Take all elements from the queue.
      * @return the iterator of elements
      */
-    Iterator<E> takeFirst(int spread);
+    Iterator<E> takeAll();
 }
