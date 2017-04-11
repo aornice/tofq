@@ -2,19 +2,18 @@ package xyz.aornice.tofq.depostion.support;
 
 import xyz.aornice.tofq.depostion.DepositionListener;
 import xyz.aornice.tofq.depostion.CargoDeposition;
-import xyz.aornice.tofq.util.SortedQueue;
+import xyz.aornice.tofq.util.SortedList;
 import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.Topic;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created by drfish on 09/04/2017.
  */
 public class LocalDeposition implements CargoDeposition {
 
-    private ConcurrentMap<Topic, SortedQueue<Cargo>> topicMap;
+    private ConcurrentHashMap<Topic, SortedList<Cargo>> topicMap;
 
     private static final int BATCH_DEPOSITION_SIZE = 300;
     private static final long DEPOSTION_INTERVAL = 5;
