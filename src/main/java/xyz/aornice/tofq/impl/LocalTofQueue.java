@@ -1,6 +1,7 @@
 package xyz.aornice.tofq.impl;
 
-import xyz.aornice.tofq.CargoDeposition;
+import xyz.aornice.tofq.Cargo;
+import xyz.aornice.tofq.depostion.CargoDeposition;
 import xyz.aornice.tofq.CargoExtraction;
 import xyz.aornice.tofq.TofQueue;
 
@@ -17,8 +18,6 @@ public class LocalTofQueue implements TofQueue {
     private CargoExtraction receiptor;
 
     public LocalTofQueue(String name) {
-        furnisher = new LocalDeposition(TEST_PATH, name);
-        receiptor = new LocalExtraction(TEST_PATH, name);
     }
 
     public LocalTofQueue() {

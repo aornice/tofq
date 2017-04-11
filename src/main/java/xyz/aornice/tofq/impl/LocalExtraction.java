@@ -1,5 +1,6 @@
 package xyz.aornice.tofq.impl;
 
+import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.CargoExtraction;
 import xyz.aornice.tofq.utils.TopicCenter;
 
