@@ -1,4 +1,4 @@
-package xyz.aornice.tofq.impl;
+package xyz.aornice.tofq;
 
 /**
  * Created by robin on 10/04/2017.
@@ -31,8 +31,11 @@ public class Topic {
     }
 
     public boolean setMaxStoredId(long id) {
-        long origin = this.maxStoredId.get();
-        if (origin >= id) return false;
-        return this.maxStoredId.compareAndSet(origin, id);
+        long origin;
+        do {
+            origin = this.maxStoredId.get();
+            if (origin >= id) return false;
+        } while (!this.maxStoredId.compareAndSet(origin, id));
+        return true;
     }
 }

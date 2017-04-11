@@ -1,4 +1,4 @@
-package xyz.aornice.tofq.impl;
+package xyz.aornice.tofq;
 
 /**
  * Created by robin on 10/04/2017.

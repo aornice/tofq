@@ -1,8 +1,7 @@
 package xyz.aornice.tofq.impl;
 
+import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.CargoExtraction;
-
-import java.io.*;
 
 /**
  * Created by drfish on 09/04/2017.
