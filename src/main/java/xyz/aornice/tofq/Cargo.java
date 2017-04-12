@@ -8,6 +8,14 @@ public class Cargo {
     private long id;
     private byte[] data;
 
+    public Cargo() {
+    }
+
+    public Cargo(Topic topic, long id, byte[] data) {
+        this.topic = topic;
+        this.id = id;
+        this.data = data;
+    }
 
     public Topic getTopic() {
         return topic;

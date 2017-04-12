@@ -71,4 +71,8 @@ public class TopicCenter {
     public static String getPath(String topic){
         return topicPathMap.get(topic);
     }
+
+    public static boolean existsTopic(String topic){
+        return topics.contains(topic);
+    }
 }
