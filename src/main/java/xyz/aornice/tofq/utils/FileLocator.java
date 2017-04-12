@@ -141,13 +141,4 @@ public class FileLocator{
         files.add(filename);
     }
 
-    public static void main(String[] args){
-        for (Map.Entry<String, ArrayList<String>> entry: topicFileMap.entrySet()){
-            System.out.println(entry.getKey()+":");
-            for (String fileName: entry.getValue()){
-                System.out.println("\t"+fileName);
-            }
-        }
-    }
-
 }
