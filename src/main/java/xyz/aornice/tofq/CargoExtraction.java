@@ -6,14 +6,15 @@ package xyz.aornice.tofq;
 public interface CargoExtraction {
     Cargo[] readAll();
 
-    Cargo read(String topic, long id);
+    Cargo read(Topic topic, long id);
 
     /**
      * return cargos in topic of a range
+     *
      * @param topic topic name
-     * @param from  start index of the cargo
-     * @param to    end index of the cargo
+     * @param from  start index of the cargo, included
+     * @param to    end index of the cargo, not included
      * @return      return cargos, null if the topic not exists
      */
-    Cargo[] read(String topic, long from, long to);
+    Cargo[] read(Topic topic, long from, long to);
 }

@@ -1,5 +1,5 @@
+import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.TofQueue;
-import xyz.aornice.tofq.impl.Cargo;
 import xyz.aornice.tofq.impl.FurnisherData;
 import xyz.aornice.tofq.impl.LocalTofQueue;
 
