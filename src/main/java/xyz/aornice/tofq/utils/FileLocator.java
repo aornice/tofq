@@ -146,4 +146,8 @@ public class FileLocator{
         return (fileIndex(index)+1)<<MESSAGES_POW ;
     }
 
+    public static String filePath(String topic, String fileName){
+        return TopicCenter.getPath(topic)+TopicCenter.getFileSeperator()+fileName;
+    }
+
 }
