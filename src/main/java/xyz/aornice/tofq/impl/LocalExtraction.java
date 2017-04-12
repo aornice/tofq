@@ -45,7 +45,10 @@ public class LocalExtraction implements CargoExtraction {
             return new Cargo[0];
         }
 
-        Cargo[] cargos = new Cargo[(int)(to-from)];
+        // get the actual bound,
+        long bound = Long.min(topic.getMaxStoredId()+1, to);
+
+        Cargo[] cargos = new Cargo[(int)(bound-from)];
 
         long current = from;
         long nextBound = current;
@@ -59,8 +62,8 @@ public class LocalExtraction implements CargoExtraction {
             }
             nextBound = FileLocator.nextBound(current);
             List<byte[]> messages;
-            if (nextBound > to){
-                messages = harbour.get(fileName, current, to);
+            if (nextBound > bound){
+                messages = harbour.get(fileName, current, bound);
             }else{
                 messages = harbour.get(fileName, current, nextBound-1);
             }
@@ -68,12 +71,7 @@ public class LocalExtraction implements CargoExtraction {
                 cargos[pos++] = new Cargo(topic, from+pos, msg);
             }
             current = nextBound;
-        }while(nextBound < to);
-
-        // if the to is out of bound
-        if (nextBound < to){
-            return Arrays.copyOf(cargos, (int)(current-from));
-        }
+        }while(nextBound < bound);
 
         return cargos;
     }
