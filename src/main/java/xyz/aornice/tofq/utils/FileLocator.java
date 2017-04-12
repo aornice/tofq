@@ -7,7 +7,6 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  *
@@ -63,11 +62,7 @@ public class FileLocator{
                         if (file1.length() != file2.length()){
                             return file1.length() - file2.length();
                         }
-                        // compare the number
-                        int number1 = Integer.parseInt(file1.substring(DATE_LENGTH, file1.length()-SUFFIX_LENGTH));
-                        int number2 = Integer.parseInt(file2.substring(DATE_LENGTH, file2.length()-SUFFIX_LENGTH));
-
-                        return number1-number2;
+                        return file1.compareTo(file2);
                     }
                 });
 
@@ -79,12 +74,12 @@ public class FileLocator{
     }
 
     /**
-     * Calculate the relative shift of a message in file
+     * Calculate the relative offset of a message in file
      *
      * @param index
      * @return
      */
-    public static final long shift(long index){
+    public static final long messageOffset(long index){
         return index&(MESSAGES_PER_FILE-1);
     }
 
@@ -93,9 +88,13 @@ public class FileLocator{
      *
      * @param topic
      * @param index  the message index
-     * @return       return null if the index is out of current bound
+     * @return       return null if the index is out of current bound or the topic does not exist
      */
     public static String fileName(String topic, long index){
+        if (!TopicCenter.existsTopic(topic)){
+            return null;
+        }
+
         int fileInd = fileIndex(index);
         ArrayList<String> files = topicFileMap.get(topic);
         if (fileInd < files.size()) {
@@ -110,9 +109,11 @@ public class FileLocator{
      * When consider deleting, file index can be calculated by minus a shift.
      * When delete file, the filename list in topicFileMap should also be adjusted.
      *
+     * TODO the file index is int, because java only permits at most Integer.MAX_VALUE elements in ArrayList
+     *
      *
      * @param index
-     * @return     return int because java only permits at most Integer.MAX_VALUE elements in ArrayList
+     * @return      the file index
      */
     private static final int fileIndex(long index){
         return (int)(index >> MESSAGES_POW);
@@ -139,6 +140,10 @@ public class FileLocator{
         }
         // the new file must be the last file
         files.add(filename);
+    }
+
+    public static long nextBound(long index){
+        return (fileIndex(index)+1)<<MESSAGES_POW ;
     }
 
 }

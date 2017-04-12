@@ -2,18 +2,22 @@ package xyz.aornice.tofq.impl;
 
 import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.CargoExtraction;
+import xyz.aornice.tofq.Topic;
+import xyz.aornice.tofq.harbour.Harbour;
+import xyz.aornice.tofq.utils.FileLocator;
 import xyz.aornice.tofq.utils.TopicCenter;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by drfish on 09/04/2017.
  */
 public class LocalExtraction implements CargoExtraction {
-    private String path;
-    private String name;
+    private Harbour harbour;
 
-    public LocalExtraction(final String path, final String name) {
-        this.path = path;
-        this.name = name;
+    public LocalExtraction(Harbour harbour) {
+        this.harbour = harbour;
     }
 
     @Override
@@ -22,17 +26,56 @@ public class LocalExtraction implements CargoExtraction {
     }
 
     @Override
-    public Cargo read(String topic, long id) {
-        return null;
+    public Cargo read(Topic topic, long id) {
+        String fileName = FileLocator.fileName(topic.getName(), id);
+        // the id or topic does not exists
+        if (fileName == null){
+            return null;
+        }
+        long offset = FileLocator.messageOffset(id);
+
+        byte[] message = harbour.get(fileName, offset);
+
+        return new Cargo(topic, id, message);
     }
 
     @Override
-    public Cargo[] read(String topic, long from, long to) {
-        if (! TopicCenter.getTopics().contains(topic)){
-            return null;
+    public Cargo[] read(Topic topic, long from, long to) {
+        if (! TopicCenter.existsTopic(topic.getName())){
+            return new Cargo[0];
         }
 
-        return null;
+        Cargo[] cargos = new Cargo[(int)(to-from)];
+
+        long current = from;
+        long nextBound = current;
+        int pos = 0;
+
+        do {
+            String fileName = FileLocator.fileName(topic.getName(), current);
+            // the id is out of range
+            if (fileName == null) {
+                break;
+            }
+            nextBound = FileLocator.nextBound(current);
+            List<byte[]> messages;
+            if (nextBound > to){
+                messages = harbour.get(fileName, current, to);
+            }else{
+                messages = harbour.get(fileName, current, nextBound-1);
+            }
+            for (byte[] msg: messages){
+                cargos[pos++] = new Cargo(topic, from+pos, msg);
+            }
+            current = nextBound;
+        }while(nextBound < to);
+
+        // if the to is out of bound
+        if (nextBound < to){
+            return Arrays.copyOf(cargos, (int)(current-from));
+        }
+
+        return cargos;
     }
 
 }

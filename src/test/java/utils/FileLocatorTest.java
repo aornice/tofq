@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.*;
+
 /**
  * Created by cat on 2017/4/11.
  */
@@ -57,12 +59,18 @@ public class FileLocatorTest {
 
     }
 
+    private void testNextBound(){
+        long id = 2046;
+        assertEquals(FileLocator.nextBound(id), 2048);
+        System.out.println(FileLocator.nextBound(id));
+    }
+
     public static void main(String[] args){
         FileLocatorTest test = new FileLocatorTest();
 //        test.simpleModuloTime(8);
 //        System.out.println();
 //        test.newModuloTime(8);
-        test.testFileList();
+        test.testNextBound();
     }
 
 }
