@@ -41,7 +41,8 @@ public class LocalExtraction implements CargoExtraction {
 
     @Override
     public Cargo[] read(Topic topic, long from, long to) {
-        if (! TopicCenter.existsTopic(topic.getName())){
+        String topicName = topic.getName();
+        if (! TopicCenter.existsTopic(topicName)){
             return new Cargo[0];
         }
 
@@ -51,11 +52,11 @@ public class LocalExtraction implements CargoExtraction {
         Cargo[] cargos = new Cargo[(int)(bound-from)];
 
         long current = from;
-        long nextBound = current;
+        long nextBound;
         int pos = 0;
 
         do {
-            String fileName = FileLocator.fileName(topic.getName(), current);
+            String fileName = FileLocator.fileName(topicName, current);
             // the id is out of range
             if (fileName == null) {
                 break;
@@ -63,9 +64,9 @@ public class LocalExtraction implements CargoExtraction {
             nextBound = FileLocator.nextBound(current);
             List<byte[]> messages;
             if (nextBound > bound){
-                messages = harbour.get(fileName, current, bound);
+                messages = harbour.get(FileLocator.filePath(topicName, fileName), current, bound);
             }else{
-                messages = harbour.get(fileName, current, nextBound-1);
+                messages = harbour.get(FileLocator.filePath(topicName, fileName), current, nextBound-1);
             }
             for (byte[] msg: messages){
                 cargos[pos++] = new Cargo(topic, from+pos, msg);
