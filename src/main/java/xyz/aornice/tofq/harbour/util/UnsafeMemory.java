@@ -76,7 +76,7 @@ public enum UnsafeMemory implements Memory {
     }
 
     @Override
-    public void write(long address, byte i8) {
+    public void writeByte(long address, byte i8) {
         UNSAFE.putByte(address, i8);
     }
 

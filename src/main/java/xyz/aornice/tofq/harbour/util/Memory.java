@@ -28,7 +28,7 @@ public interface Memory {
 
     void writeByte(Object object, long offset, byte i8);
 
-    void write(long address, byte i8);
+    void writeByte(long address, byte i8);
 
     short readShort(Object object, long offset);
 
