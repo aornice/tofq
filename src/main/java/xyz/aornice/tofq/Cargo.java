@@ -40,4 +40,18 @@ public class Cargo {
     public void setData(byte[] data) {
         this.data = data;
     }
+
+    public int size() {
+        return data.length;
+    }
+
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Cargo)) return false;
+        Cargo other = (Cargo) obj;
+        return topic.equals(other.getTopic()) && (id == other.getId());
+    }
+
+    public int hashCode() {
+        return topic.hashCode() ^ (int)(id >>> 32) ^ (int)(id & (((long)1 << 33) - 1));
+    }
 }

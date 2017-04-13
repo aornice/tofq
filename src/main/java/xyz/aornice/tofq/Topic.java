@@ -38,4 +38,13 @@ public class Topic {
         } while (!this.maxStoredId.compareAndSet(origin, id));
         return true;
     }
+
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Topic)) return false;
+        return this.name.equals(((Topic) obj).name);
+    }
+
+    public int hashCode() {
+        return name.hashCode();
+    }
 }

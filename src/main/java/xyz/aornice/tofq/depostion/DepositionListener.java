@@ -1,5 +1,7 @@
 package xyz.aornice.tofq.depostion;
 
+import xyz.aornice.tofq.Topic;
+
 /**
  * Created by robin on 11/04/2017.
  */
@@ -11,5 +13,5 @@ public interface DepositionListener {
      * @param topic - the topic which is notified
      * @param cargoId -the max cargo id that has been deposited
      */
-    void notifyDeposition(String topic, long cargoId);
+    void notifyDeposition(Topic topic, long cargoId);
 }

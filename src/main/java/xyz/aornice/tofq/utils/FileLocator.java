@@ -1,5 +1,7 @@
 package xyz.aornice.tofq.utils;
 
+import xyz.aornice.tofq.Topic;
+
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
@@ -148,6 +150,15 @@ public class FileLocator{
 
     public static String filePath(String topic, String fileName){
         return TopicCenter.getPath(topic)+TopicCenter.getFileSeperator()+fileName;
+    }
+
+    public static Map<String, String> topicsNewestFile() {
+        HashMap<String, String> rst = new HashMap<>(topicFileMap.size());
+        for (Map.Entry<String, ArrayList<String>> e: topicFileMap.entrySet()) {
+            ArrayList<String> files = e.getValue();
+            rst.put(e.getKey(), files.get(files.size() - 1));
+        }
+        return rst;
     }
 
 }
