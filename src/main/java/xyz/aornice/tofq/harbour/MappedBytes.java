@@ -2,42 +2,66 @@ package xyz.aornice.tofq.harbour;
 
 import xyz.aornice.tofq.ReferenceCount;
 import xyz.aornice.tofq.harbour.util.Memory;
+import xyz.aornice.tofq.harbour.util.OS;
 import xyz.aornice.tofq.harbour.util.StringUtils;
 import xyz.aornice.tofq.harbour.util.UnsafeMemory;
 
 /**
  * Created by drfish on 12/04/2017.
  */
-public class MappedBytes {
+public class MappedBytes extends NativeBytes {
     private final long start;
     private final long end;
-    private long writePosition;
-    private long readPosition;
+    //    private final String type;
+//    private final long count;
+//    private final MappedFile mappedFile;
 
-    protected MappedBytes(ReferenceCount owner, long start, long address, long capacity, long safeCapacity) {
+
+//    protected MappedBytes(long start, long end, String type, long count, MappedFile mappedFile) {
+////        this.start = start;
+////        this.end = end;
+////        this.type = type;
+////        this.count = count;
+//        this.mappedFile = mappedFile;
+//    }
+
+    protected MappedBytes(ReferenceCount owner, long start, long address, long capacity) {
+        super(start, start + capacity, new OS.Unmapper(address, capacity, owner));
         this.start = start;
-        this.end = start + safeCapacity;
+        this.end = start + capacity;
     }
 
-    public MappedBytes append8bit(String string, int start, int end) {
+//    protected MappedBytes(MappedFile mappedFile) {
+//        this.mappedFile = mappedFile;
+//    }
+//
+//    public static MappedBytes getMappedBytes(String fileName, long blockSize, long overlapSize) throws FileNotFoundException {
+//        MappedFile rw = MappedFile.getMappedFile(fileName, blockSize, overlapSize);
+//        return new MappedBytes(rw);
+//    }
+
+    public MappedBytes writeBits(String string, long start, long end) {
+        return write8bit(string, start, end);
+    }
+
+    private MappedBytes write8bit(String string, long start, long end) {
         char[] chars = StringUtils.extractChars(string);
         Memory memory = UnsafeMemory.INSTANCE;
         int i = 0;
-        long address = writePosition;
-        int length = end - start;
-        for (; i < length - 3; i++) {
-            int c0 = chars[i + start] & 0xff;
-            int c1 = chars[i + start + 1] & 0xff;
-            int c2 = chars[i + start + 2] & 0xff;
-            int c3 = chars[i + start + 3] & 0xff;
+        long address = start;
+        long length = end - start;
+        for (; i < length - 3; i += 4) {
+            int c0 = chars[i] & 0xff;
+            int c1 = chars[i + 1] & 0xff;
+            int c2 = chars[i + 2] & 0xff;
+            int c3 = chars[i + 3] & 0xff;
             memory.writeInt(address, (c3 << 24) | (c2 << 16) | (c1 << 8) | c0);
             address += 4;
         }
         for (; i < length; i++) {
-            char c = chars[i + start];
+            char c = chars[i];
             memory.writeByte(address++, (byte) c);
         }
-        writePosition += length;
         return this;
     }
 }

@@ -1,9 +1,12 @@
 package xyz.aornice.tofq.impl;
 
 import xyz.aornice.tofq.Cargo;
-import xyz.aornice.tofq.depostion.CargoDeposition;
 import xyz.aornice.tofq.CargoExtraction;
 import xyz.aornice.tofq.TofQueue;
+import xyz.aornice.tofq.depostion.CargoDeposition;
+import xyz.aornice.tofq.depostion.support.LocalDeposition;
+import xyz.aornice.tofq.harbour.Harbour;
+import xyz.aornice.tofq.harbour.LocalHarbour;
 
 import java.nio.file.Path;
 
@@ -14,26 +17,25 @@ public class LocalTofQueue implements TofQueue {
     public static final String TEST_PATH = "queue";
     public static final String SUFFIX = ".tof";
 
-    private CargoDeposition furnisher;
-    private CargoExtraction receiptor;
-
-    public LocalTofQueue(String name) {
-    }
+    private CargoDeposition deposition;
+    private CargoExtraction extraction;
+    private Harbour harbour;
 
     public LocalTofQueue() {
-        this("temp");
+        harbour = new LocalHarbour(TEST_PATH);
+        deposition = LocalDeposition.getInstance();
+        extraction = new LocalExtraction(harbour);
     }
-
 
     @Override
     public boolean offer(FurnisherData furnisherData) {
-        furnisher.write(new Cargo());
+        deposition.write(new Cargo());
         return true;
     }
 
     @Override
     public Cargo[] elements() {
-        Cargo[] cargos= receiptor.readAll();
+        Cargo[] cargos = extraction.readAll();
         return cargos;
     }
 

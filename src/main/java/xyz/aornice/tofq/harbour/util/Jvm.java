@@ -1,6 +1,7 @@
 package xyz.aornice.tofq.harbour.util;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * Created by drfish on 10/04/2017.
@@ -18,6 +19,23 @@ public enum Jvm {
             if (superClass != null) {
                 try {
                     return getField(superClass, name);
+                } catch (Exception ignore) {
+                }
+            }
+            throw new AssertionError(e);
+        }
+    }
+
+    public static Method getMethod(Class clazz, String name, Class... params) {
+        try {
+            Method method = clazz.getDeclaredMethod(name, params);
+            method.setAccessible(true);
+            return method;
+        } catch (NoSuchMethodException e) {
+            Class superClass = clazz.getSuperclass();
+            if (superClass != null) {
+                try {
+                    return getMethod(clazz, name, params);
                 } catch (Exception ignore) {
                 }
             }
