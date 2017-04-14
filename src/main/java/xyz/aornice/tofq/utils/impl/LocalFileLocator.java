@@ -1,6 +1,8 @@
-package xyz.aornice.tofq.utils;
+package xyz.aornice.tofq.utils.impl;
 
-import xyz.aornice.tofq.Topic;
+import xyz.aornice.tofq.utils.FileLocater;
+import xyz.aornice.tofq.utils.TopicCenter;
+import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -16,7 +18,7 @@ import java.util.*;
  *
  * Created by cat on 2017/4/11.
  */
-public class FileLocator{
+public class LocalFileLocator implements FileLocater{
     private static final int MESSAGES_POW =10;
     // the message count in each file, must be 2^n, because used the fast module method: n & (m-1)
     private static final long MESSAGES_PER_FILE = 2<<MESSAGES_POW;
@@ -31,11 +33,27 @@ public class FileLocator{
 
     private static Map<String, ArrayList<String>> topicFileMap = new HashMap<>();
 
-    static{
-        for (String topic: TopicCenter.getTopics()){
+    private static TopicCenter topicCenter = LocalTopicCenter.newInstance();
+
+    private static volatile FileLocater instance;
+
+    public static FileLocater newInstance(){
+        if (instance == null){
+            synchronized (LocalFileLocator.class){
+                if (instance == null){
+                    instance = new LocalFileLocator();
+                }
+            }
+        }
+        return instance;
+    }
+
+
+    private LocalFileLocator(){
+        for (String topic: topicCenter.getTopics()){
             ArrayList<String> files = createFileList();
 
-            Path topicFolder = Paths.get(TopicCenter.getPath(topic));
+            Path topicFolder = Paths.get(topicCenter.getPath(topic));
             SimpleFileVisitor<Path> finder = new SimpleFileVisitor<Path>(){
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attr) throws IOException {
@@ -81,7 +99,7 @@ public class FileLocator{
      * @param index
      * @return
      */
-    public static final long messageOffset(long index){
+    public long messageOffset(long index){
         return index&(MESSAGES_PER_FILE-1);
     }
 
@@ -92,8 +110,8 @@ public class FileLocator{
      * @param index  the message index
      * @return       return null if the index is out of current bound or the topic does not exist
      */
-    public static String fileName(String topic, long index){
-        if (!TopicCenter.existsTopic(topic)){
+    public String fileName(String topic, long index){
+        if (!topicCenter.existsTopic(topic)){
             return null;
         }
 
@@ -117,7 +135,7 @@ public class FileLocator{
      * @param index
      * @return      the file index
      */
-    private static final int fileIndex(long index){
+    private final int fileIndex(long index){
         return (int)(index >> MESSAGES_POW);
     }
 
@@ -134,7 +152,7 @@ public class FileLocator{
      * @param topic
      * @param filename
      */
-    public static void registerNewFile(String topic, String filename) {
+    public void registerNewFile(String topic, String filename) {
         ArrayList<String> files = topicFileMap.get(topic);
         if (files == null){
             files = createFileList();
@@ -144,15 +162,15 @@ public class FileLocator{
         files.add(filename);
     }
 
-    public static long nextBound(long index){
+    public long nextBound(long index){
         return (fileIndex(index)+1)<<MESSAGES_POW ;
     }
 
-    public static String filePath(String topic, String fileName){
-        return TopicCenter.getPath(topic)+TopicCenter.getFileSeperator()+fileName;
+    public String filePath(String topic, String fileName){
+        return topicCenter.getPath(topic)+ topicCenter.getFileSeperator()+fileName;
     }
 
-    public static Map<String, String> topicsNewestFile() {
+    public Map<String, String> topicsNewestFile() {
         HashMap<String, String> rst = new HashMap<>(topicFileMap.size());
         for (Map.Entry<String, ArrayList<String>> e: topicFileMap.entrySet()) {
             ArrayList<String> files = e.getValue();
