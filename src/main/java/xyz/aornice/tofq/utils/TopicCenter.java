@@ -19,4 +19,6 @@ public interface TopicCenter {
     String getPath(String topic);
 
     boolean existsTopic(String topic);
+
+    int topicInnerID(String topic);
 }
