@@ -10,10 +10,14 @@ public class Topic {
     private String name;
     private AtomicLong maxId;
     private AtomicLong maxStoredId;
+    private String newestFile;
+    private int offset;
 
 
-    public Topic(String name) {
+    public Topic(String name, String newestFile, int offset) {
         this.name = name;
+        this.newestFile = newestFile;
+        this.offset = offset;
         this.maxId = new AtomicLong(0);
         this.maxStoredId = new AtomicLong(0);
     }
@@ -37,6 +41,18 @@ public class Topic {
             if (origin >= id) return false;
         } while (!this.maxStoredId.compareAndSet(origin, id));
         return true;
+    }
+
+    public String getNewestFile() {
+        return newestFile;
+    }
+
+    public int getOffset() {
+        return offset;
+    }
+
+    public String newTopicFile() {
+        return null;
     }
 
     public boolean equals(Object obj) {
