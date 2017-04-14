@@ -12,10 +12,10 @@ public class Topic {
     private AtomicLong maxStoredId;
 
 
-    public Topic(String name, long maxId) {
+    public Topic(String name) {
         this.name = name;
-        this.maxId = new AtomicLong(maxId);
-        this.maxStoredId = new AtomicLong(maxId);
+        this.maxId = new AtomicLong(0);
+        this.maxStoredId = new AtomicLong(0);
     }
 
     public String getName() {
