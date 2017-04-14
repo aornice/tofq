@@ -9,6 +9,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
@@ -17,7 +18,30 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by cat on 2017/4/10.
  */
 public class LocalTopicCenter implements TopicCenter {
-    private static ConcurrentHashMap<String,String> topicPathMap = new ConcurrentHashMap<>();
+
+    /**
+     * store inner topic info, such as topic path, inner id, etc
+     */
+    private static class InnerTopicInfo{
+        private static AtomicInteger nextID = new AtomicInteger(0);
+        private int innerID;
+        private String path;
+
+        public InnerTopicInfo(String path) {
+            this.path = path;
+            this.innerID = nextID.getAndIncrement();
+        }
+
+        public int getInnerID() {
+            return innerID;
+        }
+
+        public String getPath() {
+            return path;
+        }
+    }
+
+    private static ConcurrentHashMap<String,InnerTopicInfo> topicPathMap = new ConcurrentHashMap<>();
     private static Set<String> topics = topicPathMap.keySet();
     private static Path topicFolder = Paths.get("/Users/shen/workspace/项目/315QueueFiles/testTopicFolder");
 
@@ -47,7 +71,7 @@ public class LocalTopicCenter implements TopicCenter {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attr) throws IOException {
                 if (attr.isDirectory()) {
                     String topicName = file.getFileName().toString();
-                    topicPathMap.put(topicName, topicFolder+FILE_SEPERATOR+topicName);
+                    topicPathMap.put(topicName, new InnerTopicInfo(topicFolder+FILE_SEPERATOR+topicName));
                 }
 
                 return super.visitFile(file, attr);
@@ -62,10 +86,12 @@ public class LocalTopicCenter implements TopicCenter {
         }
     }
 
+    @Override
     public Set<String> getTopics() {
         return topics;
     }
 
+    @Override
     public boolean register(String topic) throws SecurityException{
         // return false if already exists
         if (topics.contains(topic)){
@@ -75,24 +101,33 @@ public class LocalTopicCenter implements TopicCenter {
         // make the topic folder
         boolean created = new File(topicFolder + FILE_SEPERATOR + topic).mkdir();
         if (created) {
-            topicPathMap.put(topic, topicFolder + FILE_SEPERATOR + topic);
+            topicPathMap.put(topic, new InnerTopicInfo(topicFolder + FILE_SEPERATOR + topic));
         }
         return created;
     }
 
+    @Override
     public Path getTopicFolder() {
         return topicFolder;
     }
 
+    @Override
     public String getFileSeperator() {
         return FILE_SEPERATOR;
     }
 
+    @Override
     public String getPath(String topic){
-        return topicPathMap.get(topic);
+        return topicPathMap.get(topic).getPath();
     }
 
+    @Override
     public boolean existsTopic(String topic){
         return topics.contains(topic);
+    }
+
+    @Override
+    public int topicInnerID(String topic) {
+        return topicPathMap.get(topic).getInnerID();
     }
 }

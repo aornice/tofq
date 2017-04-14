@@ -8,6 +8,12 @@ import java.util.Map;
  * Created by shen on 2017/4/14.
  */
 public interface FileLocater {
+
+
+    int MESSAGES_POW =10;
+    // the message count in each file, must be 2^n, because used the fast module method: n & (m-1)
+    long MESSAGES_PER_FILE = 2<<MESSAGES_POW;
+
     /**
      * Calculate the relative offset of a message in file
      *
@@ -42,4 +48,6 @@ public interface FileLocater {
     String filePath(String topic, String fileName);
 
     Map<String, String> topicsNewestFile();
+
+    String fileNameByIndex(String topic, int fileIndex);
 }

@@ -19,17 +19,10 @@ import java.util.*;
  * Created by cat on 2017/4/11.
  */
 public class LocalFileLocator implements FileLocater{
-    private static final int MESSAGES_POW =10;
-    // the message count in each file, must be 2^n, because used the fast module method: n & (m-1)
-    private static final long MESSAGES_PER_FILE = 2<<MESSAGES_POW;
-
     private static final int INIT_TOPIC_FILES = 128;
 
     // date length in file name
     private static final int DATE_LENGTH = 8;
-
-    // file suffix length
-    private static final int SUFFIX_LENGTH = 4;
 
     private static Map<String, ArrayList<String>> topicFileMap = new HashMap<>();
 
@@ -99,6 +92,7 @@ public class LocalFileLocator implements FileLocater{
      * @param index
      * @return
      */
+    @Override
     public long messageOffset(long index){
         return index&(MESSAGES_PER_FILE-1);
     }
@@ -110,6 +104,7 @@ public class LocalFileLocator implements FileLocater{
      * @param index  the message index
      * @return       return null if the index is out of current bound or the topic does not exist
      */
+    @Override
     public String fileName(String topic, long index){
         if (!topicCenter.existsTopic(topic)){
             return null;
@@ -152,6 +147,7 @@ public class LocalFileLocator implements FileLocater{
      * @param topic
      * @param filename
      */
+    @Override
     public void registerNewFile(String topic, String filename) {
         ArrayList<String> files = topicFileMap.get(topic);
         if (files == null){
@@ -162,14 +158,17 @@ public class LocalFileLocator implements FileLocater{
         files.add(filename);
     }
 
+    @Override
     public long nextBound(long index){
         return (fileIndex(index)+1)<<MESSAGES_POW ;
     }
 
+    @Override
     public String filePath(String topic, String fileName){
         return topicCenter.getPath(topic)+ topicCenter.getFileSeperator()+fileName;
     }
 
+    @Override
     public Map<String, String> topicsNewestFile() {
         HashMap<String, String> rst = new HashMap<>(topicFileMap.size());
         for (Map.Entry<String, ArrayList<String>> e: topicFileMap.entrySet()) {
@@ -177,6 +176,11 @@ public class LocalFileLocator implements FileLocater{
             rst.put(e.getKey(), files.get(files.size() - 1));
         }
         return rst;
+    }
+
+    @Override
+    public String fileNameByIndex(String topic, int fileIndex) {
+        return topicFileMap.get(topic).get(fileIndex);
     }
 
 }
