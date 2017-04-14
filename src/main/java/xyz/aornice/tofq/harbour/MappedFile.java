@@ -1,6 +1,7 @@
 package xyz.aornice.tofq.harbour;
 
 import xyz.aornice.tofq.ReferenceCount;
+import xyz.aornice.tofq.ReferenceCounter;
 import xyz.aornice.tofq.harbour.util.OS;
 
 import java.io.FileNotFoundException;
@@ -27,6 +28,7 @@ public class MappedFile implements ReferenceCount {
     private final AtomicBoolean isClosed = new AtomicBoolean();
     private final long capacity;
     private final List<WeakReference<MappedBytes>> cache = new ArrayList<>();
+    ReferenceCounter refCounter = new ReferenceCounter(this::doRelease);
 
     protected MappedFile(RandomAccessFile rFile, long blockSize, long overlapSize, long capacity) {
         this.randomFile = rFile;
@@ -83,23 +85,55 @@ public class MappedFile implements ReferenceCount {
         }
     }
 
+
+    private void doRelease() {
+        for (int i = 0; i < cache.size(); i++) {
+            WeakReference<MappedBytes> mbRef = cache.get(i);
+            if (mbRef == null) {
+                continue;
+            }
+            MappedBytes mb = mbRef.get();
+            if (mb != null) {
+                long count = mb.refCount();
+                if (count > 0) {
+                    mb.release();
+                    if (count > 1) {
+                        continue;
+                    }
+                }
+            }
+            cache.set(i, null);
+        }
+        try {
+            randomFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void release() throws IllegalStateException {
-
+        refCounter.release();
     }
 
     @Override
     public void reserve() throws IllegalStateException {
-
+        refCounter.reserve();
     }
 
     @Override
     public long referenceCount() {
-        return 0;
+        return refCounter.getCount();
     }
 
     @Override
     public void close() throws IOException {
-
+        if (!isClosed.compareAndSet(false, true)) {
+            return;
+        }
+        synchronized (cache) {
+            ReferenceCount.releaseAll((List) cache);
+        }
+        release();
     }
 }

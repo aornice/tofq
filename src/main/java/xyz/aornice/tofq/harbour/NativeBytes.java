@@ -1,6 +1,7 @@
 package xyz.aornice.tofq.harbour;
 
 import sun.misc.Cleaner;
+import xyz.aornice.tofq.ReferenceCount;
 import xyz.aornice.tofq.ReferenceCounter;
 import xyz.aornice.tofq.harbour.util.Jvm;
 import xyz.aornice.tofq.harbour.util.Memory;
@@ -12,7 +13,7 @@ import java.nio.ByteBuffer;
 /**
  * Created by drfish on 13/04/2017.
  */
-public class NativeBytes {
+public class NativeBytes implements ReferenceCount {
     //    private static final long MEMORY_MAPPED_SIZE = 128 << 10;
     private static final Field BYTE_BUFFER_ADDRESS, BYTE_BUFFER_CAPACITY;
 
@@ -60,4 +61,23 @@ public class NativeBytes {
         }
     }
 
+    public long refCount() {
+        return refCounter.getCount();
+    }
+
+
+    @Override
+    public void release() throws IllegalStateException {
+        refCounter.release();
+    }
+
+    @Override
+    public void reserve() throws IllegalStateException {
+        refCounter.reserve();
+    }
+
+    @Override
+    public long referenceCount() {
+        return refCounter.getCount();
+    }
 }
