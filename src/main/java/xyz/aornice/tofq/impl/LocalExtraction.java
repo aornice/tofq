@@ -4,10 +4,11 @@ import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.CargoExtraction;
 import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.harbour.Harbour;
-import xyz.aornice.tofq.utils.FileLocator;
+import xyz.aornice.tofq.utils.FileLocater;
 import xyz.aornice.tofq.utils.TopicCenter;
+import xyz.aornice.tofq.utils.impl.LocalFileLocator;
+import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -15,6 +16,9 @@ import java.util.List;
  */
 public class LocalExtraction implements CargoExtraction {
     private Harbour harbour;
+
+    private FileLocater fileLocater = LocalFileLocator.newInstance();
+    private TopicCenter topicCenter = LocalTopicCenter.newInstance();
 
     public LocalExtraction(Harbour harbour) {
         this.harbour = harbour;
@@ -27,12 +31,12 @@ public class LocalExtraction implements CargoExtraction {
 
     @Override
     public Cargo read(Topic topic, long id) {
-        String fileName = FileLocator.fileName(topic.getName(), id);
+        String fileName = fileLocater.fileName(topic.getName(), id);
         // the id or topic does not exists
         if (fileName == null){
             return null;
         }
-        long offset = FileLocator.messageOffset(id);
+        long offset = fileLocater.messageOffset(id);
 
         byte[] message = harbour.get(fileName, offset);
 
@@ -42,7 +46,7 @@ public class LocalExtraction implements CargoExtraction {
     @Override
     public Cargo[] read(Topic topic, long from, long to) {
         String topicName = topic.getName();
-        if (! TopicCenter.existsTopic(topicName)){
+        if (! topicCenter.existsTopic(topicName)){
             return new Cargo[0];
         }
 
@@ -56,17 +60,17 @@ public class LocalExtraction implements CargoExtraction {
         int pos = 0;
 
         do {
-            String fileName = FileLocator.fileName(topicName, current);
+            String fileName = fileLocater.fileName(topicName, current);
             // the id is out of range
             if (fileName == null) {
                 break;
             }
-            nextBound = FileLocator.nextBound(current);
+            nextBound = fileLocater.nextBound(current);
             List<byte[]> messages;
             if (nextBound > bound){
-                messages = harbour.get(FileLocator.filePath(topicName, fileName), current, bound);
+                messages = harbour.get(fileLocater.filePath(topicName, fileName), current, bound);
             }else{
-                messages = harbour.get(FileLocator.filePath(topicName, fileName), current, nextBound-1);
+                messages = harbour.get(fileLocater.filePath(topicName, fileName), current, nextBound-1);
             }
             for (byte[] msg: messages){
                 cargos[pos++] = new Cargo(topic, from+pos, msg);

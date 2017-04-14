@@ -1,6 +1,7 @@
 package utils;
 
 import xyz.aornice.tofq.utils.TopicCenter;
+import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
 
 import java.util.Set;
 
@@ -9,16 +10,17 @@ import java.util.Set;
  */
 public class TopicCenterTest {
     public static void main(String[] args){
-        Set<String> topics = TopicCenter.getTopics();
+        TopicCenter topicCenter = LocalTopicCenter.newInstance();
+        Set<String> topics = topicCenter.getTopics();
         for(String topic : topics){
             System.out.println(topic);
         }
 
         System.out.println();
 
-        TopicCenter.register("topic4");
+        topicCenter.register("topic4");
 
-        topics = TopicCenter.getTopics();
+        topics = topicCenter.getTopics();
         for(String topic: topics){
             System.out.println(topic);
         }
@@ -26,6 +28,6 @@ public class TopicCenterTest {
         System.out.println();
 
 
-        System.out.println(TopicCenter.getPath("topic4"));
+        System.out.println(topicCenter.getPath("topic4"));
     }
 }
