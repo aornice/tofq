@@ -2,25 +2,26 @@ package xyz.aornice.tofq.depostion.support;
 
 import xyz.aornice.tofq.depostion.DepositionListener;
 import xyz.aornice.tofq.depostion.CargoDeposition;
+import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.util.SortedQueue;
 import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.Topic;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 
-/**
- * Created by drfish on 09/04/2017.
- */
-public class LocalDeposition implements CargoDeposition {
 
-    private final ConcurrentMap<Topic, SortedQueue<Cargo>> topicMap = new ConcurrentHashMap<>();
-    private final BlockingQueue<Topic> batchedTopics = new LinkedBlockingQueue<>();
+public class LocalDeposition implements CargoDeposition {
 
     private static final int BATCH_DEPOSITION_SIZE = 300;
     private static final long DEPOSITION_INTERVAL_NANO = 100000;
+    private static final long CARGO_OFFSET_LEN_BYTES = 8;
+
+    private final ConcurrentMap<Topic, SortedQueue<Cargo>> topicMap = new ConcurrentHashMap<>();
+    private final BlockingQueue<Topic> batchedTopics = new LinkedBlockingQueue<>();
+    private final List<Cargo> cargoCache = new ArrayList<>(BATCH_DEPOSITION_SIZE * 3 / 2);
+    private final Harbour harbour = null;
+
 
 
     private LocalDeposition() {
@@ -50,23 +51,40 @@ public class LocalDeposition implements CargoDeposition {
     }
 
     private void deposite(Topic topic) {
+        Iterator<Cargo> cargoIt = topicMap.get(topic).takeAll();
+        cargoIt.forEachRemaining(cargoCache::add);
+
+        String topicFile = topic.getNewestFile();
+        final int size = cargoCache.size();
+        int start = 0, dataOffset = 0;
+        do {
+            int fileRemains;
+            while ((fileRemains = topic.CARGO_MAX_NUM - topic.getOffset()) == 0)
+                topicFile = topic.newTopicFile();
+
+            int end = fileRemains > (size - start) ? size: start + fileRemains;
+            for (int i = start; i < end; i++) ;
+
+            start = end;
+        } while (start != size);
     }
 
-    private class DepositionTask implements Runnable{
+    private class DepositionTask implements Runnable {
+
+        private final Map<Topic, Boolean> cleaned = new HashMap<>();
 
         private long timestamp;
-        private final Map<Topic, Boolean> cleaned = new HashMap<>();
 
         @Override
         public void run() {
             timestamp = System.nanoTime();
-            for (;;) {
+            for (; ; ) {
                 if (System.nanoTime() - timestamp > DEPOSITION_INTERVAL_NANO) {
-                    for (Topic topic: topicMap.keySet()) {
+                    for (Topic topic : topicMap.keySet()) {
                         if (cleaned.get(topic)) continue;
                         deposite(topic);
                     }
-                    for (Map.Entry<Topic, Boolean> e: cleaned.entrySet()) e.setValue(false);
+                    for (Map.Entry<Topic, Boolean> e : cleaned.entrySet()) e.setValue(false);
                     batchedTopics.clear();
                     timestamp = System.nanoTime();
 

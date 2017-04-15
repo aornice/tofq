@@ -28,4 +28,14 @@ public class LocalHarbour implements Harbour {
     public void put(String fileName, byte[] data) {
 
     }
+
+    @Override
+    public void put(String fileName, byte[] data, long offset) {
+
+    }
+
+    @Override
+    public void flush(String fileName) {
+
+    }
 }

@@ -7,6 +7,8 @@ package xyz.aornice.tofq;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Topic {
+    public static final int CARGO_MAX_NUM = 1000000;
+
     private String name;
     private AtomicLong maxId;
     private AtomicLong maxStoredId;
@@ -26,6 +28,10 @@ public class Topic {
         return name;
     }
 
+    /**
+     * thread-safe
+     * @return the incremented max id of cargo
+     */
     public long incrementAndGetId() {
         return maxId.incrementAndGet();
     }
@@ -34,6 +40,12 @@ public class Topic {
         return maxStoredId.get();
     }
 
+    /**
+     * thread-safe
+     * @param id - the max id of the cargo has been deposited
+     * @return if return true, represent set success. It might be failed, cause of
+     * current saved cargo max id is large than the id
+     */
     public boolean setMaxStoredId(long id) {
         long origin;
         do {
@@ -47,11 +59,26 @@ public class Topic {
         return newestFile;
     }
 
+    public void incrementOffset() {
+        offset++;
+        if (offset >= CARGO_MAX_NUM) throw new RuntimeException("Offset exceed");
+    }
+
+    public void incrementOffset(int val) {
+        offset += val;
+        if (offset >= CARGO_MAX_NUM) throw new RuntimeException("Offset exceed");
+    }
+
     public int getOffset() {
         return offset;
     }
 
+    public int getOffsetAndIncrement() {
+        return offset++;
+    }
+
     public String newTopicFile() {
+        // new topic file and reset offset to 0;
         return null;
     }
 

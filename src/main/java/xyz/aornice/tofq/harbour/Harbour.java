@@ -18,4 +18,8 @@ public interface Harbour {
     List<byte[]> get(String fileName, long offsetFrom, long offsetTo);
 
     void put(String fileName, byte[] data);
+
+    void put(String fileName, byte[] data, long offset);
+
+    void flush(String fileName);
 }
