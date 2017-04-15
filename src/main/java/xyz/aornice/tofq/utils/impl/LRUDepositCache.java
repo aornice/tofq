@@ -29,7 +29,7 @@ public class LRUDepositCache implements DepositCache {
 
     private LRUHashMap lruHashMap;
 
-    private static LRUDepositCache instance;
+    private static volatile LRUDepositCache instance;
 
     public static DepositCache newInstance(){
         if (instance == null){
