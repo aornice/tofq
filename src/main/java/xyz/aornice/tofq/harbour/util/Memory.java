@@ -137,4 +137,12 @@ public interface Memory {
     boolean compareAndSwapLong(long address, long expected, long value);
 
     boolean compareAndSwapLong(Object object, long offset, long expected, long value);
+
+    void copyMemory(byte[] bytes, int offset, long address, int length);
+
+    void copyMemory(long fromAddress, long address, long length);
+
+    void copyMemory(byte[] bytes, int offset, Object obj2, long offset2, int length);
+
+    void copyMemory(long fromAddress, Object obj2, long offset2, int length);
 }

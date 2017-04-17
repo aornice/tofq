@@ -26,9 +26,9 @@ public class MappedBytes extends NativeBytes {
 //    }
 
     protected MappedBytes(ReferenceCount owner, long start, long address, long capacity) {
-        super(start, start + capacity, new OS.Unmapper(address, capacity, owner));
-        this.start = start;
-        this.end = start + capacity;
+        super(address, address + capacity, new OS.Unmapper(address, capacity, owner));
+        this.start = address;
+        this.end = address + capacity;
     }
 
 //    protected MappedBytes(MappedFile mappedFile) {
@@ -48,7 +48,7 @@ public class MappedBytes extends NativeBytes {
         char[] chars = StringUtils.extractChars(string);
         Memory memory = UnsafeMemory.INSTANCE;
         int i = 0;
-        long address = start;
+        long address = this.address + start;
         long length = end - start;
         for (; i < length - 3; i += 4) {
             int c0 = chars[i] & 0xff;

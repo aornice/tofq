@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by drfish on 11/04/2017.
  */
 public class ReferenceCounter {
-    private final AtomicLong value = new AtomicLong();
+    private final AtomicLong value = new AtomicLong(1);
     private final Runnable releaseTask;
 
     public ReferenceCounter(Runnable releaseTask) {
