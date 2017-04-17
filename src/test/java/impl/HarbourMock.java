@@ -37,4 +37,24 @@ public class HarbourMock implements Harbour{
     public void flush(String fileName) {
 
     }
+
+    @Override
+    public long getLong(String fileName, long offset) {
+        return 0;
+    }
+
+    @Override
+    public int getInt(String fileName, long offset) {
+        return 0;
+    }
+
+    @Override
+    public void put(String fileName, long val, long offset) {
+
+    }
+
+    @Override
+    public void put(String fileName, int val, long offset) {
+
+    }
 }
