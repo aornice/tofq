@@ -157,6 +157,11 @@ public class NativeBytes implements ReferenceCount {
         return this;
     }
 
+    public NativeBytes write(long offsetInTarget, byte[] bytes, int offset, int length) {
+        memory.copyMemory(bytes, offset, offset(offsetInTarget), length);
+        return this;
+    }
+
 
     private void doRelease() {
         memory = null;

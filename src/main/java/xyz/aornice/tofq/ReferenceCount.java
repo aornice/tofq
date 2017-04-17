@@ -1,6 +1,7 @@
 package xyz.aornice.tofq;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public interface ReferenceCount extends Closeable {
         }
     }
 
-    default void close() {
+    default void close() throws IOException {
         release();
     }
 
