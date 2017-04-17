@@ -11,11 +11,11 @@ public interface Harbour {
     /**
      *
      * @param fileName
-     * @param offsetFrom  start offset, included
-     * @param offsetTo    end offset, not included
+     * @param offsetFrom  start offset in byte, included
+     * @param offsetTo    end offset in byte, not included
      * @return
      */
-    List<byte[]> get(String fileName, long offsetFrom, long offsetTo);
+    byte[] get(String fileName, long offsetFrom, long offsetTo);
 
     void put(String fileName, byte[] data);
 
