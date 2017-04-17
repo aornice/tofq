@@ -12,10 +12,6 @@ public interface TopicCenter {
 
     boolean register(String topic);
 
-    Path getTopicFolder();
-
-    String getFileSeperator();
-
     String getPath(String topic);
 
     boolean existsTopic(String topic);

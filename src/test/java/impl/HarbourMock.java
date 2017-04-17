@@ -17,18 +17,24 @@ public class HarbourMock implements Harbour{
     }
 
     @Override
-    public List<byte[]> get(String fileName, long offsetFrom, long offsetTo) {
-        List<byte[]> result = new ArrayList<>((int)(offsetTo-offsetFrom));
+    public byte[] get(String fileName, long offsetFrom, long offsetTo) {
         byte[]  bs = new byte[2];
         bs[0]=0x00;
         bs[1] = 0x01;
-        for (long i=offsetFrom; i<offsetTo; i++){
-            result.add(bs);
-        }
-        return result;
+        return bs;
     }
 
     @Override
     public void put(String fileName, byte[] data) {
+    }
+
+    @Override
+    public void put(String fileName, byte[] data, long offset) {
+
+    }
+
+    @Override
+    public void flush(String fileName) {
+
     }
 }

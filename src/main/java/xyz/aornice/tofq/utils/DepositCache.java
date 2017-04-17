@@ -9,10 +9,10 @@ import java.util.List;
  */
 public interface DepositCache {
     /**
-     * why using fileIndex instead of fileName? the comparison of String is slower than int
+     *
      * @param topic
-     * @param fileIndex
+     * @param startIndex
      * @return
      */
-    List<byte[]> get(Topic topic, int fileIndex);
+    List<byte[]> get(Topic topic, long startIndex);
 }

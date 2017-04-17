@@ -2,10 +2,7 @@ package xyz.aornice.tofq.utils.impl;
 
 import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.harbour.Harbour;
-import xyz.aornice.tofq.harbour.LocalHarbour;
-import xyz.aornice.tofq.utils.DepositCache;
-import xyz.aornice.tofq.utils.FileLocater;
-import xyz.aornice.tofq.utils.TopicCenter;
+import xyz.aornice.tofq.utils.*;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,9 +15,7 @@ public class LRUDepositCache implements DepositCache {
 
     private TopicCenter topicCenter = LocalTopicCenter.newInstance();
 
-    private Harbour harbour;
-
-    private FileLocater fileLocater;
+    private ExtractionHelper extractionHelper = LocalExtractionHelper.newInstance();
 
     private static final int SHIFT_COUNT = 32;
 
@@ -29,23 +24,14 @@ public class LRUDepositCache implements DepositCache {
 
     private LRUHashMap lruHashMap;
 
-    private static volatile LRUDepositCache instance;
+    private static volatile DepositCache instance = new LRUDepositCache(INIT_CAPACITY);
 
     public static DepositCache newInstance(){
-        if (instance == null){
-            synchronized (LocalFileLocator.class){
-                if (instance == null){
-                    instance = new LRUDepositCache(INIT_CAPACITY);
-                }
-            }
-        }
         return instance;
     }
 
     private LRUDepositCache(int initCapacity){
         this.lruHashMap = new LRUHashMap(initCapacity);
-        this.harbour = harbour;
-        this.fileLocater = LocalFileLocator.newInstance();
     }
 
     private class LRUHashMap extends LinkedHashMap<Long, List<byte[]>> {
@@ -65,14 +51,14 @@ public class LRUDepositCache implements DepositCache {
 
 
     @Override
-    public List<byte[]> get(Topic topic, int fileIndex) {
+    public List<byte[]> get(Topic topic, long startIndex) {
         long topicID = topicCenter.topicInnerID(topic.getName());
-        long hashValue = fileIndex<<SHIFT_COUNT+topicID;
+        long hashValue = startIndex<<SHIFT_COUNT+topicID;
 
         List<byte[]> fileContent = lruHashMap.get(hashValue);
 
         if (fileContent == null) {
-            fileContent = harbour.get(fileLocater.fileNameByIndex(topic.getName(), fileIndex), 0, FileLocater.MESSAGES_PER_FILE);
+            fileContent = extractionHelper.read(topic.getName(), startIndex, startIndex+ ExtractionHelper.MESSAGES_PER_FILE);
             lruHashMap.put(hashValue, fileContent);
         }
 

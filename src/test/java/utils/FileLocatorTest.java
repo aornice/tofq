@@ -60,18 +60,12 @@ public class FileLocatorTest {
 
     }
 
-    private void testNextBound(){
-        long id = 2046;
-        assertEquals(fileLocater.nextBound(id), 2048);
-        System.out.println(fileLocater.nextBound(id));
-    }
 
     public static void main(String[] args){
         FileLocatorTest test = new FileLocatorTest();
 //        test.simpleModuloTime(8);
 //        System.out.println();
 //        test.newModuloTime(8);
-        test.testNextBound();
     }
 
 }

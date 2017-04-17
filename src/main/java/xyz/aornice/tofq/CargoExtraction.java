@@ -8,6 +8,10 @@ public interface CargoExtraction {
 
     Cargo read(Topic topic, long id);
 
+    Cargo[] recentNCargos(Topic topic, int nCargos);
+
+    Cargo[] recentNDayCargos(Topic topic, int nDays);
+
     /**
      * return cargos in topic of a range
      *
@@ -17,4 +21,5 @@ public interface CargoExtraction {
      * @return      return cargos, null if the topic not exists
      */
     Cargo[] read(Topic topic, long from, long to);
+
 }

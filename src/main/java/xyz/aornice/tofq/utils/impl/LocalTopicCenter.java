@@ -1,6 +1,5 @@
 package xyz.aornice.tofq.utils.impl;
 
-import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.utils.TopicCenter;
 
 import java.io.File;
@@ -43,20 +42,13 @@ public class LocalTopicCenter implements TopicCenter {
 
     private static ConcurrentHashMap<String,InnerTopicInfo> topicPathMap = new ConcurrentHashMap<>();
     private static Set<String> topics = topicPathMap.keySet();
-    private static Path topicFolder = Paths.get("/Users/shen/workspace/项目/315QueueFiles/testTopicFolder");
+    private static Path topicFolder = Paths.get(CargoFileUtil.getTopicRoot());
 
-    private static final String FILE_SEPERATOR = System.getProperty("file.separator");
 
-    private volatile static LocalTopicCenter instance;
+
+    private volatile static TopicCenter instance = new LocalTopicCenter();
 
     public static TopicCenter newInstance(){
-        if (instance==null){
-            synchronized (LocalTopicCenter.class){
-                if (instance==null){
-                    instance = new LocalTopicCenter();
-                }
-            }
-        }
         return instance;
     }
 
@@ -71,7 +63,7 @@ public class LocalTopicCenter implements TopicCenter {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attr) throws IOException {
                 if (attr.isDirectory()) {
                     String topicName = file.getFileName().toString();
-                    topicPathMap.put(topicName, new InnerTopicInfo(topicFolder+FILE_SEPERATOR+topicName));
+                    topicPathMap.put(topicName, new InnerTopicInfo(topicFolder+ CargoFileUtil.getFileSeperator()+topicName));
                 }
 
                 return super.visitFile(file, attr);
@@ -99,21 +91,11 @@ public class LocalTopicCenter implements TopicCenter {
         }
 
         // make the topic folder
-        boolean created = new File(topicFolder + FILE_SEPERATOR + topic).mkdir();
+        boolean created = new File(topicFolder + CargoFileUtil.getFileSeperator() + topic).mkdir();
         if (created) {
-            topicPathMap.put(topic, new InnerTopicInfo(topicFolder + FILE_SEPERATOR + topic));
+            topicPathMap.put(topic, new InnerTopicInfo(topicFolder + CargoFileUtil.getFileSeperator() + topic));
         }
         return created;
-    }
-
-    @Override
-    public Path getTopicFolder() {
-        return topicFolder;
-    }
-
-    @Override
-    public String getFileSeperator() {
-        return FILE_SEPERATOR;
     }
 
     @Override
