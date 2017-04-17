@@ -17,9 +17,17 @@ public interface Harbour {
      */
     byte[] get(String fileName, long offsetFrom, long offsetTo);
 
+    long getLong(String fileName, long offset);
+
+    int getInt(String fileName, long offset);
+
     void put(String fileName, byte[] data);
 
     void put(String fileName, byte[] data, long offset);
+
+    void put(String fileName, long val, long offset);
+
+    void put(String fileName, int val, long offset);
 
     void flush(String fileName);
 }

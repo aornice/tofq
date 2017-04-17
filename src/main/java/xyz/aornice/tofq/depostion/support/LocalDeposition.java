@@ -1,5 +1,6 @@
 package xyz.aornice.tofq.depostion.support;
 
+import xyz.aornice.tofq.TopicFileFormat;
 import xyz.aornice.tofq.depostion.DepositionListener;
 import xyz.aornice.tofq.depostion.CargoDeposition;
 import xyz.aornice.tofq.depostion.ICargo;
@@ -15,11 +16,11 @@ public class LocalDeposition implements CargoDeposition {
 
     private static final int BATCH_DEPOSITION_SIZE = 300;
     private static final long DEPOSITION_INTERVAL_NANO = 100000;
-    private static final long CARGO_OFFSET_LEN_BYTES = 8;
 
     private final ConcurrentMap<Topic, SortedQueue<ICargo>> topicMap = new ConcurrentHashMap<>();
     private final BlockingQueue<Topic> batchedTopics = new LinkedBlockingQueue<>();
     private final List<ICargo> cargoCache = new ArrayList<>(BATCH_DEPOSITION_SIZE * 3 / 2);
+    private final List<DepositionListener> listeners = new CopyOnWriteArrayList<>();
     private final Harbour harbour = null;
 
 
@@ -40,6 +41,7 @@ public class LocalDeposition implements CargoDeposition {
 
     @Override
     public void addDepositionListener(DepositionListener listener) {
+        listeners.add(listener);
     }
 
     private void notifyDeposition(Topic topic) {
@@ -50,23 +52,42 @@ public class LocalDeposition implements CargoDeposition {
         }
     }
 
-    private void deposite(Topic topic) {
+    private void deposit(Topic topic) {
         Iterator<ICargo> cargoIt = topicMap.get(topic).takeAll();
         cargoIt.forEachRemaining(cargoCache::add);
 
         String topicFile = topic.getNewestFile();
         final int size = cargoCache.size();
-        int start = 0, dataOffset = 0;
+
+        if (size == 0) return;
+        if (cargoCache.get(0).getId() == topic.getStartId() + 1) throw new RuntimeException("Deposition Cargo ID isn't successive");
+
+        int start = 0, maxStoredId = 0;
         do {
             int fileRemains;
-            while ((fileRemains = topic.CARGO_MAX_NUM - topic.getOffset()) == 0)
+            while ((fileRemains = topic.CARGO_MAX_NUM - topic.getCount()) == 0)
                 topicFile = topic.newTopicFile();
-
             int end = fileRemains > (size - start) ? size: start + fileRemains;
-            for (int i = start; i < end; i++) ;
 
+            {
+                long putOffset = TopicFileFormat.Offset.OFFSET_BYTE + topic.getCount() * TopicFileFormat.Offset.OFFSET_SIZE_BYTE;
+                long dataOffset = topic.getCount() == 0 ? TopicFileFormat.Data.OFFSET_BYTE: harbour.getLong(topicFile, putOffset - TopicFileFormat.Offset.OFFSET_SIZE_BYTE);
+                for (int i = start ; i < end; i++, putOffset += TopicFileFormat.Offset.OFFSET_SIZE_BYTE)
+                    harbour.put(topicFile, dataOffset += cargoCache.get(i).size(), putOffset);
+            }
+
+            {
+                long putOffset = topic.getCount() == 0 ? TopicFileFormat.Data.OFFSET_BYTE:
+                        harbour.getLong(topicFile, TopicFileFormat.Offset.OFFSET_BYTE + (topic.getCount() - 1) * TopicFileFormat.Offset.OFFSET_SIZE_BYTE);
+                for (int i = start; i < end; i++, putOffset += cargoCache.get(i).size())
+                    harbour.put(topicFile, cargoCache.get(i).getData(), putOffset);
+            }
+            harbour.put(topicFile, topic.getCount() + start - end, TopicFileFormat.Header.COUNT_OFFSET_BYTE);
+            topic.incrementCount(start - end);
             start = end;
+            harbour.flush(topicFile);
         } while (start != size);
+        for (DepositionListener l: listeners) l.notifyDeposition(topic, maxStoredId);
     }
 
     private class DepositionTask implements Runnable {
@@ -82,7 +103,7 @@ public class LocalDeposition implements CargoDeposition {
                 if (System.nanoTime() - timestamp > DEPOSITION_INTERVAL_NANO) {
                     for (Topic topic : topicMap.keySet()) {
                         if (cleaned.get(topic)) continue;
-                        deposite(topic);
+                        deposit(topic);
                     }
                     for (Map.Entry<Topic, Boolean> e : cleaned.entrySet()) e.setValue(false);
                     batchedTopics.clear();
@@ -92,7 +113,7 @@ public class LocalDeposition implements CargoDeposition {
                     try {
                         Topic topic = batchedTopics.poll(System.nanoTime() - timestamp, TimeUnit.NANOSECONDS);
                         if (topic == null) break;
-                        deposite(topic);
+                        deposit(topic);
                         cleaned.put(topic, true);
                     } catch (InterruptedException e) {
                         e.printStackTrace();

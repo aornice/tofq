@@ -1,6 +1,8 @@
 package xyz.aornice.tofq.depostion;
 
 
+import xyz.aornice.tofq.Topic;
+
 /**
  * Created by drfish on 09/04/2017.
  */

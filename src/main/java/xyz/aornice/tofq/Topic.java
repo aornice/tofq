@@ -4,24 +4,34 @@ package xyz.aornice.tofq;
  * Created by robin on 10/04/2017.
  */
 
+import xyz.aornice.tofq.harbour.Harbour;
+
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Topic {
-    public static final int CARGO_MAX_NUM = 1000000;
+    public static final int CARGO_MAX_NUM = TopicFileFormat.Offset.CAPABILITY;
+
+    private static final Harbour harbour = null;
 
     private String name;
     private AtomicLong maxId;
     private AtomicLong maxStoredId;
     private String newestFile;
-    private int offset;
+    private int count;
+    private long startId;
 
 
-    public Topic(String name, String newestFile, int offset) {
+    public Topic(String name, String newestFile) {
         this.name = name;
         this.newestFile = newestFile;
-        this.offset = offset;
-        this.maxId = new AtomicLong(0);
-        this.maxStoredId = new AtomicLong(0);
+        loadInfo();
+    }
+
+    private void loadInfo() {
+        startId = harbour.getLong(newestFile, TopicFileFormat.Header.ID_START_OFFSET_BYTE);
+        count = harbour.getInt(newestFile, TopicFileFormat.Header.COUNT_OFFSET_BYTE);
+        maxId = new AtomicLong(startId + count);
+        maxStoredId = new AtomicLong(startId + count);
     }
 
     public String getName() {
@@ -59,26 +69,26 @@ public class Topic {
         return newestFile;
     }
 
-    public void incrementOffset() {
-        offset++;
-        if (offset >= CARGO_MAX_NUM) throw new RuntimeException("Offset exceed");
+    public void incrementCount() {
+        count++;
+        if (count > CARGO_MAX_NUM) throw new RuntimeException("Offset exceed");
     }
 
-    public void incrementOffset(int val) {
-        offset += val;
-        if (offset >= CARGO_MAX_NUM) throw new RuntimeException("Offset exceed");
+    public void incrementCount(int val) {
+        count += val;
+        if (count > CARGO_MAX_NUM) throw new RuntimeException("Offset exceed");
     }
 
-    public int getOffset() {
-        return offset;
+    public int getCount() {
+        return count;
     }
 
-    public int getOffsetAndIncrement() {
-        return offset++;
+    public int getCountAndIncrement() {
+        return count++;
     }
 
     public String newTopicFile() {
-        // new topic file and reset offset to 0;
+        // new topic file and reset count to 0;
         return null;
     }
 
@@ -89,5 +99,9 @@ public class Topic {
 
     public int hashCode() {
         return name.hashCode();
+    }
+
+    public long getStartId() {
+        return startId;
     }
 }
