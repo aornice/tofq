@@ -29,7 +29,6 @@ public class LocalTofQueue implements TofQueue {
 
     @Override
     public boolean offer(FurnisherData furnisherData) {
-        deposition.write(new Cargo());
         return true;
     }
 
