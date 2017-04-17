@@ -5,6 +5,7 @@
 
 # Package Files #
 *.jar
+!gradle-wrapper.jar
 *.war
 *.ear
 
@@ -12,7 +13,6 @@
 hs_err_pid*
 
 # gradle settings
-gradle/
 build/
 out/
 .gradle/
