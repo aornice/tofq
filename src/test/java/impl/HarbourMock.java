@@ -39,6 +39,11 @@ public class HarbourMock implements Harbour{
     }
 
     @Override
+    public void create(String fileName) {
+
+    }
+
+    @Override
     public long getLong(String fileName, long offset) {
         return 0;
     }
