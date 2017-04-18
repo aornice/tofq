@@ -6,6 +6,9 @@ package xyz.aornice.tofq;
 
 import xyz.aornice.tofq.harbour.Harbour;
 
+import static xyz.aornice.tofq.TopicFileFormat.Header;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Topic {
@@ -28,10 +31,10 @@ public class Topic {
     }
 
     private void loadInfo() {
-        startId = harbour.getLong(newestFile, TopicFileFormat.Header.ID_START_OFFSET_BYTE);
-        count = harbour.getInt(newestFile, TopicFileFormat.Header.COUNT_OFFSET_BYTE);
-        maxId = new AtomicLong(startId + count);
-        maxStoredId = new AtomicLong(startId + count);
+        startId = harbour.getLong(newestFile, Header.ID_START_OFFSET_BYTE);
+        count = harbour.getInt(newestFile, Header.COUNT_OFFSET_BYTE);
+        maxId = new AtomicLong(startId + count - 1);
+        maxStoredId = new AtomicLong(startId + count - 1);
     }
 
     public String getName() {
@@ -88,8 +91,23 @@ public class Topic {
     }
 
     public String newTopicFile() {
-        // new topic file and reset count to 0;
-        return null;
+        String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
+        final String basePath  = Setting.basePath;
+        int num = 0, prefixLen = basePath.length() + getName().length() + 1;
+        if (newestFile.substring(prefixLen, prefixLen + 6).equals(date))
+            num = Integer.valueOf(newestFile.substring(prefixLen + 6, newestFile.length() - 5)) + 1;
+        final String newTopicFile = basePath + date + num;
+
+        final long startId = getMaxStoredId() + 1;
+        harbour.create(newTopicFile);
+        harbour.put(newTopicFile, startId, Header.ID_START_OFFSET_BYTE);
+        harbour.put(newTopicFile, 0, Header.COUNT_OFFSET_BYTE);
+
+
+        this.count = 0;
+        this.startId = startId;
+        this.newestFile = newTopicFile;
+        return newTopicFile;
     }
 
     public boolean equals(Object obj) {

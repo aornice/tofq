@@ -4,7 +4,8 @@ import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.depostion.DepositionListener;
 import xyz.aornice.tofq.depostion.CargoDeposition;
 import xyz.aornice.tofq.harbour.Harbour;
-import xyz.aornice.tofq.util.SuccessiveList;
+import xyz.aornice.tofq.depostion.util.ConcurrentSuccessiveList;
+import xyz.aornice.tofq.depostion.util.SuccessiveList;
 import xyz.aornice.tofq.Topic;
 import static xyz.aornice.tofq.TopicFileFormat.Header;
 import static xyz.aornice.tofq.TopicFileFormat.Offset;
@@ -15,20 +16,33 @@ import java.util.concurrent.*;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import xyz.aornice.tofq.utils.TopicCenter;
+import xyz.aornice.tofq.utils.TopicUpdateListener;
 
 
-public class LocalDeposition implements CargoDeposition {
+public class LocalDeposition implements CargoDeposition, TopicUpdateListener {
 
     private static final Logger logger = LogManager.getLogger(LocalDeposition.class);
     private static final int BATCH_DEPOSITION_SIZE = 300;
     private static final long DEPOSITION_INTERVAL_NANO = 100000;
 
-    private final ConcurrentMap<Topic, SuccessiveList<Cargo>> topicMap = new ConcurrentHashMap<>();
-    private final BlockingQueue<Topic> batchedTopics = new LinkedBlockingQueue<>();
-    private final List<Cargo> cargoCache = new ArrayList<>(BATCH_DEPOSITION_SIZE * 3 / 2);
-    private final List<DepositionListener> listeners = new CopyOnWriteArrayList<>();
-    private final Harbour harbour = null;
+    private final ConcurrentMap<Topic, SuccessiveList<Cargo>> topicMap;
+    private final BlockingQueue<Topic> batchedTopics;
+    private final List<Cargo> cargoCache;
+    private final List<DepositionListener> listeners;
 
+    private Harbour harbour = null;
+    private TopicCenter topicCenter = null;
+
+    {
+        topicMap = new ConcurrentHashMap<>();
+        batchedTopics = new LinkedBlockingQueue<>();
+        cargoCache = new ArrayList<>(BATCH_DEPOSITION_SIZE * 3 / 2);
+        listeners = new CopyOnWriteArrayList<>();
+
+        for (Topic topic: topicCenter.getTopics())
+            topicMap.put(topic, new ConcurrentSuccessiveList<>(BATCH_DEPOSITION_SIZE * 3 / 2, topic.getMaxStoredId() + 1));
+    }
 
     private LocalDeposition() {
         new Thread(new DepositionTask()).start();
@@ -47,6 +61,19 @@ public class LocalDeposition implements CargoDeposition {
     @Override
     public void addDepositionListener(DepositionListener listener) {
         listeners.add(listener);
+    }
+
+    @Override
+    public void topicUpdated(Topic newTopic) {
+        topicMap.put(newTopic, new ConcurrentSuccessiveList<>(BATCH_DEPOSITION_SIZE * 3 / 2, newTopic.getMaxStoredId() + 1));
+    }
+
+    public void setHarbour(Harbour harbour) {
+        this.harbour = harbour;
+    }
+
+    public void setTopicCenter(TopicCenter topicCenter) {
+        this.topicCenter = topicCenter;
     }
 
     private void notifyDeposition(Topic topic) {
@@ -69,6 +96,7 @@ public class LocalDeposition implements CargoDeposition {
             return;
         }
 
+        logger.debug("Deposit topic %s start", topic.getName());
         int start = 0, maxStoredId = 0;
         do {
             int fileRemains;
@@ -96,7 +124,9 @@ public class LocalDeposition implements CargoDeposition {
             harbour.flush(topicFile);
         } while (start != size);
         for (DepositionListener l : listeners) l.notifyDeposition(topic, maxStoredId);
+        logger.debug("Deposit topic %s end", topic.getName());
     }
+
 
     private class DepositionTask implements Runnable {
 
@@ -109,6 +139,7 @@ public class LocalDeposition implements CargoDeposition {
             timestamp = System.nanoTime();
             for (; ; ) {
                 if (System.nanoTime() - timestamp > DEPOSITION_INTERVAL_NANO) {
+                    logger.debug("Time interval deposition start");
                     for (Topic topic : topicMap.keySet()) {
                         if (cleaned.get(topic)) continue;
                         deposit(topic);
@@ -116,17 +147,21 @@ public class LocalDeposition implements CargoDeposition {
                     for (Map.Entry<Topic, Boolean> e : cleaned.entrySet()) e.setValue(false);
                     batchedTopics.clear();
                     timestamp = System.nanoTime();
-
+                    logger.debug("Time interval deposition end");
                 } else {
                     try {
                         Topic topic = batchedTopics.poll(System.nanoTime() - timestamp, TimeUnit.NANOSECONDS);
                         if (topic == null) break;
+                        logger.debug("Batch deposition start");
                         deposit(topic);
+                        logger.debug("Batch deposition end");
                         cleaned.put(topic, true);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
+                        return;
                     }
                 }
+                if (Thread.interrupted()) return;
             }
         }
     }

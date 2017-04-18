@@ -1,4 +1,4 @@
-package xyz.aornice.tofq.util;
+package xyz.aornice.tofq.depostion.util;
 
 import sun.misc.Unsafe;
 import xyz.aornice.tofq.Identifiable;

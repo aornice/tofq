@@ -30,4 +30,6 @@ public interface Harbour {
     void put(String fileName, int val, long offset);
 
     void flush(String fileName);
+
+    void create(String fileName);
 }

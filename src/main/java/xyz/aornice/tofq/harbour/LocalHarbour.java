@@ -58,4 +58,9 @@ public class LocalHarbour implements Harbour {
     public void flush(String fileName) {
 
     }
+
+    @Override
+    public void create(String fileName) {
+
+    }
 }
