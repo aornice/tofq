@@ -3,13 +3,12 @@ package xyz.aornice.tofq;
 /**
  * Created by robin on 10/04/2017.
  */
-public class Cargo {
+public class Cargo implements Identifiable{
     private Topic topic;
     private long id;
     private byte[] data;
 
-    public Cargo() {
-    }
+    public Cargo() {}
 
     public Cargo(Topic topic, long id, byte[] data) {
         this.topic = topic;
