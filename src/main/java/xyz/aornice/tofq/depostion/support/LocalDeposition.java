@@ -1,8 +1,8 @@
 package xyz.aornice.tofq.depostion.support;
 
+import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.depostion.DepositionListener;
 import xyz.aornice.tofq.depostion.CargoDeposition;
-import xyz.aornice.tofq.depostion.ICargo;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.util.SuccessiveList;
 import xyz.aornice.tofq.Topic;
@@ -23,9 +23,9 @@ public class LocalDeposition implements CargoDeposition {
     private static final int BATCH_DEPOSITION_SIZE = 300;
     private static final long DEPOSITION_INTERVAL_NANO = 100000;
 
-    private final ConcurrentMap<Topic, SuccessiveList<ICargo>> topicMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Topic, SuccessiveList<Cargo>> topicMap = new ConcurrentHashMap<>();
     private final BlockingQueue<Topic> batchedTopics = new LinkedBlockingQueue<>();
-    private final List<ICargo> cargoCache = new ArrayList<>(BATCH_DEPOSITION_SIZE * 3 / 2);
+    private final List<Cargo> cargoCache = new ArrayList<>(BATCH_DEPOSITION_SIZE * 3 / 2);
     private final List<DepositionListener> listeners = new CopyOnWriteArrayList<>();
     private final Harbour harbour = null;
 
@@ -39,7 +39,7 @@ public class LocalDeposition implements CargoDeposition {
     }
 
     @Override
-    public void write(ICargo cargo) {
+    public void write(Cargo cargo) {
         topicMap.get(cargo.getTopic()).put(cargo);
         if (topicMap.size() == BATCH_DEPOSITION_SIZE) notifyDeposition(cargo.getTopic());
     }

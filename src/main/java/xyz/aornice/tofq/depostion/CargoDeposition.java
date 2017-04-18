@@ -1,6 +1,7 @@
 package xyz.aornice.tofq.depostion;
 
 
+import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.Topic;
 
 /**
@@ -12,9 +13,9 @@ public interface CargoDeposition {
      * The method will return immediately without guarantee the cargo has been deposited.
      * The deposition success information could get by adding listener to
      * {@link CargoDeposition#addDepositionListener}
-     * @param cargo - the {@link ICargo} need to be deposited
+     * @param cargo - the {@link Cargo} need to be deposited
      */
-    void write(ICargo cargo);
+    void write(Cargo cargo);
 
     /**
      * Add {@link DepositionListener} to {@link CargoDeposition}. CargoDeposition will notify
