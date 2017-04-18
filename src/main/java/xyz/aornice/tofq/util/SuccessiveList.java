@@ -1,11 +1,12 @@
 package xyz.aornice.tofq.util;
 
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by robin on 11/04/2017.
  */
-public interface SortedQueue<E> {
+public interface SuccessiveList<E> {
 
     /**
      * Insert the specified element to the sorted list, waiting for space to become available if the queue it full.
@@ -20,8 +21,13 @@ public interface SortedQueue<E> {
     int size();
 
     /**
-     * Take all elements from the queue.
-     * @return the iterator of elements
+     * Return the number of successive elements start from head in this queue.
+     * @return the number of successive elements start from head in this queue
      */
-    Iterator<E> takeAll();
+    int successiveSize();
+
+    /**
+     * Take all successive elements start from head in this queue.
+     */
+    boolean takeAllSuccessive(long head, List<E> list);
 }
