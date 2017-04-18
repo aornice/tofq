@@ -5,10 +5,8 @@ import xyz.aornice.tofq.CargoExtraction;
 import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.utils.ExtractionHelper;
-import xyz.aornice.tofq.utils.FileLocater;
 import xyz.aornice.tofq.utils.TopicCenter;
 import xyz.aornice.tofq.utils.impl.LocalExtractionHelper;
-import xyz.aornice.tofq.utils.impl.LocalFileLocator;
 import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
 
 import java.util.Calendar;
@@ -21,7 +19,6 @@ import java.util.List;
 public class LocalExtraction implements CargoExtraction {
     private Harbour harbour;
 
-    private FileLocater fileLocater = LocalFileLocator.newInstance();
     private TopicCenter topicCenter = LocalTopicCenter.newInstance();
     private ExtractionHelper extractionHelper = LocalExtractionHelper.newInstance();
 
@@ -72,7 +69,7 @@ public class LocalExtraction implements CargoExtraction {
         calendar.add(Calendar.DAY_OF_MONTH, -nDays);
         Date from = calendar.getTime();
 
-        List<String> files = fileLocater.dateRangedFiles(topic.getName(), from, to);
+        List<String> files = topicCenter.dateRangedFiles(topic.getName(), from, to);
 
         List<byte[]> msgs = extractionHelper.readInRange(topic.getName(), files.get(0), files.get(files.size()-1), files.size());
 

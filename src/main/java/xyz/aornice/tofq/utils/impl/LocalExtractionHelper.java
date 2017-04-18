@@ -3,7 +3,6 @@ package xyz.aornice.tofq.utils.impl;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.harbour.LocalHarbour;
 import xyz.aornice.tofq.utils.ExtractionHelper;
-import xyz.aornice.tofq.utils.FileLocater;
 import xyz.aornice.tofq.utils.TopicCenter;
 
 import java.util.ArrayList;
@@ -16,8 +15,6 @@ import java.util.List;
 public class LocalExtractionHelper implements ExtractionHelper {
 
     private static ExtractionHelper instance = new LocalExtractionHelper();
-
-    private FileLocater fileLocater = LocalFileLocator.newInstance();
 
     private TopicCenter topicCenter = LocalTopicCenter.newInstance();
 
@@ -63,7 +60,7 @@ public class LocalExtractionHelper implements ExtractionHelper {
     @Override
     public int currentMsgCount(String topic, String fileName) {
         // if not the newest file, then current Msg Count is MESSAGE_PER_FILE
-        if (CargoFileUtil.getFileSortComparator().compare(fileName, fileLocater.topicNewestFile(topic)) < 0){
+        if (CargoFileUtil.getFileSortComparator().compare(fileName, topicCenter.topicNewestFile(topic)) < 0){
             return MESSAGES_PER_FILE;
         }
 
@@ -186,7 +183,7 @@ public class LocalExtractionHelper implements ExtractionHelper {
     }
 
     private long firstIndex(String topic){
-        String firstFile = fileLocater.iThFile(topic, 0);
+        String firstFile = topicCenter.iThFile(topic, 0);
         return startIndex(topic, firstFile);
     }
 
@@ -204,6 +201,6 @@ public class LocalExtractionHelper implements ExtractionHelper {
         }
 
         int fileInd = fileIndex(topic, index);
-        return fileLocater.iThFile(topic, fileInd);
+        return topicCenter.iThFile(topic, fileInd);
     }
 }
