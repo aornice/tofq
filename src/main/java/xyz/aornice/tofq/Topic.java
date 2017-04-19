@@ -14,20 +14,24 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Topic {
     public static final int CARGO_MAX_NUM = TopicFileFormat.Offset.CAPABILITY;
 
-    private static final Harbour harbour = null;
-
     private String name;
     private AtomicLong maxId;
     private AtomicLong maxStoredId;
     private String newestFile;
     private int count;
     private long startId;
+    private Harbour harbour;
 
-
-    public Topic(String name, String newestFile) {
+    public Topic(String name, String newestFile, Harbour harbour) {
         this.name = name;
         this.newestFile = newestFile;
+        System.out.println("init topic");
+        setHarbour(harbour);
         loadInfo();
+    }
+
+    public Topic(String name, String newestFile) {
+        this(name, newestFile, null);
     }
 
     private void loadInfo() {
@@ -73,8 +77,7 @@ public class Topic {
     }
 
     public void incrementCount() {
-        count++;
-        if (count > CARGO_MAX_NUM) throw new RuntimeException("Offset exceed");
+        incrementCount(1);
     }
 
     public void incrementCount(int val) {
@@ -103,7 +106,6 @@ public class Topic {
         harbour.put(newTopicFile, startId, Header.ID_START_OFFSET_BYTE);
         harbour.put(newTopicFile, 0, Header.COUNT_OFFSET_BYTE);
 
-
         this.count = 0;
         this.startId = startId;
         this.newestFile = newTopicFile;
@@ -121,5 +123,9 @@ public class Topic {
 
     public long getStartId() {
         return startId;
+    }
+
+    public void setHarbour(Harbour harbour) {
+        this.harbour = harbour;
     }
 }

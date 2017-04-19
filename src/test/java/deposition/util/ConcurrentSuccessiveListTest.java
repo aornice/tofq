@@ -1,4 +1,4 @@
-package util;
+package deposition.util;
 
 import static org.junit.Assert.assertEquals;
 import org.junit.Before;
@@ -25,6 +25,11 @@ public class ConcurrentSuccessiveListTest {
 
     @Test
     public void put() {
+        Cargo cargoI = new Cargo();
+        cargoI.setId(4);
+        list.put(cargoI);
+        assertEquals(1, list.size());
+
         for (int i = 20; i > 5; i--) {
             Cargo cargo = new Cargo();
             cargo.setId(i);
@@ -99,7 +104,18 @@ public class ConcurrentSuccessiveListTest {
         assertEquals(36, list.successiveSize());
         List<Cargo> rst = new ArrayList<>();
         assertEquals(list.takeAllSuccessive(4, rst), true);
-
         for (int i = 4; i < 40; i++) assertEquals(rst.get(i - 4).getId(), i);
+        assertEquals(5, list.size());
+        assertEquals(0, list.successiveSize());
+        Cargo cargo2 = new Cargo();
+        cargo2.setId(40);
+        list.put(cargo2);
+        assertEquals(5, list.size());
+        assertEquals(5, list.successiveSize());
+        rst.clear();
+        assertEquals(list.takeAllSuccessive(40, rst), true);
+        for (int i = 0; i < 5; i++) assertEquals(rst.get(i).getId(), i + 40);
+        assertEquals(0, list.size());
+        assertEquals(0, list.successiveSize());
     }
 }

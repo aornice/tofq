@@ -61,7 +61,7 @@ public class ConcurrentSuccessiveList<E extends Identifiable> implements Success
         final ReentrantReadWriteLock.ReadLock readLock = this.readLock;
         readLock.lock();
         try {
-            int offset = (int) (e.getId() - head);
+            final int offset = (int) (e.getId() - head);
             while (offset >= items.length && !ensureCapability(offset + 1)) ;
             items[offset] = e;
             int size = this.size;
@@ -115,7 +115,8 @@ public class ConcurrentSuccessiveList<E extends Identifiable> implements Success
             System.arraycopy(this.items, successiveSize, this.items, 0, size - successSize);
             Arrays.fill(this.items, size - successiveSize, size, null);
             this.head += successSize;
-            readLock.lock();
+            this.successiveSize = 0;
+            this.size = size - successSize;
         } finally {
             writeLock.unlock();
         }
