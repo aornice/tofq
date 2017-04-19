@@ -1,6 +1,7 @@
 package xyz.aornice.tofq.depostion.support;
 
 import xyz.aornice.tofq.Cargo;
+import xyz.aornice.tofq.Setting;
 import xyz.aornice.tofq.depostion.DepositionListener;
 import xyz.aornice.tofq.depostion.CargoDeposition;
 import xyz.aornice.tofq.harbour.Harbour;
@@ -23,8 +24,6 @@ import xyz.aornice.tofq.utils.TopicUpdateListener;
 public class LocalDeposition implements CargoDeposition, TopicUpdateListener {
 
     private static final Logger logger = LogManager.getLogger(LocalDeposition.class);
-    private static final int BATCH_DEPOSITION_SIZE = 2;
-    private static final long DEPOSITION_INTERVAL_NANO = 5_000_000;
 
     private final ConcurrentMap<Topic, SuccessiveList<Cargo>> topicMap;
     private final BlockingQueue<Topic> batchedTopics;
@@ -38,12 +37,12 @@ public class LocalDeposition implements CargoDeposition, TopicUpdateListener {
     {
         topicMap = new ConcurrentHashMap<>();
         batchedTopics = new LinkedBlockingQueue<>();
-        cargoCache = new ArrayList<>(BATCH_DEPOSITION_SIZE * 3 / 2);
+        cargoCache = new ArrayList<>(Setting.BATCH_DEPOSITION_SIZE * 3 / 2);
         listeners = new CopyOnWriteArrayList<>();
     }
 
     private LocalDeposition() {
-        thread = new Thread(new DepositionTask());
+        thread = new Thread(new DepositionTask(), "LocalDeposition");
         thread.start();
     }
 
@@ -54,7 +53,7 @@ public class LocalDeposition implements CargoDeposition, TopicUpdateListener {
     @Override
     public void write(Cargo cargo) {
         topicMap.get(cargo.getTopic()).put(cargo);
-        if (topicMap.get(cargo.getTopic()).successiveSize() >= BATCH_DEPOSITION_SIZE) notifyDeposition(cargo.getTopic());
+        if (topicMap.get(cargo.getTopic()).successiveSize() >= Setting.BATCH_DEPOSITION_SIZE) notifyDeposition(cargo.getTopic());
     }
 
     @Override
@@ -64,7 +63,7 @@ public class LocalDeposition implements CargoDeposition, TopicUpdateListener {
 
     @Override
     public void topicUpdated(Topic newTopic) {
-        topicMap.put(newTopic, new ConcurrentSuccessiveList<>(BATCH_DEPOSITION_SIZE * 3 / 2, newTopic.getMaxStoredId() + 1));
+        topicMap.put(newTopic, new ConcurrentSuccessiveList<>(Setting.BATCH_DEPOSITION_SIZE * 3 / 2, newTopic.getMaxStoredId() + 1));
     }
 
     public void setHarbour(Harbour harbour) {
@@ -74,7 +73,7 @@ public class LocalDeposition implements CargoDeposition, TopicUpdateListener {
     public void setTopicCenter(TopicCenter topicCenter) {
         this.topicCenter = topicCenter;
         for (Topic topic: topicCenter.getTopics())
-            topicMap.put(topic, new ConcurrentSuccessiveList<>(BATCH_DEPOSITION_SIZE * 3 / 2, topic.getMaxStoredId() + 1));
+            topicMap.put(topic, new ConcurrentSuccessiveList<>(Setting.BATCH_DEPOSITION_SIZE * 3 / 2, topic.getMaxStoredId() + 1));
     }
 
     public void close() {
@@ -92,22 +91,21 @@ public class LocalDeposition implements CargoDeposition, TopicUpdateListener {
     private void deposit(Topic topic) {
         topicMap.get(topic).takeAllSuccessive(topic.getMaxStoredId() + 1, cargoCache);
 
-        String topicFile = topic.getNewestFile();
         final int size = cargoCache.size();
+        if (size == 0) return;
 
         logger.debug("MaxStoredId {} ; size {}", topic.getMaxStoredId(), cargoCache.size());
 
-        if (size == 0) return;
-        if (cargoCache.get(0).getId() == topic.getStartId() + 1) {
-            logger.debug("Cargoes is not successive to lasted deposited cargo");
-            return;
-        }
+        if (cargoCache.get(0).getId() != topic.getMaxStoredId() + 1)
+            throw new Error("Cargoes is not successive to lasted deposited cargo");
 
         logger.debug("Deposit topic {} start", topic.getName());
+
+        String topicFile = topic.getNewestFile();
         int start = 0, maxStoredId = 0;
         do {
             int fileRemains;
-            while ((fileRemains = topic.CARGO_MAX_NUM - topic.getCount()) == 0)
+            while ((fileRemains = Offset.CAPABILITY - topic.getCount()) == 0)
                 topicFile = topic.newTopicFile();
             int end = fileRemains > (size - start) ? size : start + fileRemains;
 
@@ -135,7 +133,7 @@ public class LocalDeposition implements CargoDeposition, TopicUpdateListener {
             start = end;
             harbour.flush(topicFile);
             topic.setMaxStoredId(cargoCache.get(end - 1).getId());
-            logger.debug("max id {}", topic.getMaxStoredId());
+            logger.debug("Max Stored Cargo id {}", topic.getMaxStoredId());
         } while (start != size);
         for (DepositionListener l : listeners) l.notifyDeposition(topic, maxStoredId);
         cargoCache.clear();
@@ -153,7 +151,7 @@ public class LocalDeposition implements CargoDeposition, TopicUpdateListener {
         public void run() {
             timestamp = System.nanoTime();
             for (; ; ) {
-                if (System.nanoTime() - timestamp > DEPOSITION_INTERVAL_NANO) {
+                if (System.nanoTime() - timestamp > Setting.DEPOSITION_INTERVAL_NANO) {
                     logger.debug("Time interval deposition start");
                     batchedTopics.clear();
                     for (Topic topic : topicMap.keySet()) {
@@ -165,19 +163,19 @@ public class LocalDeposition implements CargoDeposition, TopicUpdateListener {
                     logger.debug("Time interval deposition end");
                 } else {
                     try {
-                        Topic topic = batchedTopics.poll(DEPOSITION_INTERVAL_NANO - (System.nanoTime() - timestamp), TimeUnit.NANOSECONDS);
+                        Topic topic = batchedTopics.poll(Setting.DEPOSITION_INTERVAL_NANO - (System.nanoTime() - timestamp), TimeUnit.NANOSECONDS);
                         if (topic == null) continue;
                         logger.debug("Batch deposition start");
                         deposit(topic);
                         logger.debug("Batch deposition end");
                         cleaned.put(topic, true);
                     } catch (InterruptedException e) {
-                        logger.debug("Detect interrupt, close the deposition");
+                        logger.info("Detect interrupt, close the deposition");
                         return;
                     }
                 }
                 if (Thread.interrupted()) {
-                    logger.debug("Detect interrupt, close the deposition");
+                    logger.info("Detect interrupt, close the deposition");
                     return;
                 }
             }

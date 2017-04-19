@@ -12,7 +12,7 @@ import java.util.*;
  */
 public class TopicCenterMock implements TopicCenter{
 
-    Topic topic = new Topic("testtopic", Setting.basePath + "testtopic/201704180.tofq", new HarbourMock());
+    Topic topic = new Topic("testtopic", Setting.BASE_PATH + "testtopic/201704180.tofq", new HarbourMock());
     @Override
     public Set<Topic> getTopics() {
         return new HashSet<>(Arrays.asList(topic));

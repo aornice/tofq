@@ -4,15 +4,18 @@ package xyz.aornice.tofq;
  * Created by robin on 10/04/2017.
  */
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import xyz.aornice.tofq.harbour.Harbour;
 
 import static xyz.aornice.tofq.TopicFileFormat.Header;
+import static xyz.aornice.tofq.TopicFileFormat.Offset;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Topic {
-    public static final int CARGO_MAX_NUM = TopicFileFormat.Offset.CAPABILITY;
+    private static final Logger logger = LogManager.getLogger(Topic.class);
 
     private String name;
     private AtomicLong maxId;
@@ -25,7 +28,6 @@ public class Topic {
     public Topic(String name, String newestFile, Harbour harbour) {
         this.name = name;
         this.newestFile = newestFile;
-        System.out.println("init topic");
         setHarbour(harbour);
         loadInfo();
     }
@@ -82,7 +84,7 @@ public class Topic {
 
     public void incrementCount(int val) {
         count += val;
-        if (count > CARGO_MAX_NUM) throw new RuntimeException("Offset exceed");
+        if (count > Offset.CAPABILITY) throw new RuntimeException("Offset exceed");
     }
 
     public int getCount() {
@@ -95,11 +97,11 @@ public class Topic {
 
     public String newTopicFile() {
         String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
-        final String basePath  = Setting.basePath;
-        int num = 0, prefixLen = basePath.length() + getName().length() + 1;
-        if (newestFile.substring(prefixLen, prefixLen + 6).equals(date))
-            num = Integer.valueOf(newestFile.substring(prefixLen + 6, newestFile.length() - 5)) + 1;
-        final String newTopicFile = basePath + date + num;
+        final String basePath  = Setting.BASE_PATH + getName() + "/";
+        int num = 0, prefixLen = basePath.length();
+        if (newestFile.substring(prefixLen, prefixLen + 8).equals(date))
+            num = Integer.valueOf(newestFile.substring(prefixLen + 8, newestFile.length() - 5)) + 1;
+        final String newTopicFile = basePath + date + num + ".tofq";
 
         final long startId = getMaxStoredId() + 1;
         harbour.create(newTopicFile);
@@ -109,6 +111,7 @@ public class Topic {
         this.count = 0;
         this.startId = startId;
         this.newestFile = newTopicFile;
+        logger.info("New topic file {} with startId {}", newTopicFile, startId);
         return newTopicFile;
     }
 

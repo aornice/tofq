@@ -8,7 +8,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import xyz.aornice.tofq.Cargo;
+import xyz.aornice.tofq.Setting;
 import xyz.aornice.tofq.Topic;
+import xyz.aornice.tofq.TopicFileFormat;
 import xyz.aornice.tofq.depostion.support.LocalDeposition;
 
 /**
@@ -23,7 +25,8 @@ public class LocalDepositionTest {
 
     @Before
     public void setUp() {
-        logger.debug("setup");
+        Setting.BATCH_DEPOSITION_SIZE = 2;
+
         deposition = (LocalDeposition) LocalDeposition.getInstance();
         deposition.setHarbour(new HarbourMock());
         topicCenterMock = new TopicCenterMock();
@@ -33,18 +36,18 @@ public class LocalDepositionTest {
     @After
     public void tearDown() {
         deposition.close();
-        logger.debug("tearDown");
     }
 
     @Test
     public void write() throws InterruptedException {
         Topic topic = topicCenterMock.getTopic("testtopic");
-        for (int i = 0; i < 10; i++) {
+        long startId = topic.getStartId();
+        for (long i = startId; i < startId + 10; i++) {
             String msg = "msg-" + i;
             deposition.write(new Cargo(topic, topic.incrementAndGetId(), msg.getBytes()));
         }
         Thread.sleep(10);
-        String msg = "msg-" + 10;
+        String msg = "msg-" + (startId + 10);
         deposition.write(new Cargo(topic, topic.incrementAndGetId(), msg.getBytes()));
         Thread.sleep(100);
     }

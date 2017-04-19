@@ -2,7 +2,6 @@ package deposition.mock;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xyz.aornice.tofq.depostion.support.LocalDeposition;
 import xyz.aornice.tofq.harbour.Harbour;
 
 import java.nio.ByteBuffer;
@@ -19,7 +18,7 @@ public class HarbourMock implements Harbour{
 
     {
         byte[] count = ByteBuffer.allocate(4).putInt(0).array();
-        byte[] startId = ByteBuffer.allocate(8).putInt(0).array();
+        byte[] startId = ByteBuffer.allocate(8).putLong(10).array();
         int i = 0;
         for (byte b: count) file[i++] = b;
         for (byte b: startId) file[i++] = b;
@@ -80,6 +79,7 @@ public class HarbourMock implements Harbour{
 
     @Override
     public void create(String fileName) {
+        file = new byte[100000];
         logger.debug("Create topic file {}", fileName);
     }
 }
