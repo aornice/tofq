@@ -35,27 +35,28 @@ public class LocalExtraction implements CargoExtraction {
     public Cargo read(Topic topic, long id) {
         String fileName = extractionHelper.fileName(topic.getName(), id);
         // the id or topic does not exists
-        if (fileName == null){
+        if (fileName == null) {
             return null;
         }
-        long offset = extractionHelper.messageOffset(id);
+        long offsetFrom = id == 0 ? 0 : extractionHelper.messageOffset(id - 1);
+        long offsetTO = extractionHelper.messageOffset(id);
 
-        byte[] message = harbour.get(fileName, offset);
+        byte[] message = harbour.get(fileName, offsetFrom, offsetTO);
 
         return new Cargo(topic, id, message);
     }
 
     @Override
     public Cargo[] recentNCargos(Topic topic, int nCargos) {
-        long endInd = topic.getMaxStoredId()+1;
-        long startInd = endInd-nCargos;
+        long endInd = topic.getMaxStoredId() + 1;
+        long startInd = endInd - nCargos;
 
         List<byte[]> msgs = extractionHelper.read(topic.getName(), startInd, endInd);
 
         Cargo[] cargos = new Cargo[msgs.size()];
 
-        for (int i=0;i<msgs.size(); i++){
-            cargos[i] = new Cargo(topic, startInd+i, msgs.get(i));
+        for (int i = 0; i < msgs.size(); i++) {
+            cargos[i] = new Cargo(topic, startInd + i, msgs.get(i));
         }
 
         return cargos;
@@ -71,12 +72,12 @@ public class LocalExtraction implements CargoExtraction {
 
         List<String> files = topicCenter.dateRangedFiles(topic.getName(), from, to);
 
-        List<byte[]> msgs = extractionHelper.readInRange(topic.getName(), files.get(0), files.get(files.size()-1), files.size());
+        List<byte[]> msgs = extractionHelper.readInRange(topic.getName(), files.get(0), files.get(files.size() - 1), files.size());
 
         long startInd = extractionHelper.startIndex(topic.getName(), files.get(0));
 
         Cargo[] cargos = new Cargo[msgs.size()];
-        for (int i=0;i<msgs.size(); i++){
+        for (int i = 0; i < msgs.size(); i++) {
             cargos[i] = new Cargo(topic, startInd++, msgs.get(i));
         }
 
@@ -86,25 +87,25 @@ public class LocalExtraction implements CargoExtraction {
     @Override
     public Cargo[] read(Topic topic, long from, long to) {
         String topicName = topic.getName();
-        if (! topicCenter.existsTopic(topicName)){
+        if (!topicCenter.existsTopic(topicName)) {
             return new Cargo[0];
         }
 
-        long bound = Long.min(topic.getMaxStoredId()+1, to);
+        long bound = Long.min(topic.getMaxStoredId() + 1, to);
 
         // the from index is not smaller than bound
-        if (bound <= from){
+        if (bound <= from) {
             return new Cargo[0];
         }
 
-        Cargo[] cargos = new Cargo[(int)(bound-from)];
+        Cargo[] cargos = new Cargo[(int) (bound - from)];
 
         List<byte[]> messages = extractionHelper.read(topicName, from, bound);
 
         int pos = 0;
 
-        for (byte[] msg: messages){
-            cargos[pos++] = new Cargo(topic, from+pos, msg);
+        for (byte[] msg : messages) {
+            cargos[pos++] = new Cargo(topic, from + pos, msg);
         }
 
         return cargos;
