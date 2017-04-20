@@ -1,16 +1,18 @@
 package xyz.aornice.tofq.utils.impl;
 
 import xyz.aornice.tofq.Topic;
+import xyz.aornice.tofq.TopicFileFormat.*;
+import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.utils.TopicCenter;
-import xyz.aornice.tofq.utils.TopicUpdateListener;
+import xyz.aornice.tofq.utils.TopicChangeListener;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -48,6 +50,10 @@ public class LocalTopicCenter implements TopicCenter {
     private static ConcurrentHashMap<String, Topic> topicObjMap = new ConcurrentHashMap<>();
     private static Path topicFolder = Paths.get(CargoFileUtil.getTopicRoot());
 
+    private static Queue<TopicChangeListener> topicListeners = new ConcurrentLinkedQueue<>();
+
+    private Harbour harbour;
+
     private volatile static TopicCenter instance = new LocalTopicCenter();
 
     private static final int INIT_TOPIC_FILES = 128;
@@ -58,7 +64,9 @@ public class LocalTopicCenter implements TopicCenter {
         return instance;
     }
 
+
     private LocalTopicCenter(){
+
         for (String topicName : topicNames) {
             ArrayList<String> files = createFileList();
 
@@ -126,18 +134,39 @@ public class LocalTopicCenter implements TopicCenter {
     }
 
     @Override
-    public boolean register(String topic) throws SecurityException{
+    public boolean register(String topicName) throws SecurityException{
         // return false if already exists
-        if (topicNames.contains(topic)){
+        if (topicNames.contains(topicName)){
             return false;
         }
 
         // make the topic folder
-        boolean created = new File(topicFolder + CargoFileUtil.getFileSeperator() + topic).mkdir();
-        if (created) {
-            topicPathMap.put(topic, new InnerTopicInfo(topicFolder + CargoFileUtil.getFileSeperator() + topic));
+        String folderName = topicFolder + CargoFileUtil.getFileSeperator() + topicName;
+        File folder = new File(folderName);
+        if (! folder.exists() || !folder.isDirectory()) {
+            boolean folderCreated = new File(folderName).mkdir();
+            if(! folderCreated){
+                return false;
+            }
         }
-        return created;
+
+        String fileName = folderName+CargoFileUtil.getFileSeperator()+ FileName.DATE_FORMAT.format(Calendar.getInstance().getTime())+FileName.START_IND+FileName.SUFFIX;
+
+        boolean fileCreated = harbour.create(fileName);
+
+        if (! fileCreated){
+            // not delete the folder: maybe there are some files in the folder
+            return false;
+        }
+
+        topicPathMap.put(topicName, new InnerTopicInfo(topicFolder + CargoFileUtil.getFileSeperator() + topicName));
+
+        Topic createdTopic = new Topic(topicName, fileName);
+
+        topicObjMap.put(topicName, createdTopic);
+        topicAdded(createdTopic);
+
+        return true;
     }
 
     @Override
@@ -155,9 +184,13 @@ public class LocalTopicCenter implements TopicCenter {
         return topicPathMap.get(topic).getInnerID();
     }
 
-    //TODO
     @Override
-    public void addListener(TopicUpdateListener listener) {
+    public void addListener(TopicChangeListener listener) {
+        topicListeners.add(listener);
+    }
+
+    private void topicAdded(Topic newTopic){
+        topicListeners.stream().forEach(listener -> listener.topicAdded(newTopic));
     }
 
 

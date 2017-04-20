@@ -6,8 +6,6 @@ import java.util.List;
  * Created by drfish on 10/04/2017.
  */
 public interface Harbour {
-    byte[] get(String fileName, long offset);
-
     /**
      *
      * @param fileName
@@ -33,5 +31,5 @@ public interface Harbour {
 
     void flush(String fileName);
 
-    void create(String fileName);
+    boolean create(String fileName);
 }

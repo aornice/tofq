@@ -3,7 +3,7 @@ package deposition.mock;
 import xyz.aornice.tofq.Setting;
 import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.utils.TopicCenter;
-import xyz.aornice.tofq.utils.TopicUpdateListener;
+import xyz.aornice.tofq.utils.TopicChangeListener;
 
 import java.util.*;
 
@@ -49,7 +49,7 @@ public class TopicCenterMock implements TopicCenter{
     }
 
     @Override
-    public void addListener(TopicUpdateListener listener) {
+    public void addListener(TopicChangeListener listener) {
 
     }
 

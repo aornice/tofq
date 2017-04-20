@@ -11,8 +11,10 @@ public interface DepositCache {
     /**
      *
      * @param topic
-     * @param startIndex
+     * @param msgIndex
      * @return
      */
-    List<byte[]> get(Topic topic, long startIndex);
+    List<byte[]> getFileContent(Topic topic, long msgIndex);
+
+
 }

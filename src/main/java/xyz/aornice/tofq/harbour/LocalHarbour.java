@@ -18,13 +18,13 @@ public class LocalHarbour implements Harbour {
     }
 
     @Override
-    public byte[] get(String fileName, long offset) {
+    public byte[] get(String fileName, long offsetFrom, long offsetTo) {
         return new byte[0];
     }
 
     @Override
-    public byte[] get(String fileName, long offsetFrom, long offsetTo) {
-        return new byte[0];
+    public long[] getLongs(String fileName, long offset, long count) {
+        return new long[0];
     }
 
     @Override
@@ -63,7 +63,7 @@ public class LocalHarbour implements Harbour {
     }
 
     @Override
-    public void create(String fileName) {
-
+    public boolean create(String fileName) {
+        return false;
     }
 }

@@ -1,26 +1,25 @@
 package xyz.aornice.tofq.utils.impl;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
+
 import java.util.Comparator;
 import java.util.Date;
+
+import xyz.aornice.tofq.TopicFileFormat.*;
 
 /**
  * Created by shen on 2017/4/17.
  */
 public class CargoFileUtil {
     // date length in file name
-    private static final int DATE_LENGTH = 8;
-
     private static final String FILE_SEPERATOR = System.getProperty("file.separator");
 
     private static final String TOPIC_ROOT = "/Users/shen/workspace/项目/315QueueFiles/testTopicFolder";
 
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+
 
     private static final Comparator<String> fileSortComparator = (String file1, String file2) -> {
         // first compare the date
-        for (int i = 0; i < DATE_LENGTH; i++) {
+        for (int i = 0; i < FileName.DATE_LENGTH; i++) {
             if (file1.charAt(i) != file2.charAt(i)) {
                 return file1.charAt(i) - file2.charAt(i);
             }
@@ -33,7 +32,7 @@ public class CargoFileUtil {
     };
 
     private static final Comparator<String> dateComparator = (String str1, String str2) -> {
-        for (int i=0;i<DATE_LENGTH; i++){
+        for (int i=0;i<FileName.DATE_LENGTH; i++){
             if(str1.charAt(i) != str2.charAt(i)){
                 return str1.charAt(i) - str2.charAt(i);
             }
@@ -42,7 +41,7 @@ public class CargoFileUtil {
     };
 
     public static int compareToDate(String fileName, Date date){
-        String target = dateFormat.format(date);
+        String target = FileName.DATE_FORMAT.format(date);
         return dateComparator.compare(fileName, target);
     }
 

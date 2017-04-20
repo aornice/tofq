@@ -11,7 +11,7 @@ import xyz.aornice.tofq.depostion.util.ConcurrentSuccessiveList;
 import xyz.aornice.tofq.depostion.util.SuccessiveList;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.utils.TopicCenter;
-import xyz.aornice.tofq.utils.TopicUpdateListener;
+import xyz.aornice.tofq.utils.TopicChangeListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,7 +22,7 @@ import java.util.concurrent.*;
 import static xyz.aornice.tofq.TopicFileFormat.*;
 
 
-public class LocalDeposition implements CargoDeposition, TopicUpdateListener {
+public class LocalDeposition implements CargoDeposition, TopicChangeListener {
     private static final Logger logger = LoggerFactory.getLogger(LocalDeposition.class);
 
     private final ConcurrentMap<Topic, SuccessiveList<Cargo>> topicMap;
