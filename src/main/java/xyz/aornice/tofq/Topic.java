@@ -4,18 +4,19 @@ package xyz.aornice.tofq;
  * Created by robin on 10/04/2017.
  */
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.harbour.Harbour;
 
-import static xyz.aornice.tofq.TopicFileFormat.Header;
-import static xyz.aornice.tofq.TopicFileFormat.Offset;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static xyz.aornice.tofq.TopicFileFormat.Header;
+import static xyz.aornice.tofq.TopicFileFormat.Offset;
+
 public class Topic {
-    private static final Logger logger = LogManager.getLogger(Topic.class);
+    private static final Logger logger = LoggerFactory.getLogger(Topic.class);
 
     private String name;
     private AtomicLong maxId;
@@ -49,6 +50,7 @@ public class Topic {
 
     /**
      * thread-safe
+     *
      * @return the incremented max id of cargo
      */
     public long incrementAndGetId() {
@@ -61,6 +63,7 @@ public class Topic {
 
     /**
      * thread-safe
+     *
      * @param id - the max id of the cargo has been deposited
      * @return if return true, represent set success. It might be failed, cause of
      * current saved cargo max id is large than the id
@@ -97,7 +100,7 @@ public class Topic {
 
     public String newTopicFile() {
         String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
-        final String basePath  = Setting.BASE_PATH + getName() + "/";
+        final String basePath = Setting.BASE_PATH + getName() + "/";
         int num = 0, prefixLen = basePath.length();
         if (newestFile.substring(prefixLen, prefixLen + 8).equals(date))
             num = Integer.valueOf(newestFile.substring(prefixLen + 8, newestFile.length() - 5)) + 1;

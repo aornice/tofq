@@ -1,5 +1,7 @@
 package xyz.aornice.tofq.harbour;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sun.misc.Cleaner;
 import xyz.aornice.tofq.ReferenceCount;
 import xyz.aornice.tofq.ReferenceCounter;
@@ -14,6 +16,7 @@ import java.nio.ByteBuffer;
  * Created by drfish on 13/04/2017.
  */
 public class NativeBytes implements ReferenceCount {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NativeBytes.class);
     //    private static final long MEMORY_MAPPED_SIZE = 128 << 10;
     private static final Field BYTE_BUFFER_ADDRESS, BYTE_BUFFER_CAPACITY;
 
@@ -166,7 +169,7 @@ public class NativeBytes implements ReferenceCount {
     private void doRelease() {
         memory = null;
         if (refCounter.getCount() > 0) {
-            System.out.println("NativeBytes discarded without releasing");
+            LOGGER.warn("NativeBytes discarded without releasing");
         }
         if (cleaner != null) {
             cleaner.clean();

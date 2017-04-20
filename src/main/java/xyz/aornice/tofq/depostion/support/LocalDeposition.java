@@ -1,29 +1,29 @@
 package xyz.aornice.tofq.depostion.support;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.Setting;
-import xyz.aornice.tofq.depostion.DepositionListener;
+import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.depostion.CargoDeposition;
-import xyz.aornice.tofq.harbour.Harbour;
+import xyz.aornice.tofq.depostion.DepositionListener;
 import xyz.aornice.tofq.depostion.util.ConcurrentSuccessiveList;
 import xyz.aornice.tofq.depostion.util.SuccessiveList;
-import xyz.aornice.tofq.Topic;
-import static xyz.aornice.tofq.TopicFileFormat.Header;
-import static xyz.aornice.tofq.TopicFileFormat.Offset;
-import static xyz.aornice.tofq.TopicFileFormat.Data;
-
-import java.util.*;
-import java.util.concurrent.*;
-
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
+import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.utils.TopicCenter;
 import xyz.aornice.tofq.utils.TopicUpdateListener;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
+
+import static xyz.aornice.tofq.TopicFileFormat.*;
+
 
 public class LocalDeposition implements CargoDeposition, TopicUpdateListener {
-
-    private static final Logger logger = LogManager.getLogger(LocalDeposition.class);
+    private static final Logger logger = LoggerFactory.getLogger(LocalDeposition.class);
 
     private final ConcurrentMap<Topic, SuccessiveList<Cargo>> topicMap;
     private final BlockingQueue<Topic> batchedTopics;
@@ -53,7 +53,8 @@ public class LocalDeposition implements CargoDeposition, TopicUpdateListener {
     @Override
     public void write(Cargo cargo) {
         topicMap.get(cargo.getTopic()).put(cargo);
-        if (topicMap.get(cargo.getTopic()).successiveSize() >= Setting.BATCH_DEPOSITION_SIZE) notifyDeposition(cargo.getTopic());
+        if (topicMap.get(cargo.getTopic()).successiveSize() >= Setting.BATCH_DEPOSITION_SIZE)
+            notifyDeposition(cargo.getTopic());
     }
 
     @Override
@@ -72,7 +73,7 @@ public class LocalDeposition implements CargoDeposition, TopicUpdateListener {
 
     public void setTopicCenter(TopicCenter topicCenter) {
         this.topicCenter = topicCenter;
-        for (Topic topic: topicCenter.getTopics())
+        for (Topic topic : topicCenter.getTopics())
             topicMap.put(topic, new ConcurrentSuccessiveList<>(Setting.BATCH_DEPOSITION_SIZE * 3 / 2, topic.getMaxStoredId() + 1));
     }
 

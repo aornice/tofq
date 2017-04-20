@@ -1,13 +1,16 @@
 package xyz.aornice.tofq.harbour;
 
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by drfish on 12/04/2017.
  */
 
 public class LocalHarbour implements Harbour {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocalHarbour.class);
     private String location;
+
     private MappedFile mappedFile;
 
     public LocalHarbour(String location) {

@@ -2,15 +2,14 @@ package deposition;
 
 import deposition.mock.HarbourMock;
 import deposition.mock.TopicCenterMock;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.Setting;
 import xyz.aornice.tofq.Topic;
-import xyz.aornice.tofq.TopicFileFormat;
 import xyz.aornice.tofq.depostion.support.LocalDeposition;
 
 /**
@@ -21,7 +20,7 @@ public class LocalDepositionTest {
     LocalDeposition deposition;
     TopicCenterMock topicCenterMock;
 
-    private static final Logger logger = LogManager.getLogger(LocalDepositionTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(LocalDepositionTest.class);
 
     @Before
     public void setUp() {

@@ -1,7 +1,7 @@
 package deposition.mock;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.harbour.Harbour;
 
 import java.nio.ByteBuffer;
@@ -10,9 +10,8 @@ import java.util.Arrays;
 /**
  * Created by robin on 18/04/2017.
  */
-public class HarbourMock implements Harbour{
-
-    private static final Logger logger = LogManager.getLogger(HarbourMock.class);
+public class HarbourMock implements Harbour {
+    private static final Logger logger = LoggerFactory.getLogger(HarbourMock.class);
 
     private byte[] file = new byte[100000];
 
@@ -20,8 +19,8 @@ public class HarbourMock implements Harbour{
         byte[] count = ByteBuffer.allocate(4).putInt(0).array();
         byte[] startId = ByteBuffer.allocate(8).putLong(10).array();
         int i = 0;
-        for (byte b: count) file[i++] = b;
-        for (byte b: startId) file[i++] = b;
+        for (byte b : count) file[i++] = b;
+        for (byte b : startId) file[i++] = b;
 
     }
 
@@ -37,12 +36,12 @@ public class HarbourMock implements Harbour{
 
     @Override
     public long getLong(String fileName, long offset) {
-        return ByteBuffer.wrap(Arrays.copyOfRange(file, (int)offset, (int)(offset + 8))).getLong();
+        return ByteBuffer.wrap(Arrays.copyOfRange(file, (int) offset, (int) (offset + 8))).getLong();
     }
 
     @Override
     public int getInt(String fileName, long offset) {
-        return ByteBuffer.wrap(Arrays.copyOfRange(file, (int)offset, (int)(offset + 4))).getInt();
+        return ByteBuffer.wrap(Arrays.copyOfRange(file, (int) offset, (int) (offset + 4))).getInt();
     }
 
     @Override
@@ -51,7 +50,7 @@ public class HarbourMock implements Harbour{
     }
 
     private void putHelper(String fileName, byte[] data, long offset) {
-        System.arraycopy(data, 0, file, (int)offset, data.length);
+        System.arraycopy(data, 0, file, (int) offset, data.length);
     }
 
     @Override
