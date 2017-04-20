@@ -17,6 +17,8 @@ public interface Harbour {
      */
     byte[] get(String fileName, long offsetFrom, long offsetTo);
 
+    long[] getLongs(String fileName, long offset, long count);
+
     long getLong(String fileName, long offset);
 
     int getInt(String fileName, long offset);

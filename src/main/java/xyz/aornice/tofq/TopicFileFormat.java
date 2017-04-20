@@ -16,7 +16,8 @@ public class TopicFileFormat {
     }
 
     public static class Offset {
-        public static final int CAPABILITY = 10000;
+        public static final int CAPABILITY_POW=10;
+        public static final int CAPABILITY = 1<<CAPABILITY_POW;
         public static final int OFFSET_SIZE_BYTE = 8;
         public static final int SIZE_BYTE = CAPABILITY * OFFSET_SIZE_BYTE;
         public static final long OFFSET_BYTE = Header.OFFSET_BYTE + Header.SIZE_BYTE;

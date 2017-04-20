@@ -16,7 +16,7 @@ public class CargoFileUtil {
 
     private static final String TOPIC_ROOT = "/Users/shen/workspace/项目/315QueueFiles/testTopicFolder";
 
-    private static final SimpleDateFormat format1 = new SimpleDateFormat("yyyyMMdd");
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 
     private static final Comparator<String> fileSortComparator = (String file1, String file2) -> {
         // first compare the date
@@ -42,7 +42,7 @@ public class CargoFileUtil {
     };
 
     public static int compareToDate(String fileName, Date date){
-        String target = format1.format(date);
+        String target = dateFormat.format(date);
         return dateComparator.compare(fileName, target);
     }
 

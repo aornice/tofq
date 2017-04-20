@@ -1,6 +1,7 @@
 package xyz.aornice.tofq.utils.impl;
 
 import xyz.aornice.tofq.Topic;
+import xyz.aornice.tofq.TopicFileFormat;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.utils.*;
 
@@ -58,7 +59,7 @@ public class LRUDepositCache implements DepositCache {
         List<byte[]> fileContent = lruHashMap.get(hashValue);
 
         if (fileContent == null) {
-            fileContent = extractionHelper.read(topic.getName(), startIndex, startIndex+ ExtractionHelper.MESSAGES_PER_FILE);
+            fileContent = extractionHelper.read(topic.getName(), startIndex, startIndex+ TopicFileFormat.Offset.CAPABILITY);
             lruHashMap.put(hashValue, fileContent);
         }
 
