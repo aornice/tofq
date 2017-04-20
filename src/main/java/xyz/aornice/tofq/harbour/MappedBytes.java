@@ -64,4 +64,15 @@ public class MappedBytes extends NativeBytes {
         }
         return this;
     }
+
+    public MappedBytes readBits(StringBuilder sb, long start, long end) {
+        sb.setLength(0);
+        Memory memory = UnsafeMemory.INSTANCE;
+        for (long offset = start; offset < end; offset++) {
+            int c = memory.readByte(address + offset);
+            sb.append((char) c);
+        }
+        return this;
+    }
+
 }

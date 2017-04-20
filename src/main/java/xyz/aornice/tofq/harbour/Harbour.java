@@ -1,16 +1,13 @@
 package xyz.aornice.tofq.harbour;
 
-import java.util.List;
-
 /**
  * Created by drfish on 10/04/2017.
  */
 public interface Harbour {
     /**
-     *
      * @param fileName
-     * @param offsetFrom  start offset in byte, included
-     * @param offsetTo    end offset in byte, not included
+     * @param offsetFrom start offset in byte, included
+     * @param offsetTo   end offset in byte, not included
      * @return
      */
     byte[] get(String fileName, long offsetFrom, long offsetTo);
@@ -20,8 +17,6 @@ public interface Harbour {
     long getLong(String fileName, long offset);
 
     int getInt(String fileName, long offset);
-
-    void put(String fileName, byte[] data);
 
     void put(String fileName, byte[] data, long offset);
 

@@ -2,6 +2,7 @@ package deposition.mock;
 
 import xyz.aornice.tofq.Setting;
 import xyz.aornice.tofq.Topic;
+import xyz.aornice.tofq.harbour.LocalHarbour;
 import xyz.aornice.tofq.utils.TopicCenter;
 import xyz.aornice.tofq.utils.TopicChangeListener;
 
@@ -10,9 +11,10 @@ import java.util.*;
 /**
  * Created by robin on 18/04/2017.
  */
-public class TopicCenterMock implements TopicCenter{
+public class TopicCenterMock implements TopicCenter {
 
-    Topic topic = new Topic("testtopic", Setting.BASE_PATH + "testtopic/201704180.tofq", new HarbourMock());
+    Topic topic = new Topic("testtopic", Setting.BASE_PATH + "testtopic/201704180.tofq", new LocalHarbour());
+
     @Override
     public Set<Topic> getTopics() {
         return new HashSet<>(Arrays.asList(topic));

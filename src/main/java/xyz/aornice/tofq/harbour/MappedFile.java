@@ -78,7 +78,8 @@ public class MappedFile implements ReferenceCount {
             }
 
             long mappedSize = blockSize + overlapSize;
-            long address = OS.map(fileChannel, FileChannel.MapMode.READ_WRITE, blocks * blockSize, mappedSize);
+//            long address = OS.map(fileChannel, FileChannel.MapMode.READ_WRITE, blocks * blockSize, mappedSize);
+            long address = OS.map(fileChannel, FileChannel.MapMode.READ_WRITE, 0, mappedSize);
             MappedBytes mb = new MappedBytes(this, blocks * blockSize, address, mappedSize);
             cache.set(blocks, new WeakReference<>(mb));
             return mb;
