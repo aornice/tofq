@@ -1,6 +1,5 @@
 package deposition;
 
-import deposition.mock.HarbourMock;
 import deposition.mock.TopicCenterMock;
 import org.junit.After;
 import org.junit.Before;
@@ -11,6 +10,7 @@ import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.Setting;
 import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.depostion.support.LocalDeposition;
+import xyz.aornice.tofq.harbour.LocalHarbour;
 
 /**
  * Created by robin on 18/04/2017.
@@ -27,7 +27,7 @@ public class LocalDepositionTest {
         Setting.BATCH_DEPOSITION_SIZE = 2;
 
         deposition = (LocalDeposition) LocalDeposition.getInstance();
-        deposition.setHarbour(new HarbourMock());
+        deposition.setHarbour(new LocalHarbour());
         topicCenterMock = new TopicCenterMock();
         deposition.setTopicCenter(topicCenterMock);
     }

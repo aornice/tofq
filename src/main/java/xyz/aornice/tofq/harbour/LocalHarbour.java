@@ -17,6 +17,9 @@ public class LocalHarbour implements Harbour {
     private static final int BYTE_BITS = 8;
     private String location;
 
+    public LocalHarbour() {
+    }
+
     public LocalHarbour(String location) {
         this.location = location;
     }
