@@ -4,6 +4,7 @@ import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.harbour.LocalHarbour;
 import xyz.aornice.tofq.utils.ExtractionHelper;
 import xyz.aornice.tofq.utils.TopicCenter;
+import xyz.aornice.tofq.TopicFileFormat.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,21 +21,6 @@ public class LocalExtractionHelper implements ExtractionHelper {
 
     private Harbour harbour = new LocalHarbour("path");
 
-    private static final int MSG_COUNT_OFFSET = 0;
-    private static final int INT_BYTE_NUM = 4;
-    private static final int START_INDEX_OFFSET = 4;
-    private static final int LONG_BYTE_NUM = 8;
-    private static final int LONG_BYTE_SHIFT = (LONG_BYTE_NUM>>1)-1;
-
-    // header size in byte
-    private static final int HEADER_SIZE = 64;
-
-    // offset is long, which takes 8 bytes
-    private static final int OFFSET_LENGTH = 8;
-
-    private static final int MSG_BLOCK_HEADER = HEADER_SIZE+OFFSET_LENGTH<< MESSAGES_POW;
-
-
     public static ExtractionHelper newInstance(){
         return instance;
     }
@@ -45,14 +31,9 @@ public class LocalExtractionHelper implements ExtractionHelper {
 
     @Override
     public long[] msgByteOffsets(String topic, String fileName) {
-        byte[] bytes = harbour.get(CargoFileUtil.filePath(topicCenter.getPath(topic), fileName), HEADER_SIZE, MSG_BLOCK_HEADER);
         int msgCount = currentMsgCount(topic, fileName);
 
-        long[] byteOffsets = new long[msgCount];
-
-        for (int i=0;i<msgCount;i++){
-            byteOffsets[i] = byte2long(bytes, i<<LONG_BYTE_SHIFT);
-        }
+        long[] byteOffsets = harbour.getLongs(CargoFileUtil.filePath(topicCenter.getPath(topic), fileName), Header.SIZE_BYTE, msgCount);
 
         return byteOffsets;
     }
@@ -61,31 +42,11 @@ public class LocalExtractionHelper implements ExtractionHelper {
     public int currentMsgCount(String topic, String fileName) {
         // if not the newest file, then current Msg Count is MESSAGE_PER_FILE
         if (CargoFileUtil.getFileSortComparator().compare(fileName, topicCenter.topicNewestFile(topic)) < 0){
-            return MESSAGES_PER_FILE;
+            return Offset.CAPABILITY;
         }
 
-        // int value takes 4 bytes
-        byte[] bytes = harbour.get(CargoFileUtil.filePath(topicCenter.getPath(topic), fileName), MSG_COUNT_OFFSET, MSG_COUNT_OFFSET+INT_BYTE_NUM);
-        int count = byte2int(bytes);
+        int count = harbour.getInt(CargoFileUtil.filePath(topicCenter.getPath(topic), fileName), Header.COUNT_OFFSET_BYTE);
         return count;
-    }
-
-    private int byte2int(byte[] bytes){
-        int value= 0;
-        for (int i = 0; i < INT_BYTE_NUM; i++) {
-            int shift= (INT_BYTE_NUM - 1 - i) << 3;
-            value +=(bytes[i] & 0x000000FF) << shift;
-        }
-        return value;
-    }
-
-    private long byte2long(byte[] bytes, int start){
-        long value = 0;
-        for(int i=0; i<LONG_BYTE_NUM; i++){
-            int shift = (LONG_BYTE_NUM -1 - i) << 3;
-            value += (bytes[i] & 0x000000FF) << shift;
-        }
-        return value;
     }
 
     /**
@@ -137,16 +98,14 @@ public class LocalExtractionHelper implements ExtractionHelper {
 
     @Override
     public long startIndex(String topic, String fileName) {
-        byte[] bytes = harbour.get(CargoFileUtil.filePath(topicCenter.getPath(topic), fileName), START_INDEX_OFFSET, LONG_BYTE_NUM);
-        return byte2long(bytes, 0);
+        long startInd = harbour.getLong(CargoFileUtil.filePath(topicCenter.getPath(topic), fileName), Header.ID_START_OFFSET_BYTE);
+        return startInd;
     }
 
     @Override
     public List<byte[]> readInRange(String topic, String fromFile, String toFile, int fileCount) {
-        List<byte[]> results = new ArrayList<>(fileCount << MESSAGES_POW);
-
         long fromInd = startIndex(topic, fromFile);
-        long toInd = startIndex(topic, toFile)+MESSAGES_PER_FILE;
+        long toInd = startIndex(topic, toFile)+Offset.CAPABILITY;
 
         return read(topic, fromInd, toInd);
     }
@@ -160,11 +119,11 @@ public class LocalExtractionHelper implements ExtractionHelper {
      */
     @Override
     public int messageOffset(long index) {
-        return (int) (index & (MESSAGES_PER_FILE - 1));
+        return (int) (index & (Offset.CAPABILITY - 1));
     }
 
     private long nextBound(String topic, long index) {
-        return (fileIndex(topic,index) + 1) << MESSAGES_POW;
+        return (fileIndex(topic,index) + 1) << Offset.CAPABILITY_POW;
     }
 
     /**
@@ -179,7 +138,7 @@ public class LocalExtractionHelper implements ExtractionHelper {
      * @return the file index
      */
     private int fileIndex(String topic, long index) {
-        return (int) ((index-firstIndex(topic)) >> MESSAGES_POW);
+        return (int) ((index-firstIndex(topic)) >> Offset.CAPABILITY_POW);
     }
 
     private long firstIndex(String topic){

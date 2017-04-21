@@ -24,6 +24,11 @@ public class LocalHarbour implements Harbour {
         this.location = location;
     }
 
+    @Override
+    public long[] getLongs(String fileName, long offset, long count) {
+        return new long[0];
+    }
+
     private MappedBytes getMappedBytes(String fileName) {
         return getMappedBytes(fileName, DEFAULT_FILE_SIZE);
     }
@@ -91,7 +96,7 @@ public class LocalHarbour implements Harbour {
     }
 
     @Override
-    public void create(String fileName) {
-
+    public boolean create(String fileName) {
+        return false;
     }
 }

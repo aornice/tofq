@@ -1,7 +1,7 @@
 package xyz.aornice.tofq.utils.impl;
 
 import xyz.aornice.tofq.Topic;
-import xyz.aornice.tofq.harbour.Harbour;
+import xyz.aornice.tofq.TopicFileFormat.*;
 import xyz.aornice.tofq.utils.*;
 
 import java.util.LinkedHashMap;
@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Created by shen on 2017/4/14.
  */
-public class LRUDepositCache implements DepositCache {
+public class LocalDepositCache implements DepositCache {
 
     private TopicCenter topicCenter = LocalTopicCenter.newInstance();
 
@@ -24,13 +24,13 @@ public class LRUDepositCache implements DepositCache {
 
     private LRUHashMap lruHashMap;
 
-    private static volatile DepositCache instance = new LRUDepositCache(INIT_CAPACITY);
+    private static volatile DepositCache instance = new LocalDepositCache(INIT_CAPACITY);
 
     public static DepositCache newInstance(){
         return instance;
     }
 
-    private LRUDepositCache(int initCapacity){
+    private LocalDepositCache(int initCapacity){
         this.lruHashMap = new LRUHashMap(initCapacity);
     }
 
@@ -51,14 +51,14 @@ public class LRUDepositCache implements DepositCache {
 
 
     @Override
-    public List<byte[]> get(Topic topic, long startIndex) {
+    public List<byte[]> getFileContent(Topic topic, long msgIndex) {
         long topicID = topicCenter.topicInnerID(topic.getName());
-        long hashValue = startIndex<<SHIFT_COUNT+topicID;
+        long hashValue = msgIndex <<SHIFT_COUNT+topicID;
 
         List<byte[]> fileContent = lruHashMap.get(hashValue);
 
         if (fileContent == null) {
-            fileContent = extractionHelper.read(topic.getName(), startIndex, startIndex+ ExtractionHelper.MESSAGES_PER_FILE);
+            fileContent = extractionHelper.read(topic.getName(), msgIndex, msgIndex + Offset.CAPABILITY);
             lruHashMap.put(hashValue, fileContent);
         }
 

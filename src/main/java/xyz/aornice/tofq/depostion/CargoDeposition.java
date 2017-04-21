@@ -11,7 +11,7 @@ public interface CargoDeposition {
 
     /**
      * The method will return immediately without guarantee the cargo has been deposited.
-     * The deposition success information could get by adding listener to
+     * The deposition success information could getFileContent by adding listener to
      * {@link CargoDeposition#addDepositionListener}
      * @param cargo - the {@link Cargo} need to be deposited
      */

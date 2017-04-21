@@ -12,6 +12,8 @@ public interface Harbour {
      */
     byte[] get(String fileName, long offsetFrom, long offsetTo);
 
+    long[] getLongs(String fileName, long offset, long count);
+
     long getLong(String fileName, long offset);
 
     int getInt(String fileName, long offset);
@@ -24,5 +26,5 @@ public interface Harbour {
 
     void flush(String fileName);
 
-    void create(String fileName);
+    boolean create(String fileName);
 }

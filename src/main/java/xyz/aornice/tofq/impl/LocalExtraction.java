@@ -38,10 +38,18 @@ public class LocalExtraction implements CargoExtraction {
         if (fileName == null) {
             return null;
         }
-        long offsetFrom = id == 0 ? 0 : extractionHelper.messageOffset(id - 1);
-        long offsetTO = extractionHelper.messageOffset(id);
 
-        byte[] message = harbour.get(fileName, offsetFrom, offsetTO);
+        int msgOffset = extractionHelper.messageOffset(id);
+        // TODO should use cache later
+        long[] offsets = extractionHelper.msgByteOffsets(topic.getName(), fileName);
+
+        long byteOffsetTo = offsets[msgOffset];
+        long byteOffsetFrom = 0;
+
+        if (msgOffset != 0){
+            byteOffsetFrom = offsets[msgOffset-1];
+        }
+        byte[] message = harbour.get(fileName, byteOffsetFrom, byteOffsetTo);
 
         return new Cargo(topic, id, message);
     }

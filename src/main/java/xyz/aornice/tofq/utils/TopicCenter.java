@@ -2,8 +2,6 @@ package xyz.aornice.tofq.utils;
 
 import xyz.aornice.tofq.Topic;
 
-import java.io.File;
-import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +25,7 @@ public interface TopicCenter {
 
     int topicInnerID(String topicName);
 
-    void addListener(TopicUpdateListener listener);
+    void addListener(TopicChangeListener listener);
 
     /**
      * Should register the new file when file is created
