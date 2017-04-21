@@ -7,14 +7,14 @@ import java.util.List;
 /**
  * Created by shen on 2017/4/14.
  */
-public interface DepositCache {
+public interface DepositCache<T> {
     /**
      *
      * @param topic
      * @param msgIndex
      * @return
      */
-    List<byte[]> getFileContent(Topic topic, long msgIndex);
+    List<T> getFileContent(Topic topic, long msgIndex);
 
 
 }

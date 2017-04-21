@@ -1,14 +1,13 @@
 package xyz.aornice.tofq.utils.impl;
 
+import xyz.aornice.tofq.TopicFileFormat;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.harbour.LocalHarbour;
 import xyz.aornice.tofq.utils.ExtractionHelper;
 import xyz.aornice.tofq.utils.TopicCenter;
 import xyz.aornice.tofq.TopicFileFormat.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by shen on 2017/4/16.
@@ -19,21 +18,24 @@ public class LocalExtractionHelper implements ExtractionHelper {
 
     private TopicCenter topicCenter = LocalTopicCenter.newInstance();
 
-    private Harbour harbour = new LocalHarbour("path");
+    private Map<String, Long> startIndexMap;
+
+    private Harbour harbour;
 
     public static ExtractionHelper newInstance(){
         return instance;
     }
 
     private LocalExtractionHelper(){
-
+        startIndexMap = new HashMap<>(topicCenter.getTopicNames().size());
+        harbour = new LocalHarbour("path");
     }
 
     @Override
-    public long[] msgByteOffsets(String topic, String fileName) {
+    public List<Long> msgByteOffsets(String topic, String fileName) {
         int msgCount = currentMsgCount(topic, fileName);
 
-        long[] byteOffsets = harbour.getLongs(CargoFileUtil.filePath(topicCenter.getPath(topic), fileName), Header.SIZE_BYTE, msgCount);
+        List<Long> byteOffsets = harbour.getLongs(CargoFileUtil.filePath(topicCenter.getPath(topic), fileName), Header.SIZE_BYTE, msgCount);
 
         return byteOffsets;
     }
@@ -66,7 +68,7 @@ public class LocalExtractionHelper implements ExtractionHelper {
         do {
             nextBound = nextBound(topic, current);
             String fileName = fileName(topic, current);
-            long[] offsets = msgByteOffsets(topic, fileName);
+            List<Long> offsets = msgByteOffsets(topic, fileName);
 
             if (nextBound > msgToInd){
                 nextBound = msgToInd+1;
@@ -76,17 +78,17 @@ public class LocalExtractionHelper implements ExtractionHelper {
 
             long startOffset = 0;
             if (startInd != 0){
-                startOffset = offsets[startInd-1];
+                startOffset = offsets.get(startInd-1);
             }
-            long endOffset = offsets[endInd];
+            long endOffset = offsets.get(endInd);
 
             byte[] rawMsgs = harbour.get(CargoFileUtil.filePath(topicCenter.getPath(topic), fileName), startOffset, endOffset);
 
             for (int i=startInd; i<endInd; i++){
                 // TODO msg may be bigger than INT.MAX
                 // TODO use memory address later
-                int from = i==startInd? 0: (int)(offsets[startInd-1]-startOffset);
-                int to = (int)(offsets[startInd]-startOffset);
+                int from = i==startInd? 0: (int)(offsets.get(startInd-1)-startOffset);
+                int to = (int)(offsets.get(startInd)-startOffset);
                 msgs.add(Arrays.copyOfRange(rawMsgs, from, to));
             }
 
@@ -122,6 +124,11 @@ public class LocalExtractionHelper implements ExtractionHelper {
         return (int) (index & (Offset.CAPABILITY - 1));
     }
 
+    @Override
+    public long startIndex(long msgIndex) {
+        return (msgIndex>> Offset.CAPABILITY_POW)<<Offset.CAPABILITY_POW;
+    }
+
     private long nextBound(String topic, long index) {
         return (fileIndex(topic,index) + 1) << Offset.CAPABILITY_POW;
     }
@@ -138,12 +145,17 @@ public class LocalExtractionHelper implements ExtractionHelper {
      * @return the file index
      */
     private int fileIndex(String topic, long index) {
-        return (int) ((index-firstIndex(topic)) >> Offset.CAPABILITY_POW);
+        return (int) ((index- startIndex(topic)) >> Offset.CAPABILITY_POW);
     }
 
-    private long firstIndex(String topic){
-        String firstFile = topicCenter.iThFile(topic, 0);
-        return startIndex(topic, firstFile);
+    private long startIndex(String topic){
+        Long startIndex = startIndexMap.get(topic);
+        if (startIndex == null){
+            String firstFile = topicCenter.iThFile(topic, 0);
+            startIndex = startIndex(topic, firstFile);
+        }
+
+        return startIndex;
     }
 
     /**

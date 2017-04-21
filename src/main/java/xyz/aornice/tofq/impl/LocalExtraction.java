@@ -41,13 +41,13 @@ public class LocalExtraction implements CargoExtraction {
 
         int msgOffset = extractionHelper.messageOffset(id);
         // TODO should use cache later
-        long[] offsets = extractionHelper.msgByteOffsets(topic.getName(), fileName);
+        List<Long> offsets = extractionHelper.msgByteOffsets(topic.getName(), fileName);
 
-        long byteOffsetTo = offsets[msgOffset];
+        long byteOffsetTo = offsets.get(msgOffset);
         long byteOffsetFrom = 0;
 
         if (msgOffset != 0){
-            byteOffsetFrom = offsets[msgOffset-1];
+            byteOffsetFrom = offsets.get(msgOffset-1);
         }
         byte[] message = harbour.get(fileName, byteOffsetFrom, byteOffsetTo);
 

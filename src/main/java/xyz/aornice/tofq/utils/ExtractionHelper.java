@@ -23,7 +23,9 @@ public interface ExtractionHelper {
      */
     int messageOffset(long index);
 
-    long[] msgByteOffsets(String topic, String fileName);
+    long startIndex(long msgIndex);
+
+    List<Long> msgByteOffsets(String topic, String fileName);
 
     int currentMsgCount(String topic, String fileName);
 
