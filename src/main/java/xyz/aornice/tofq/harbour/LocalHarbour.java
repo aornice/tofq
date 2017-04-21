@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 /**
  * Created by drfish on 12/04/2017.
@@ -24,10 +25,6 @@ public class LocalHarbour implements Harbour {
         this.location = location;
     }
 
-    @Override
-    public long[] getLongs(String fileName, long offset, long count) {
-        return new long[0];
-    }
 
     private MappedBytes getMappedBytes(String fileName) {
         return getMappedBytes(fileName, DEFAULT_FILE_SIZE);
@@ -55,6 +52,11 @@ public class LocalHarbour implements Harbour {
             bytes[i] = mappedBytes.readByte(offsetFrom + i * BYTE_BITS);
         }
         return bytes;
+    }
+
+    @Override
+    public List<Long> getLongs(String fileName, long offset, long count) {
+        return null;
     }
 
     @Override

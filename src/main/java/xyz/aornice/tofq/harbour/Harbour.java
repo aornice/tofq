@@ -1,5 +1,7 @@
 package xyz.aornice.tofq.harbour;
 
+import java.util.List;
+
 /**
  * Created by drfish on 10/04/2017.
  */
@@ -12,7 +14,7 @@ public interface Harbour {
      */
     byte[] get(String fileName, long offsetFrom, long offsetTo);
 
-    long[] getLongs(String fileName, long offset, long count);
+    List<Long> getLongs(String fileName, long offset, long count);
 
     long getLong(String fileName, long offset);
 
