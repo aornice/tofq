@@ -5,7 +5,7 @@ package xyz.aornice.tofq;
  */
 public class Setting {
 
-    public static final String DEFAULT_BASE_PATH = "/var/tofq/";
+    public static final String DEFAULT_BASE_PATH = "";
     public static final int DEFAULT_BATCH_DEPOSITION_SIZE = 300;
     public static final long DEFAULT_DEPOSITION_INTERVAL_NANO = 5_000_000;
 

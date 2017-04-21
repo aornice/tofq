@@ -34,7 +34,7 @@ public class LocalDepositionTest {
 
     @After
     public void tearDown() {
-        deposition.close();
+//        deposition.close();
     }
 
     @Test

@@ -4,6 +4,7 @@ import xyz.aornice.tofq.ReferenceCount;
 import xyz.aornice.tofq.ReferenceCounter;
 import xyz.aornice.tofq.harbour.util.OS;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -39,8 +40,18 @@ public class MappedFile implements ReferenceCount {
     }
 
     public static MappedFile getMappedFile(String fileName, long blockSize, long overlapSize) throws FileNotFoundException {
+        checkDir(fileName);
         RandomAccessFile rFile = new RandomAccessFile(fileName, "rw");
         return new MappedFile(rFile, blockSize, overlapSize, DEFAULT_CAPACITY);
+    }
+
+    private static void checkDir(String filename) {
+        int index = filename.lastIndexOf(File.separator);
+        if (index != -1) {
+            File file = new File(filename.substring(0, index));
+            if (!file.exists())
+                file.mkdirs();
+        }
     }
 
     public static MappedFile getMappedFile(String fileName, long blockSize) throws FileNotFoundException {
@@ -77,10 +88,10 @@ public class MappedFile implements ReferenceCount {
                 }
             }
 
-            long mappedSize = blockSize + overlapSize;
+//            long mappedSize = blockSize + overlapSize;
 //            long address = OS.map(fileChannel, FileChannel.MapMode.READ_WRITE, blocks * blockSize, mappedSize);
-            long address = OS.map(fileChannel, FileChannel.MapMode.READ_WRITE, 0, mappedSize);
-            MappedBytes mb = new MappedBytes(this, blocks * blockSize, address, mappedSize);
+            long address = OS.map(fileChannel, FileChannel.MapMode.READ_WRITE, 0, position);
+            MappedBytes mb = new MappedBytes(this, blocks * blockSize, address, position);
             cache.set(blocks, new WeakReference<>(mb));
             return mb;
         }
