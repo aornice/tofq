@@ -62,10 +62,10 @@ public class LocalDeposition implements CargoDeposition, TopicChangeListener {
         listeners.add(listener);
     }
 
-    @Override
-    public void topicUpdated(Topic newTopic) {
-        topicMap.put(newTopic, new ConcurrentSuccessiveList<>(Setting.BATCH_DEPOSITION_SIZE * 3 / 2, newTopic.getMaxStoredId() + 1));
-    }
+//    @Override
+//    public void topicUpdated(Topic newTopic) {
+//        topicMap.put(newTopic, new ConcurrentSuccessiveList<>(Setting.BATCH_DEPOSITION_SIZE * 3 / 2, newTopic.getMaxStoredId() + 1));
+//    }
 
     public void setHarbour(Harbour harbour) {
         this.harbour = harbour;
@@ -139,6 +139,11 @@ public class LocalDeposition implements CargoDeposition, TopicChangeListener {
         for (DepositionListener l : listeners) l.notifyDeposition(topic, maxStoredId);
         cargoCache.clear();
         logger.debug("Deposit topic {} end", topic.getName());
+    }
+
+    @Override
+    public void topicAdded(Topic newTopic) {
+        //TODO listener: topicAdded
     }
 
 
