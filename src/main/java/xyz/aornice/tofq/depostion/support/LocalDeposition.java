@@ -1,7 +1,7 @@
 package xyz.aornice.tofq.depostion.support;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.Setting;
 import xyz.aornice.tofq.Topic;
@@ -26,7 +26,7 @@ import java.util.*;
 
 
 public class LocalDeposition implements CargoDeposition, TopicChangeListener {
-    private static final Logger logger = LoggerFactory.getLogger(LocalDeposition.class);
+    private static final Logger logger = LogManager.getLogger(LocalDeposition.class);
 
     private final ConcurrentMap<Topic, SuccessiveList<Cargo>> topicMap;
     private final Set<Topic> processingTopics;

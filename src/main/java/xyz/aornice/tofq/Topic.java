@@ -103,8 +103,8 @@ public class Topic {
         final String basePath = Setting.BASE_PATH + getName() + "/";
         int num = 0, prefixLen = basePath.length();
         if (newestFile.substring(prefixLen, prefixLen + 8).equals(date))
-            num = Integer.valueOf(newestFile.substring(prefixLen + 8, newestFile.length() - 5)) + 1;
-        final String newTopicFile = basePath + date + num + ".tofq";
+            num = Integer.valueOf(newestFile.substring(prefixLen + 8, newestFile.length() - 4)) + 1;
+        final String newTopicFile = basePath + date + num + ".tof";
 
         final long startId = getMaxStoredId() + 1;
         harbour.create(newTopicFile);
