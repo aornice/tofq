@@ -21,14 +21,18 @@ import java.util.concurrent.*;
 
 import static xyz.aornice.tofq.TopicFileFormat.*;
 
+import java.util.*;
+
+
 
 public class LocalDeposition implements CargoDeposition, TopicChangeListener {
     private static final Logger logger = LoggerFactory.getLogger(LocalDeposition.class);
 
     private final ConcurrentMap<Topic, SuccessiveList<Cargo>> topicMap;
+    private final Set<Topic> processingTopics;
     private final BlockingQueue<Topic> batchedTopics;
     private final List<Cargo> cargoCache;
-    private final List<DepositionListener> listeners;
+    private final Set<DepositionListener> listeners;
     private final Thread thread;
 
     private Harbour harbour = null;
@@ -36,9 +40,10 @@ public class LocalDeposition implements CargoDeposition, TopicChangeListener {
 
     {
         topicMap = new ConcurrentHashMap<>();
+        processingTopics = new CopyOnWriteArraySet<>();
         batchedTopics = new LinkedBlockingQueue<>();
         cargoCache = new ArrayList<>(Setting.BATCH_DEPOSITION_SIZE * 3 / 2);
-        listeners = new CopyOnWriteArrayList<>();
+        listeners = new CopyOnWriteArraySet<>();
     }
 
     private LocalDeposition() {
@@ -52,8 +57,9 @@ public class LocalDeposition implements CargoDeposition, TopicChangeListener {
 
     @Override
     public void write(Cargo cargo) {
-        topicMap.get(cargo.getTopic()).put(cargo);
-        if (topicMap.get(cargo.getTopic()).successiveSize() >= Setting.BATCH_DEPOSITION_SIZE)
+        SuccessiveList<Cargo> cargoes = topicMap.get(cargo.getTopic());
+        cargoes.put(cargo);
+        if (!processingTopics.contains(cargo.getTopic()) && cargoes.successiveSize() >= Setting.BATCH_DEPOSITION_SIZE)
             notifyDeposition(cargo.getTopic());
     }
 
@@ -61,11 +67,6 @@ public class LocalDeposition implements CargoDeposition, TopicChangeListener {
     public void addDepositionListener(DepositionListener listener) {
         listeners.add(listener);
     }
-
-//    @Override
-//    public void topicUpdated(Topic newTopic) {
-//        topicMap.put(newTopic, new ConcurrentSuccessiveList<>(Setting.BATCH_DEPOSITION_SIZE * 3 / 2, newTopic.getMaxStoredId() + 1));
-//    }
 
     public void setHarbour(Harbour harbour) {
         this.harbour = harbour;
@@ -77,11 +78,21 @@ public class LocalDeposition implements CargoDeposition, TopicChangeListener {
             topicMap.put(topic, new ConcurrentSuccessiveList<>(Setting.BATCH_DEPOSITION_SIZE * 3 / 2, topic.getMaxStoredId() + 1));
     }
 
+    @Override
+    public void topicAdded(Topic newTopic) {
+        topicMap.put(newTopic, new ConcurrentSuccessiveList<>(Setting.BATCH_DEPOSITION_SIZE * 3 / 2, newTopic.getMaxStoredId() + 1));
+    }
+
     public void close() {
         thread.interrupt();
     }
 
     private void notifyDeposition(Topic topic) {
+        if (processingTopics.contains(topic)) return;
+        synchronized (processingTopics) {
+            if (processingTopics.contains(topic)) return;
+            processingTopics.add(topic);
+        }
         try {
             batchedTopics.put(topic);
         } catch (InterruptedException e) {
@@ -141,12 +152,6 @@ public class LocalDeposition implements CargoDeposition, TopicChangeListener {
         logger.debug("Deposit topic {} end", topic.getName());
     }
 
-    @Override
-    public void topicAdded(Topic newTopic) {
-        //TODO listener: topicAdded
-    }
-
-
     private class DepositionTask implements Runnable {
 
         private final Map<Topic, Boolean> cleaned = new HashMap<>();
@@ -173,6 +178,7 @@ public class LocalDeposition implements CargoDeposition, TopicChangeListener {
                         if (topic == null) continue;
                         logger.debug("Batch deposition start");
                         deposit(topic);
+                        processingTopics.remove(topic);
                         logger.debug("Batch deposition end");
                         cleaned.put(topic, true);
                     } catch (InterruptedException e) {
