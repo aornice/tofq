@@ -3,6 +3,8 @@ package xyz.aornice.tofq.util;
 import java.lang.reflect.Field;
 
 /**
+ * Low level memory access
+ * <p>
  * Created by drfish on 10/04/2017.
  */
 public interface Memory {
