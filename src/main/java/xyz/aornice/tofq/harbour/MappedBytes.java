@@ -1,10 +1,10 @@
 package xyz.aornice.tofq.harbour;
 
 import xyz.aornice.tofq.ReferenceCount;
-import xyz.aornice.tofq.harbour.util.Memory;
-import xyz.aornice.tofq.harbour.util.OS;
-import xyz.aornice.tofq.harbour.util.StringUtils;
-import xyz.aornice.tofq.harbour.util.UnsafeMemory;
+import xyz.aornice.tofq.util.Memory;
+import xyz.aornice.tofq.util.OS;
+import xyz.aornice.tofq.util.StringUtils;
+import xyz.aornice.tofq.util.UnsafeMemory;
 
 /**
  * Created by drfish on 12/04/2017.
