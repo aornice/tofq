@@ -28,10 +28,8 @@ public class BasicQueueTest {
         topicCenter = LocalTopicCenter.newInstance();
         extraction = new LocalExtraction();
         deposition = (LocalDeposition) LocalDeposition.getInstance();
-        deposition.setHarbour(new LocalHarbour());
         registerTopics();
         generateCargoes();
-        deposition.setTopicCenter(topicCenter);
     }
 
     private void registerTopics() {

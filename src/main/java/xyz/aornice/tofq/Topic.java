@@ -14,7 +14,6 @@ import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static xyz.aornice.tofq.TopicFileFormat.Header;
-import static xyz.aornice.tofq.TopicFileFormat.Offset;
 
 public class Topic {
     private static final Logger logger = LoggerFactory.getLogger(Topic.class);
@@ -23,7 +22,6 @@ public class Topic {
     private AtomicLong maxId;
     private AtomicLong maxStoredId;
     private String newestFile;
-    private int count;
     private long startId;
     private Harbour harbour;
 
@@ -43,14 +41,13 @@ public class Topic {
 
     private void initInfo() {
         startId = 0L;
-        count = 0;
         maxId = new AtomicLong(0);
         maxStoredId = new AtomicLong(0);
     }
 
     private void loadInfo() {
         startId = harbour.getLong(newestFile, Header.ID_START_OFFSET_BYTE);
-        count = harbour.getInt(newestFile, Header.COUNT_OFFSET_BYTE);
+        final int count = harbour.getInt(newestFile, Header.COUNT_OFFSET_BYTE);
         maxId = new AtomicLong(startId + count - 1);
         maxStoredId = new AtomicLong(startId + count - 1);
     }
@@ -92,21 +89,8 @@ public class Topic {
         return newestFile;
     }
 
-    public void incrementCount() {
-        incrementCount(1);
-    }
-
-    public void incrementCount(int val) {
-        count += val;
-        if (count > Offset.CAPABILITY) throw new RuntimeException("Offset exceed");
-    }
-
     public int getCount() {
-        return count;
-    }
-
-    public int getCountAndIncrement() {
-        return count++;
+        return (int) (maxStoredId.get() - startId) + 1;
     }
 
     public String newTopicFile() {
@@ -122,7 +106,6 @@ public class Topic {
         harbour.put(newTopicFile, startId, Header.ID_START_OFFSET_BYTE);
         harbour.put(newTopicFile, 0, Header.COUNT_OFFSET_BYTE);
 
-        this.count = 0;
         this.startId = startId;
         this.newestFile = newTopicFile;
         logger.info("New topic file {} with startId {}", newTopicFile, startId);

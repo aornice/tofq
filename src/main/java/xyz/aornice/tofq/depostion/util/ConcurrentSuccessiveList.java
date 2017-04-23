@@ -1,12 +1,13 @@
 package xyz.aornice.tofq.depostion.util;
 
-import sun.misc.Unsafe;
-import xyz.aornice.tofq.Identifiable;
-
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import xyz.aornice.tofq.Identifiable;
+import xyz.aornice.tofq.util.Memory;
+import xyz.aornice.tofq.util.UnsafeMemory;
+
 
 /**
  * Created by robin on 11/04/2017.
@@ -16,7 +17,7 @@ public class ConcurrentSuccessiveList<E extends Identifiable> implements Success
     private static final int NORMAL = 1;
     private static final int RESIZING = 2;
 
-    private static final Unsafe unsafe = getUnsafe();
+    private static final Memory unsafe = UnsafeMemory.INSTANCE;
     private static final long sizeOffset;
     private static final long successiveSizeOffset;
     private static final long stateOffset;
@@ -34,9 +35,9 @@ public class ConcurrentSuccessiveList<E extends Identifiable> implements Success
 
     static {
         try {
-            sizeOffset = unsafe.objectFieldOffset(ConcurrentSuccessiveList.class.getDeclaredField("size"));
-            successiveSizeOffset = unsafe.objectFieldOffset(ConcurrentSuccessiveList.class.getDeclaredField("successiveSize"));
-            stateOffset = unsafe.objectFieldOffset(ConcurrentSuccessiveList.class.getDeclaredField("state"));
+            sizeOffset = unsafe.getFieldOffset(ConcurrentSuccessiveList.class.getDeclaredField("size"));
+            successiveSizeOffset = unsafe.getFieldOffset(ConcurrentSuccessiveList.class.getDeclaredField("successiveSize"));
+            stateOffset = unsafe.getFieldOffset(ConcurrentSuccessiveList.class.getDeclaredField("state"));
         } catch (NoSuchFieldException e) {
             throw new Error(e);
         }
@@ -52,6 +53,7 @@ public class ConcurrentSuccessiveList<E extends Identifiable> implements Success
 
     /**
      * The element must have different ID
+     *
      * @param e - the element to add
      */
     @Override
@@ -132,20 +134,9 @@ public class ConcurrentSuccessiveList<E extends Identifiable> implements Success
         System.arraycopy(items, 0, newItems, 0, items.length);
         Arrays.fill(items, null);
         items = newItems;
-        if (!unsafe.compareAndSwapInt(this, stateOffset, RESIZING, NORMAL)) throw new RuntimeException("Ensure Capability state error");
+        if (!unsafe.compareAndSwapInt(this, stateOffset, RESIZING, NORMAL))
+            throw new RuntimeException("Ensure Capability state error");
         return true;
-    }
-
-    @SuppressWarnings("restriction")
-    private static Unsafe getUnsafe() {
-        try {
-
-            Field singleoneInstanceField = Unsafe.class.getDeclaredField("theUnsafe");
-            singleoneInstanceField.setAccessible(true);
-            return (Unsafe) singleoneInstanceField.get(null);
-        } catch (IllegalAccessException | NoSuchFieldException e) {
-            throw new AssertionError(e);
-        }
     }
 
     static int resizeStamp(int n) {

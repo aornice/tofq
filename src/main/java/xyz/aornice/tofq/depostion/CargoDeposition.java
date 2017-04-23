@@ -25,4 +25,8 @@ public interface CargoDeposition {
      * @param listener - the listener to add
      */
     void addDepositionListener(DepositionListener listener);
+
+    void start();
+
+    void shutdown();
 }
