@@ -1,8 +1,11 @@
 package xyz.aornice.tofq.utils.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.Topic;
-import xyz.aornice.tofq.TopicFileFormat.*;
+import xyz.aornice.tofq.TopicFileFormat.FileName;
 import xyz.aornice.tofq.harbour.Harbour;
+import xyz.aornice.tofq.harbour.LocalHarbour;
 import xyz.aornice.tofq.utils.TopicCenter;
 import xyz.aornice.tofq.utils.TopicChangeListener;
 
@@ -16,17 +19,17 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- *
  * Scan all topicNames
- *
+ * <p>
  * Created by cat on 2017/4/10.
  */
 public class LocalTopicCenter implements TopicCenter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocalTopicCenter.class);
 
     /**
      * store inner topic info, such as topic path, inner id, etc
      */
-    private static class InnerTopicInfo{
+    private static class InnerTopicInfo {
         private static AtomicInteger nextID = new AtomicInteger(0);
         private int innerID;
         private String path;
@@ -45,28 +48,26 @@ public class LocalTopicCenter implements TopicCenter {
         }
     }
 
-    private static ConcurrentHashMap<String,InnerTopicInfo> topicPathMap = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, InnerTopicInfo> topicPathMap = new ConcurrentHashMap<>();
     private static Set<String> topicNames = topicPathMap.keySet();
     private static ConcurrentHashMap<String, Topic> topicObjMap = new ConcurrentHashMap<>();
     private static Path topicFolder = Paths.get(CargoFileUtil.getTopicRoot());
 
     private static Queue<TopicChangeListener> topicListeners = new ConcurrentLinkedQueue<>();
 
-    private Harbour harbour;
+    private Harbour harbour = new LocalHarbour();
 
-    private volatile static TopicCenter instance = new LocalTopicCenter();
 
     private static final int INIT_TOPIC_FILES = 128;
 
-    private static Map<String, ArrayList<String>> topicFileMap = new HashMap<>();
+    private static Map<String, List<String>> topicFileMap = new HashMap<>();
 
-    public static TopicCenter newInstance(){
+    public static TopicCenter newInstance() {
         return instance;
     }
 
 
-    private LocalTopicCenter(){
-
+    private LocalTopicCenter() {
         for (String topicName : topicNames) {
             ArrayList<String> files = createFileList();
 
@@ -89,7 +90,8 @@ public class LocalTopicCenter implements TopicCenter {
                 files.sort(CargoFileUtil.getFileSortComparator());
 
                 topicFileMap.put(topicName, files);
-                topicObjMap.put(topicName, new Topic(topicName, files.get(files.size()-1)));
+
+                topicObjMap.put(topicName, new Topic(topicName, files.get(files.size() - 1)));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -97,22 +99,38 @@ public class LocalTopicCenter implements TopicCenter {
     }
 
 
-    static{
-        SimpleFileVisitor<Path> finder = new SimpleFileVisitor<Path>(){
+    static {
+        SimpleFileVisitor<Path> finder = new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attr) throws IOException {
                 if (attr.isDirectory()) {
                     String topicName = file.getFileName().toString();
-                    topicPathMap.put(topicName, new InnerTopicInfo(topicFolder+ CargoFileUtil.getFileSeperator()+topicName));
+                    topicPathMap.put(topicName, new InnerTopicInfo(topicFolder + CargoFileUtil.getFileSeperator() + topicName));
+
+                    // load old topic info
+                    String folderName = topicFolder + CargoFileUtil.getFileSeperator() + topicName;
+                    String fileName = folderName + CargoFileUtil.getFileSeperator() + FileName.DATE_FORMAT.format(Calendar.getInstance().getTime()) + FileName.START_IND + FileName.SUFFIX;
+                    Topic createdTopic = new Topic(topicName, fileName);
+                    topicObjMap.put(topicName, createdTopic);
+                    topicNames = topicPathMap.keySet();
                 }
 
                 return super.visitFile(file, attr);
             }
         };
 
+        // check if the basic topicFolder is created
+        File file = topicFolder.toFile();
+        if (!file.exists()) {
+            boolean isCreated = file.mkdirs();
+            if (!isCreated) {
+                LOGGER.error("creating topic folder failed!");
+            }
+        }
+
         try {
             // not scanning symlink path, max depth is 1
-            java.nio.file.Files.walkFileTree(topicFolder,Collections.EMPTY_SET,1, finder);
+            java.nio.file.Files.walkFileTree(topicFolder, Collections.EMPTY_SET, 1, finder);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -130,31 +148,31 @@ public class LocalTopicCenter implements TopicCenter {
 
     @Override
     public Topic getTopic(String topicName) {
-        return null;
+        return topicObjMap.get(topicName);
     }
 
     @Override
-    public boolean register(String topicName) throws SecurityException{
+    public boolean register(String topicName) throws SecurityException {
         // return false if already exists
-        if (topicNames.contains(topicName)){
+        if (topicNames.contains(topicName)) {
             return false;
         }
 
         // make the topic folder
         String folderName = topicFolder + CargoFileUtil.getFileSeperator() + topicName;
         File folder = new File(folderName);
-        if (! folder.exists() || !folder.isDirectory()) {
+        if (!folder.exists() || !folder.isDirectory()) {
             boolean folderCreated = new File(folderName).mkdir();
-            if(! folderCreated){
+            if (!folderCreated) {
                 return false;
             }
         }
 
-        String fileName = folderName+CargoFileUtil.getFileSeperator()+ FileName.DATE_FORMAT.format(Calendar.getInstance().getTime())+FileName.START_IND+FileName.SUFFIX;
+        String fileName = folderName + CargoFileUtil.getFileSeperator() + FileName.DATE_FORMAT.format(Calendar.getInstance().getTime()) + FileName.START_IND + FileName.SUFFIX;
 
         boolean fileCreated = harbour.create(fileName);
 
-        if (! fileCreated){
+        if (!fileCreated) {
             // not delete the folder: maybe there are some files in the folder
             return false;
         }
@@ -166,16 +184,36 @@ public class LocalTopicCenter implements TopicCenter {
         topicObjMap.put(topicName, createdTopic);
         topicAdded(createdTopic);
 
+
+        // update topicFileMap
+        topicFileMap.put(topicName, Arrays.asList(fileName));
+
         return true;
     }
 
     @Override
-    public String getPath(String topic){
+    public boolean remove(String topicName) {
+        String folderName = topicFolder + CargoFileUtil.getFileSeperator() + topicName;
+        // delete the topic folder
+        boolean fileDeleted = harbour.remove(folderName);
+        if (!fileDeleted) {
+            return false;
+        }
+        // clean the cache
+        topicPathMap.remove(topicName);
+        Topic topic = topicObjMap.get(topicName);
+        topicObjMap.remove(topicName);
+        topicDeleted(topic);
+        return true;
+    }
+
+    @Override
+    public String getPath(String topic) {
         return topicPathMap.get(topic).getPath();
     }
 
     @Override
-    public boolean existsTopic(String topic){
+    public boolean existsTopic(String topic) {
         return topicNames.contains(topic);
     }
 
@@ -189,10 +227,13 @@ public class LocalTopicCenter implements TopicCenter {
         topicListeners.add(listener);
     }
 
-    private void topicAdded(Topic newTopic){
+    private void topicAdded(Topic newTopic) {
         topicListeners.stream().forEach(listener -> listener.topicAdded(newTopic));
     }
 
+    private void topicDeleted(Topic topic) {
+        topicListeners.stream().forEach(listener -> listener.topicDeleted(topic));
+    }
 
     private static ArrayList<String> createFileList() {
         return new ArrayList<String>(INIT_TOPIC_FILES);
@@ -209,7 +250,7 @@ public class LocalTopicCenter implements TopicCenter {
      */
     @Override
     public void registerNewFile(String topic, String filename) {
-        ArrayList<String> files = topicFileMap.get(topic);
+        List<String> files = topicFileMap.get(topic);
         if (files == null) {
             files = createFileList();
             topicFileMap.put(topic, files);
@@ -221,8 +262,8 @@ public class LocalTopicCenter implements TopicCenter {
     @Override
     public Map<String, String> topicsNewestFile() {
         HashMap<String, String> rst = new HashMap<>(topicFileMap.size());
-        for (Map.Entry<String, ArrayList<String>> e : topicFileMap.entrySet()) {
-            ArrayList<String> files = e.getValue();
+        for (Map.Entry<String, List<String>> e : topicFileMap.entrySet()) {
+            List<String> files = e.getValue();
             rst.put(e.getKey(), files.get(files.size() - 1));
         }
         return rst;
@@ -241,7 +282,7 @@ public class LocalTopicCenter implements TopicCenter {
 
     @Override
     public String iThFile(String topic, int i) {
-        if (i < topicFileMap.get(topic).size()){
+        if (i < topicFileMap.get(topic).size()) {
             return topicFileMap.get(topic).get(i);
         }
         return null;
@@ -249,6 +290,7 @@ public class LocalTopicCenter implements TopicCenter {
 
     /**
      * search from end
+     *
      * @param topic
      * @param from
      * @param to    exclusice
@@ -256,27 +298,29 @@ public class LocalTopicCenter implements TopicCenter {
      */
     @Override
     public List<String> dateRangedFiles(String topic, Date from, Date to) {
-        ArrayList<String> files = topicFileMap.get(topic);
-        int endInd=files.size()-1;
-        for(int i=files.size()-1; i>=0; i--){
+        List<String> files = topicFileMap.get(topic);
+        int endInd = files.size() - 1;
+        for (int i = files.size() - 1; i >= 0; i--) {
             int compareRes = CargoFileUtil.compareToDate(files.get(i), to);
-            if (compareRes >=0) {
-                endInd --;
-            }else{
+            if (compareRes >= 0) {
+                endInd--;
+            } else {
                 break;
             }
         }
 
         int startInd = 0;
-        for (int i=endInd; i>=0; i--){
+        for (int i = endInd; i >= 0; i--) {
             int compareRes = CargoFileUtil.compareToDate(files.get(i), from);
-            if (compareRes >= 0){
+            if (compareRes >= 0) {
                 startInd = i;
-            }else{
+            } else {
                 break;
             }
         }
 
-        return files.subList(startInd, endInd+1);
+        return files.subList(startInd, endInd + 1);
     }
+
+    private volatile static TopicCenter instance = new LocalTopicCenter();
 }

@@ -1,15 +1,17 @@
 package xyz.aornice.tofq;
 
+import java.util.Arrays;
 
 /**
  * Created by robin on 10/04/2017.
  */
-public class Cargo implements Identifiable{
+public class Cargo implements Identifiable {
     private Topic topic;
     private long id;
     private byte[] data;
 
-    public Cargo() {}
+    public Cargo() {
+    }
 
     public Cargo(Topic topic, long id, byte[] data) {
         this.topic = topic;
@@ -52,6 +54,12 @@ public class Cargo implements Identifiable{
     }
 
     public int hashCode() {
-        return topic.hashCode() ^ (int)(id >>> 32) ^ (int)(id & (((long)1 << 33) - 1));
+        return topic.hashCode() ^ (int) (id >>> 32) ^ (int) (id & (((long) 1 << 33) - 1));
+    }
+
+    @Override
+    public String toString() {
+        String description = String.format("topic: %s, id: %d, data: %s\n", topic.getName(), id, Arrays.toString(data));
+        return description;
     }
 }

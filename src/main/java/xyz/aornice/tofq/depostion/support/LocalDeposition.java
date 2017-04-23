@@ -13,16 +13,10 @@ import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.utils.TopicCenter;
 import xyz.aornice.tofq.utils.TopicChangeListener;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static xyz.aornice.tofq.TopicFileFormat.*;
-
-import java.util.*;
-
 
 
 public class LocalDeposition implements CargoDeposition, TopicChangeListener {
@@ -150,6 +144,12 @@ public class LocalDeposition implements CargoDeposition, TopicChangeListener {
         for (DepositionListener l : listeners) l.notifyDeposition(topic, maxStoredId);
         cargoCache.clear();
         logger.debug("Deposit topic {} end", topic.getName());
+    }
+
+
+    @Override
+    public void topicDeleted(Topic topic) {
+        //TODO listener: topic deleted
     }
 
     private class DepositionTask implements Runnable {

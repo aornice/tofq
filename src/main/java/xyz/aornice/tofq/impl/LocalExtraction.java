@@ -3,9 +3,12 @@ package xyz.aornice.tofq.impl;
 import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.CargoExtraction;
 import xyz.aornice.tofq.Topic;
+import xyz.aornice.tofq.TopicFileFormat;
 import xyz.aornice.tofq.harbour.Harbour;
+import xyz.aornice.tofq.harbour.LocalHarbour;
 import xyz.aornice.tofq.utils.ExtractionHelper;
 import xyz.aornice.tofq.utils.TopicCenter;
+import xyz.aornice.tofq.utils.impl.CargoFileUtil;
 import xyz.aornice.tofq.utils.impl.LocalExtractionHelper;
 import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
 
@@ -22,6 +25,10 @@ public class LocalExtraction implements CargoExtraction {
     private TopicCenter topicCenter = LocalTopicCenter.newInstance();
     private ExtractionHelper extractionHelper = LocalExtractionHelper.newInstance();
 
+    public LocalExtraction() {
+        this(new LocalHarbour());
+    }
+
     public LocalExtraction(Harbour harbour) {
         this.harbour = harbour;
     }
@@ -33,7 +40,9 @@ public class LocalExtraction implements CargoExtraction {
 
     @Override
     public Cargo read(Topic topic, long id) {
+        String folderName = topicCenter.getPath(topic.getName());
         String fileName = extractionHelper.fileName(topic.getName(), id);
+        String fullName = folderName + CargoFileUtil.getFileSeperator() + fileName;
         // the id or topic does not exists
         if (fileName == null) {
             return null;
@@ -44,12 +53,12 @@ public class LocalExtraction implements CargoExtraction {
         List<Long> offsets = extractionHelper.msgByteOffsets(topic.getName(), fileName);
 
         long byteOffsetTo = offsets.get(msgOffset);
-        long byteOffsetFrom = 0;
+        long byteOffsetFrom = TopicFileFormat.Header.SIZE_BYTE+ TopicFileFormat.Offset.SIZE_BYTE;
 
-        if (msgOffset != 0){
-            byteOffsetFrom = offsets.get(msgOffset-1);
+        if (msgOffset != 0) {
+            byteOffsetFrom = offsets.get(msgOffset - 1);
         }
-        byte[] message = harbour.get(fileName, byteOffsetFrom, byteOffsetTo);
+        byte[] message = harbour.get(fullName, byteOffsetFrom, byteOffsetTo);
 
         return new Cargo(topic, id, message);
     }

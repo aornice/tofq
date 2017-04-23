@@ -29,4 +29,14 @@ public interface Harbour {
     void flush(String fileName);
 
     boolean create(String fileName);
+
+    /**
+     * remove the file of cargoes or folder of topic
+     * this method with cache the removed file or folder for a while
+     *
+     * @param fileName
+     * @return <code>true</code> if and only if the removing is succeeded;
+     * <code>false</code> otherwise
+     */
+    boolean remove(String fileName);
 }
