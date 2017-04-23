@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Created by robin on 18/04/2017.
  */
-public class HarbourMock implements Harbour{
+public class HarbourMock implements Harbour {
 
     private static final Logger logger = LogManager.getLogger(HarbourMock.class);
 
@@ -21,8 +21,8 @@ public class HarbourMock implements Harbour{
         byte[] count = ByteBuffer.allocate(4).putInt(0).array();
         byte[] startId = ByteBuffer.allocate(8).putLong(10).array();
         int i = 0;
-        for (byte b: count) file[i++] = b;
-        for (byte b: startId) file[i++] = b;
+        for (byte b : count) file[i++] = b;
+        for (byte b : startId) file[i++] = b;
 
     }
 
@@ -38,16 +38,16 @@ public class HarbourMock implements Harbour{
 
     @Override
     public long getLong(String fileName, long offset) {
-        return ByteBuffer.wrap(Arrays.copyOfRange(file, (int)offset, (int)(offset + 8))).getLong();
+        return ByteBuffer.wrap(Arrays.copyOfRange(file, (int) offset, (int) (offset + 8))).getLong();
     }
 
     @Override
     public int getInt(String fileName, long offset) {
-        return ByteBuffer.wrap(Arrays.copyOfRange(file, (int)offset, (int)(offset + 4))).getInt();
+        return ByteBuffer.wrap(Arrays.copyOfRange(file, (int) offset, (int) (offset + 4))).getInt();
     }
 
     private void putHelper(String fileName, byte[] data, long offset) {
-        System.arraycopy(data, 0, file, (int)offset, data.length);
+        System.arraycopy(data, 0, file, (int) offset, data.length);
     }
 
     @Override
@@ -77,6 +77,12 @@ public class HarbourMock implements Harbour{
     public boolean create(String fileName) {
         file = new byte[100000];
         logger.debug("Create topic file {}", fileName);
+        return true;
+    }
+
+    @Override
+    public boolean remove(String fileName) {
+        logger.debug("Remove file {}", fileName);
         return true;
     }
 }

@@ -49,14 +49,14 @@ public class BasicQueueTest {
 
     @Test
     public void deposit() {
-        for (Cargo cargo : cargoes) {
-            deposition.write(cargo);
-        }
-
-        for (int i = 0; i < 10; i++) {
-            Cargo cargo = extraction.read(topic1, i);
-            System.out.println(cargo);
-        }
+//        for (Cargo cargo : cargoes) {
+//            deposition.write(cargo);
+//        }
+//
+//        for (int i = 0; i < 10; i++) {
+//            Cargo cargo = extraction.read(topic1, i);
+//            System.out.println(cargo);
+//        }
     }
 
     @After
