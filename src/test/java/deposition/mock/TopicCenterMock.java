@@ -36,6 +36,11 @@ public class TopicCenterMock implements TopicCenter {
     }
 
     @Override
+    public boolean remove(String topicName) {
+        return false;
+    }
+
+    @Override
     public String getPath(String topicName) {
         return null;
     }

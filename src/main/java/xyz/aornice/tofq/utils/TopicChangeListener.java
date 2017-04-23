@@ -7,4 +7,6 @@ import xyz.aornice.tofq.Topic;
  */
 public interface TopicChangeListener {
     void topicAdded(Topic newTopic);
+
+    void topicDeleted(Topic topic);
 }

@@ -146,6 +146,10 @@ public class LocalDeposition implements CargoDeposition, TopicChangeListener {
         //TODO listener: topicAdded
     }
 
+    @Override
+    public void topicDeleted(Topic topic) {
+        //TODO listener: topic deleted
+    }
 
     private class DepositionTask implements Runnable {
 

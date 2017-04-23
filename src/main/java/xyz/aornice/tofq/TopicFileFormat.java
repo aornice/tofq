@@ -32,7 +32,7 @@ public class TopicFileFormat {
     public static class FileName {
         public static final int DATE_LENGTH = 8;
         public static final int START_IND = 0;
-        public static final String SUFFIX = "tof";
+        public static final String SUFFIX = ".tof";
         public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd");
     }
 }

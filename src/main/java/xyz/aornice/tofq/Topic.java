@@ -7,6 +7,7 @@ package xyz.aornice.tofq;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.harbour.Harbour;
+import xyz.aornice.tofq.harbour.LocalHarbour;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -30,11 +31,21 @@ public class Topic {
         this.name = name;
         this.newestFile = newestFile;
         setHarbour(harbour);
-        loadInfo();
+        if (newestFile != null)
+            loadInfo();
+        else
+            initInfo();
     }
 
     public Topic(String name, String newestFile) {
-        this(name, newestFile, null);
+        this(name, newestFile, new LocalHarbour());
+    }
+
+    private void initInfo() {
+        startId = 0L;
+        count = 0;
+        maxId = new AtomicLong(0);
+        maxStoredId = new AtomicLong(0);
     }
 
     private void loadInfo() {
