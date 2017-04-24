@@ -14,4 +14,5 @@ public class Setting {
     public static long DEPOSITION_INTERVAL_NANO = DEFAULT_DEPOSITION_INTERVAL_NANO;
 
     public static final boolean LAZY_DELETE = false;
+    public static final String TOPIC_ROOT = "testtopic";
 }

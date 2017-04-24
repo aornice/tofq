@@ -91,7 +91,7 @@ public class LocalTopicCenter implements TopicCenter {
 
                 topicFileMap.put(topicName, files);
 
-                topicObjMap.put(topicName, new Topic(topicName, files.get(files.size() - 1)));
+                topicObjMap.put(topicName, new Topic(topicName, topicFolder + File.separator + files.get(files.size() - 1)));
             } catch (IOException e) {
                 e.printStackTrace();
             }

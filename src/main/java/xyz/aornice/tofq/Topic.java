@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.harbour.LocalHarbour;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
@@ -29,20 +30,11 @@ public class Topic {
         this.name = name;
         this.newestFile = newestFile;
         setHarbour(harbour);
-        if (newestFile != null)
-            loadInfo();
-        else
-            initInfo();
+        loadInfo();
     }
 
     public Topic(String name, String newestFile) {
         this(name, newestFile, new LocalHarbour());
-    }
-
-    private void initInfo() {
-        startId = 0L;
-        maxId = new AtomicLong(0);
-        maxStoredId = new AtomicLong(0);
     }
 
     private void loadInfo() {
@@ -95,7 +87,7 @@ public class Topic {
 
     public String newTopicFile() {
         String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
-        final String basePath = Setting.BASE_PATH + getName() + "/";
+        final String basePath = Setting.TOPIC_ROOT + File.separator + getName() + File.separator;
         int num = 0, prefixLen = basePath.length();
         if (newestFile.substring(prefixLen, prefixLen + 8).equals(date))
             num = Integer.valueOf(newestFile.substring(prefixLen + 8, newestFile.length() - 4)) + 1;

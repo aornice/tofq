@@ -1,6 +1,7 @@
 package xyz.aornice.tofq.utils.impl;
 
 
+import xyz.aornice.tofq.Setting;
 import xyz.aornice.tofq.TopicFileFormat.FileName;
 
 import java.util.Comparator;
@@ -12,9 +13,6 @@ import java.util.Date;
 public class CargoFileUtil {
     // date length in file name
     private static final String FILE_SEPERATOR = System.getProperty("file.separator");
-
-    private static final String TOPIC_ROOT = "testtopic";
-
 
     private static final Comparator<String> fileSortComparator = (String file1, String file2) -> {
         // first compare the date
@@ -54,7 +52,7 @@ public class CargoFileUtil {
     }
 
     public static String getTopicRoot() {
-        return TOPIC_ROOT;
+        return Setting.TOPIC_ROOT;
     }
 
     public static String filePath(String topicPath, String fileName) {
