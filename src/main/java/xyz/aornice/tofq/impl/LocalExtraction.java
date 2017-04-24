@@ -8,7 +8,6 @@ import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.harbour.LocalHarbour;
 import xyz.aornice.tofq.utils.ExtractionHelper;
 import xyz.aornice.tofq.utils.TopicCenter;
-import xyz.aornice.tofq.utils.impl.CargoFileUtil;
 import xyz.aornice.tofq.utils.impl.LocalExtractionHelper;
 import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
 
@@ -40,9 +39,7 @@ public class LocalExtraction implements CargoExtraction {
 
     @Override
     public Cargo read(Topic topic, long id) {
-        String folderName = topicCenter.getPath(topic.getName());
         String fileName = extractionHelper.fileName(topic.getName(), id);
-        String fullName = folderName + CargoFileUtil.getFileSeperator() + fileName;
         // the id or topic does not exists
         if (fileName == null) {
             return null;
@@ -51,14 +48,16 @@ public class LocalExtraction implements CargoExtraction {
         int msgOffset = extractionHelper.messageOffset(id);
         // TODO should use cache later
         List<Long> offsets = extractionHelper.msgByteOffsets(topic.getName(), fileName);
-
+        if (offsets.size() == 0) {
+            return null;
+        }
         long byteOffsetTo = offsets.get(msgOffset);
-        long byteOffsetFrom = TopicFileFormat.Header.SIZE_BYTE+ TopicFileFormat.Offset.SIZE_BYTE;
+        long byteOffsetFrom = TopicFileFormat.Header.SIZE_BYTE + TopicFileFormat.Offset.SIZE_BYTE;
 
         if (msgOffset != 0) {
             byteOffsetFrom = offsets.get(msgOffset - 1);
         }
-        byte[] message = harbour.get(fullName, byteOffsetFrom, byteOffsetTo);
+        byte[] message = harbour.get(fileName, byteOffsetFrom, byteOffsetTo);
 
         return new Cargo(topic, id, message);
     }

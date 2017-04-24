@@ -19,7 +19,7 @@ public class LocalHarbour implements Harbour {
     private static final long DEFAULT_FILE_SIZE = 1000000;
     private static final long DEFAULT_BLOCK_SIZE = 4048;
     private static final int BYTE_BITS = 8;
-    private static final String TEMP_FLIE_PRIFIX = "tmp_";
+    private static final String TEMP_FILE_PRIFIX = "tmp_";
     private String location;
 
     public LocalHarbour() {
@@ -154,9 +154,9 @@ public class LocalHarbour implements Harbour {
         }
         int index = fileName.lastIndexOf(File.separator);
         if (index == -1) {
-            newName = TEMP_FLIE_PRIFIX + fileName;
+            newName = TEMP_FILE_PRIFIX + fileName;
         } else {
-            newName = fileName.substring(0, index + 1) + TEMP_FLIE_PRIFIX + fileName.substring(index + 1);
+            newName = fileName.substring(0, index + 1) + TEMP_FILE_PRIFIX + fileName.substring(index + 1);
         }
         return newName;
     }

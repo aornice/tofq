@@ -77,7 +77,7 @@ public class LocalTopicCenter implements TopicCenter {
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attr) throws IOException {
                     if (attr.isRegularFile()) {
                         String fileName = file.getFileName().toString();
-                        files.add(fileName);
+                        files.add(topicFolder + File.separator + fileName);
                     }
                     return super.visitFile(file, attr);
                 }
@@ -91,7 +91,7 @@ public class LocalTopicCenter implements TopicCenter {
 
                 topicFileMap.put(topicName, files);
 
-                topicObjMap.put(topicName, new Topic(topicName, topicFolder + File.separator + files.get(files.size() - 1)));
+                topicObjMap.put(topicName, new Topic(topicName, files.get(files.size() - 1)));
             } catch (IOException e) {
                 e.printStackTrace();
             }

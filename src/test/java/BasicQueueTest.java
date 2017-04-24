@@ -4,6 +4,7 @@ import org.junit.Test;
 import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.CargoExtraction;
 import xyz.aornice.tofq.Topic;
+import xyz.aornice.tofq.depostion.CargoDeposition;
 import xyz.aornice.tofq.depostion.support.LocalDeposition;
 import xyz.aornice.tofq.harbour.LocalHarbour;
 import xyz.aornice.tofq.impl.LocalExtraction;
@@ -15,7 +16,7 @@ import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
  */
 public class BasicQueueTest {
     private TopicCenter topicCenter;
-    private LocalDeposition deposition;
+    private CargoDeposition deposition;
     private CargoExtraction extraction;
     private static final String TOPIC_NAME_1 = "test_topic1";
     private static final String TOPIC_NAME_2 = "test_topic2";
@@ -27,7 +28,8 @@ public class BasicQueueTest {
     public void init() {
         topicCenter = LocalTopicCenter.newInstance();
         extraction = new LocalExtraction();
-        deposition = (LocalDeposition) LocalDeposition.getInstance();
+        deposition = LocalDeposition.getInstance();
+        deposition.start();
         registerTopics();
         generateCargoes();
     }
@@ -46,15 +48,15 @@ public class BasicQueueTest {
     }
 
     @Test
-    public void deposit() {
-//        for (Cargo cargo : cargoes) {
-//            deposition.write(cargo);
-//        }
-//
-//        for (int i = 0; i < 10; i++) {
-//            Cargo cargo = extraction.read(topic1, i);
-//            System.out.println(cargo);
-//        }
+    public void deposit() throws InterruptedException {
+        for (Cargo cargo : cargoes) {
+            deposition.write(cargo);
+        }
+        Thread.sleep(100);
+        for (int i = 0; i < 10; i++) {
+            Cargo cargo = extraction.read(topic1, i);
+            System.out.println(cargo);
+        }
     }
 
     @After
