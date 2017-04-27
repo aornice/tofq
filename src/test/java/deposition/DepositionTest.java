@@ -1,5 +1,6 @@
 package deposition;
 
+import deposition.mock.HarbourMock;
 import deposition.mock.TopicCenterMock;
 import org.junit.After;
 import org.junit.Before;
@@ -9,32 +10,30 @@ import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.Setting;
 import xyz.aornice.tofq.Topic;
-import xyz.aornice.tofq.depostion.support.LocalDeposition;
-import xyz.aornice.tofq.harbour.LocalHarbour;
+import xyz.aornice.tofq.depostion.support.AbstractDeposition;
 
 /**
  * Created by robin on 18/04/2017.
  */
-public class LocalDepositionTest {
+public class DepositionTest {
 
-    LocalDeposition deposition;
+    AbstractDeposition deposition;
     TopicCenterMock topicCenterMock;
 
-    private static final Logger logger = LoggerFactory.getLogger(LocalDepositionTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(DepositionTest.class);
 
     @Before
     public void setUp() {
         Setting.BATCH_DEPOSITION_SIZE = 2;
 
-        deposition = (LocalDeposition) LocalDeposition.getInstance();
-        deposition.setHarbour(new LocalHarbour());
         topicCenterMock = new TopicCenterMock();
-        deposition.setTopicCenter(topicCenterMock);
+        deposition = new Deposition();
+        deposition.start();
     }
 
     @After
     public void tearDown() {
-//        deposition.close();
+        deposition.shutdown();
     }
 
     @Test
@@ -48,6 +47,14 @@ public class LocalDepositionTest {
         Thread.sleep(10);
         String msg = "msg-" + (startId + 10);
         deposition.write(new Cargo(topic, topic.incrementAndGetId(), msg.getBytes()));
-        Thread.sleep(100);
+        Thread.sleep(50);
+    }
+
+    class Deposition extends AbstractDeposition {
+        public Deposition() {
+            setHarbour(new HarbourMock());
+            setTopicCenter(topicCenterMock);
+        }
     }
 }
+

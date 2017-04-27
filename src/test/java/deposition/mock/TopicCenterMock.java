@@ -13,7 +13,7 @@ import java.util.*;
  */
 public class TopicCenterMock implements TopicCenter {
 
-    Topic topic = new Topic("testtopic", Setting.BASE_PATH + "testtopic/201704180.tofq", new LocalHarbour());
+    Topic topic = new Topic("testtopic", Setting.BASE_PATH + "testtopic/201704180.tof", new HarbourMock());
 
     @Override
     public Set<Topic> getTopics() {
@@ -32,6 +32,11 @@ public class TopicCenterMock implements TopicCenter {
 
     @Override
     public boolean register(String topicName) {
+        return false;
+    }
+
+    @Override
+    public boolean remove(String topicName) {
         return false;
     }
 

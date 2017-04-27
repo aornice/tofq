@@ -1,5 +1,7 @@
-package xyz.aornice.tofq.harbour.util;
+package xyz.aornice.tofq.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sun.nio.ch.FileChannelImpl;
 import xyz.aornice.tofq.ReferenceCount;
 
@@ -9,10 +11,13 @@ import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 
 /**
+ * Access OS related information
+ * <p>
  * Created by drfish on 10/04/2017.
  */
 public enum OS {
     ;
+    private static final Logger logger = LoggerFactory.getLogger("OS");
     private static final Memory MEMORY = UnsafeMemory.INSTANCE;
     private static final int MAP_RO = 0;
     private static final int MAP_RW = 1;
@@ -130,7 +135,7 @@ public enum OS {
 
                 owner.release();
             } catch (IOException | IllegalStateException e) {
-                //TODO Log system
+                logger.error("Unmmaper occur exception {}, address {}, size {}", e, address, size);
             }
         }
     }

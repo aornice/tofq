@@ -4,6 +4,7 @@ import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.CargoExtraction;
 import xyz.aornice.tofq.TofQueue;
 import xyz.aornice.tofq.depostion.CargoDeposition;
+import xyz.aornice.tofq.depostion.support.AbstractDeposition;
 import xyz.aornice.tofq.depostion.support.LocalDeposition;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.harbour.LocalHarbour;

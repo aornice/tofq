@@ -10,6 +10,7 @@ import xyz.aornice.tofq.Topic;
 public interface CargoDeposition {
 
     /**
+     * thread-safe
      * The method will return immediately without guarantee the cargo has been deposited.
      * The deposition success information could getFileContent by adding listener to
      * {@link CargoDeposition#addDepositionListener}
@@ -18,9 +19,14 @@ public interface CargoDeposition {
     void write(Cargo cargo);
 
     /**
+     * thread-safe
      * Add {@link DepositionListener} to {@link CargoDeposition}. CargoDeposition will notify
      * the listener when deposition has been done.
      * @param listener - the listener to add
      */
     void addDepositionListener(DepositionListener listener);
+
+    void start();
+
+    void shutdown();
 }

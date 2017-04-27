@@ -2,7 +2,7 @@ package xyz.aornice.tofq.harbour;
 
 import xyz.aornice.tofq.ReferenceCount;
 import xyz.aornice.tofq.ReferenceCounter;
-import xyz.aornice.tofq.harbour.util.OS;
+import xyz.aornice.tofq.util.OS;
 
 import java.io.File;
 import java.io.FileNotFoundException;

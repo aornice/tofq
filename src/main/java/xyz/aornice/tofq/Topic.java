@@ -7,13 +7,14 @@ package xyz.aornice.tofq;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.harbour.Harbour;
+import xyz.aornice.tofq.harbour.LocalHarbour;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static xyz.aornice.tofq.TopicFileFormat.Header;
-import static xyz.aornice.tofq.TopicFileFormat.Offset;
 
 public class Topic {
     private static final Logger logger = LoggerFactory.getLogger(Topic.class);
@@ -22,7 +23,6 @@ public class Topic {
     private AtomicLong maxId;
     private AtomicLong maxStoredId;
     private String newestFile;
-    private int count;
     private long startId;
     private Harbour harbour;
 
@@ -34,12 +34,12 @@ public class Topic {
     }
 
     public Topic(String name, String newestFile) {
-        this(name, newestFile, null);
+        this(name, newestFile, new LocalHarbour());
     }
 
     private void loadInfo() {
         startId = harbour.getLong(newestFile, Header.ID_START_OFFSET_BYTE);
-        count = harbour.getInt(newestFile, Header.COUNT_OFFSET_BYTE);
+        final int count = harbour.getInt(newestFile, Header.COUNT_OFFSET_BYTE);
         maxId = new AtomicLong(startId + count - 1);
         maxStoredId = new AtomicLong(startId + count - 1);
     }
@@ -81,37 +81,23 @@ public class Topic {
         return newestFile;
     }
 
-    public void incrementCount() {
-        incrementCount(1);
-    }
-
-    public void incrementCount(int val) {
-        count += val;
-        if (count > Offset.CAPABILITY) throw new RuntimeException("Offset exceed");
-    }
-
     public int getCount() {
-        return count;
-    }
-
-    public int getCountAndIncrement() {
-        return count++;
+        return (int) (maxStoredId.get() - startId) + 1;
     }
 
     public String newTopicFile() {
         String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
-        final String basePath = Setting.BASE_PATH + getName() + "/";
+        final String basePath = Setting.TOPIC_ROOT + File.separator + getName() + File.separator;
         int num = 0, prefixLen = basePath.length();
         if (newestFile.substring(prefixLen, prefixLen + 8).equals(date))
-            num = Integer.valueOf(newestFile.substring(prefixLen + 8, newestFile.length() - 5)) + 1;
-        final String newTopicFile = basePath + date + num + ".tofq";
+            num = Integer.valueOf(newestFile.substring(prefixLen + 8, newestFile.length() - 4)) + 1;
+        final String newTopicFile = basePath + date + num + ".tof";
 
         final long startId = getMaxStoredId() + 1;
         harbour.create(newTopicFile);
         harbour.put(newTopicFile, startId, Header.ID_START_OFFSET_BYTE);
         harbour.put(newTopicFile, 0, Header.COUNT_OFFSET_BYTE);
 
-        this.count = 0;
         this.startId = startId;
         this.newestFile = newTopicFile;
         logger.info("New topic file {} with startId {}", newTopicFile, startId);

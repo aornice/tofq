@@ -5,9 +5,9 @@ import org.slf4j.LoggerFactory;
 import sun.misc.Cleaner;
 import xyz.aornice.tofq.ReferenceCount;
 import xyz.aornice.tofq.ReferenceCounter;
-import xyz.aornice.tofq.harbour.util.Jvm;
-import xyz.aornice.tofq.harbour.util.Memory;
-import xyz.aornice.tofq.harbour.util.UnsafeMemory;
+import xyz.aornice.tofq.util.Jvm;
+import xyz.aornice.tofq.util.Memory;
+import xyz.aornice.tofq.util.UnsafeMemory;
 
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;

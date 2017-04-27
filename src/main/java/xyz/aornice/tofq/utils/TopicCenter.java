@@ -19,6 +19,15 @@ public interface TopicCenter {
 
     boolean register(String topicName);
 
+    /**
+     * delete the topic with name of topicName
+     * this method will delete all the cargoes in this topic
+     *
+     * @param topicName
+     * @return
+     */
+    boolean remove(String topicName);
+
     String getPath(String topicName);
 
     boolean existsTopic(String topicName);
@@ -30,7 +39,7 @@ public interface TopicCenter {
     /**
      * Should register the new file when file is created
      * Since the writing operation is serial, this method should not be called in parallel.
-     *
+     * <p>
      * The new created topic will be registered when the first file is added under the topic
      *
      * @param topic
@@ -47,7 +56,6 @@ public interface TopicCenter {
     String iThFile(String topic, int i);
 
     /**
-     *
      * @param topic
      * @param from
      * @param to    exclusice

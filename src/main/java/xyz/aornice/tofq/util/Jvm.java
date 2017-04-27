@@ -1,9 +1,11 @@
-package xyz.aornice.tofq.harbour.util;
+package xyz.aornice.tofq.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
+ * Utility class to access information of JVM
+ * <p>
  * Created by drfish on 10/04/2017.
  */
 public enum Jvm {

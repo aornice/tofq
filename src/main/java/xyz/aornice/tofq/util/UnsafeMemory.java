@@ -1,4 +1,4 @@
-package xyz.aornice.tofq.harbour.util;
+package xyz.aornice.tofq.util;
 
 import sun.misc.Unsafe;
 
@@ -6,6 +6,11 @@ import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
+ * Operating low-level memory with Unsafe
+ *
+ * @see sun.misc.Unsafe
+ * warning: Unsafe is internal proprietary API and may be removed in a future release
+ * <p>
  * Created by drfish on 10/04/2017.
  */
 public enum UnsafeMemory implements Memory {
