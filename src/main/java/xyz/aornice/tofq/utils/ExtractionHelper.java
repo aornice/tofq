@@ -25,6 +25,8 @@ public interface ExtractionHelper {
 
     long startIndex(long msgIndex);
 
+    long nextStartIndex(long msgIndex);
+
     List<Long> msgByteOffsets(String topic, String fileName);
 
     int currentMsgCount(String topic, String fileName);
@@ -34,4 +36,5 @@ public interface ExtractionHelper {
     long startIndex(String topic, String fileName);
 
     List<byte[]> readInRange(String topic, String fromFile, String toFile, int fileCount);
+
 }

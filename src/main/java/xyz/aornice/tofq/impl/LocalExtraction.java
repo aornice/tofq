@@ -4,6 +4,7 @@ import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.CargoExtraction;
 import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.harbour.Harbour;
+import xyz.aornice.tofq.utils.CargoIterator;
 import xyz.aornice.tofq.utils.ExtractionHelper;
 import xyz.aornice.tofq.utils.TopicCenter;
 import xyz.aornice.tofq.utils.impl.LocalExtractionHelper;
@@ -12,6 +13,7 @@ import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Created by drfish on 09/04/2017.
@@ -27,8 +29,11 @@ public class LocalExtraction implements CargoExtraction {
     }
 
     @Override
-    public Cargo[] readAll() {
-        return null;
+    public CargoIterator readAll(Topic topic) {
+        String fileName = topicCenter.topicOldestFile(topic.getName());
+        long firstInd = extractionHelper.startIndex(topic.getName(), fileName);
+        long endInd = topic.getMaxStoredId()+1;
+        return new CargoIteratorImpl(topic, firstInd, endInd);
     }
 
     @Override
@@ -71,7 +76,15 @@ public class LocalExtraction implements CargoExtraction {
     }
 
     @Override
-    public Cargo[] recentNDayCargos(Topic topic, int nDays) {
+    public CargoIterator recentNCargosIterator(Topic topic, long nCargos) {
+        long endInd = topic.getMaxStoredId() + 1;
+        long startInd = endInd - nCargos;
+
+        return new CargoIteratorImpl(topic, startInd, endInd);
+    }
+
+    @Override
+    public CargoIterator recentNDayCargos(Topic topic, int nDays) {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_MONTH, 1);
         Date to = calendar.getTime();
@@ -80,17 +93,33 @@ public class LocalExtraction implements CargoExtraction {
 
         List<String> files = topicCenter.dateRangedFiles(topic.getName(), from, to);
 
-        List<byte[]> msgs = extractionHelper.readInRange(topic.getName(), files.get(0), files.get(files.size() - 1), files.size());
-
         long startInd = extractionHelper.startIndex(topic.getName(), files.get(0));
+        long endInd = topic.getMaxStoredId()+1;
 
-        Cargo[] cargos = new Cargo[msgs.size()];
-        for (int i = 0; i < msgs.size(); i++) {
-            cargos[i] = new Cargo(topic, startInd++, msgs.get(i));
-        }
-
-        return cargos;
+        return new CargoIteratorImpl(topic, startInd, endInd);
     }
+
+//    @Override
+//    public Cargo[] recentNDayCargos(Topic topic, int nDays) {
+//        Calendar calendar = Calendar.getInstance();
+//        calendar.add(Calendar.DAY_OF_MONTH, 1);
+//        Date to = calendar.getTime();
+//        calendar.add(Calendar.DAY_OF_MONTH, -nDays);
+//        Date from = calendar.getTime();
+//
+//        List<String> files = topicCenter.dateRangedFiles(topic.getName(), from, to);
+//
+//        List<byte[]> msgs = extractionHelper.readInRange(topic.getName(), files.get(0), files.get(files.size() - 1), files.size());
+//
+//        long startInd = extractionHelper.startIndex(topic.getName(), files.get(0));
+//
+//        Cargo[] cargos = new Cargo[msgs.size()];
+//        for (int i = 0; i < msgs.size(); i++) {
+//            cargos[i] = new Cargo(topic, startInd++, msgs.get(i));
+//        }
+//
+//        return cargos;
+//    }
 
     @Override
     public Cargo[] read(Topic topic, long from, long to) {
@@ -118,5 +147,62 @@ public class LocalExtraction implements CargoExtraction {
 
         return cargos;
     }
+
+    @Override
+    public CargoIterator readIterator(Topic topic, long from, long to) {
+        return null;
+    }
+
+
+    class CargoIteratorImpl implements CargoIterator {
+
+        private Topic topic;
+        private long fromId;
+        private long toId;
+
+        private long curId;
+        private long nextBound;
+
+        private Cargo[] tmpCargos;
+        private int curListInd;
+
+        public CargoIteratorImpl(Topic topic, long fromId, long toId) {
+            this.topic = topic;
+            this.fromId = fromId;
+            this.toId = toId;
+            this.curId = fromId;
+            this.nextBound = fromId;
+
+            // nextBound is the smaller of these two
+            //long nextStartId = extractionHelper.nextStartIndex(fromId);
+            //this.nextBound = toId > nextStartId ? nextStartId : toId ;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return curId < toId;
+        }
+
+        @Override
+        public Cargo next() {
+            if (curId >= toId) {
+                throw new NoSuchElementException();
+            }
+            if (tmpCargos == null || curId >= nextBound) {
+                long nextStartId = extractionHelper.nextStartIndex(curId);
+                this.nextBound = toId > nextStartId ? nextStartId : toId ;
+
+                tmpCargos = read(topic, curId, nextBound);
+                curListInd = 0;
+            }
+
+            curId ++;
+
+            return tmpCargos[curListInd++];
+
+        }
+    }
+
+
 
 }

@@ -129,6 +129,11 @@ public class LocalExtractionHelper implements ExtractionHelper {
         return (msgIndex>> Offset.CAPABILITY_POW)<<Offset.CAPABILITY_POW;
     }
 
+    @Override
+    public long nextStartIndex(long msgIndex) {
+        return ((msgIndex >> Offset.CAPABILITY_POW)+1) << Offset.CAPABILITY_POW ;
+    }
+
     private long nextBound(String topic, long index) {
         return (fileIndex(topic,index) + 1) << Offset.CAPABILITY_POW;
     }
