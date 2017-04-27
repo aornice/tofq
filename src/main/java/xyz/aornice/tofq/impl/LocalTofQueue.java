@@ -35,8 +35,7 @@ public class LocalTofQueue implements TofQueue {
 
     @Override
     public Cargo[] elements() {
-        Cargo[] cargos = extraction.readAll();
-        return cargos;
+        return null;
     }
 
     @Override
