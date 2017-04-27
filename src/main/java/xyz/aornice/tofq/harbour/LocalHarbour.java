@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created by drfish on 12/04/2017.
@@ -20,6 +22,7 @@ public class LocalHarbour implements Harbour {
     private static final long DEFAULT_BLOCK_SIZE = 4048;
     private static final int BYTE_BITS = 8;
     private static final String TEMP_FILE_PRIFIX = "tmp_";
+    private static final ConcurrentMap<String, MappedBytes> bytes = new ConcurrentHashMap();
     private String location;
 
     public LocalHarbour() {
@@ -36,11 +39,16 @@ public class LocalHarbour implements Harbour {
 
     private MappedBytes getMappedBytes(String fileName, long fileSize) {
         MappedBytes mappedBytes = null;
-        try {
-            MappedFile mappedFile = MappedFile.getMappedFile(fileName, DEFAULT_BLOCK_SIZE);
-            mappedBytes = mappedFile.acquireBytes(fileSize);
-        } catch (IllegalAccessException | IOException | InvocationTargetException e) {
-            e.printStackTrace();
+        if (bytes.containsKey(fileName)) {
+            mappedBytes = bytes.get(fileName);
+        } else {
+            try {
+                MappedFile mappedFile = MappedFile.getMappedFile(fileName, DEFAULT_BLOCK_SIZE);
+                mappedBytes = mappedFile.acquireBytes(fileSize);
+                bytes.put(fileName, mappedBytes);
+            } catch (IllegalAccessException | IOException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
         }
         return mappedBytes;
     }
