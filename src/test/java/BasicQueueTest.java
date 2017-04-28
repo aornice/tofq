@@ -6,7 +6,6 @@ import xyz.aornice.tofq.CargoExtraction;
 import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.depostion.CargoDeposition;
 import xyz.aornice.tofq.depostion.support.LocalDeposition;
-import xyz.aornice.tofq.harbour.LocalHarbour;
 import xyz.aornice.tofq.impl.LocalExtraction;
 import xyz.aornice.tofq.utils.TopicCenter;
 import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
@@ -26,7 +25,7 @@ public class BasicQueueTest {
 
     @Before
     public void init() {
-        topicCenter = LocalTopicCenter.newInstance();
+        topicCenter = LocalTopicCenter.getInstance();
         extraction = new LocalExtraction();
         deposition = LocalDeposition.getInstance();
         deposition.start();

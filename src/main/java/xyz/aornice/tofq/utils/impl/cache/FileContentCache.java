@@ -23,7 +23,7 @@ public class FileContentCache extends LocalDepositCache<byte[]> implements Messa
 
     private FileContentCache(int initCapacity) {
         lruHashMap = new LRUHashMap(initCapacity);
-        extractionHelper = LocalExtractionHelper.newInstance();
+        extractionHelper = LocalExtractionHelper.getInstance();
     }
 
     @Override

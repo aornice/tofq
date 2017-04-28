@@ -14,7 +14,7 @@ public class FileExtensionTest {
     public void fileExtend() {
         CargoDeposition deposition = LocalDeposition.getInstance();
         deposition.start();
-        TopicCenter topicCenter = LocalTopicCenter.newInstance();
+        TopicCenter topicCenter = LocalTopicCenter.getInstance();
         Topic topic = topicCenter.getTopic("test_topic1");
         for(int i=0;i<100000;i++) {
             deposition.write(new Cargo(topic, topic.incrementAndGetId(), ("message" + i).getBytes()));

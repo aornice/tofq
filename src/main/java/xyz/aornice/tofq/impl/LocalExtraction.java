@@ -23,8 +23,8 @@ import java.util.NoSuchElementException;
 public class LocalExtraction implements CargoExtraction {
     private Harbour harbour;
 
-    private TopicCenter topicCenter = LocalTopicCenter.newInstance();
-    private ExtractionHelper extractionHelper = LocalExtractionHelper.newInstance();
+    private TopicCenter topicCenter = LocalTopicCenter.getInstance();
+    private ExtractionHelper extractionHelper = LocalExtractionHelper.getInstance();
 
     public LocalExtraction() {
         this(new LocalHarbour());
