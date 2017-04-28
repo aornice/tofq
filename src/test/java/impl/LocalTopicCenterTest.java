@@ -19,7 +19,7 @@ public class LocalTopicCenterTest {
 
     @Before
     public void init() {
-        topicCenter = LocalTopicCenter.newInstance();
+        topicCenter = LocalTopicCenter.getInstance();
     }
 
     @Test

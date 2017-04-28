@@ -1,6 +1,7 @@
 package xyz.aornice.tofq;
 
 import xyz.aornice.tofq.impl.FurnisherData;
+import xyz.aornice.tofq.utils.CargoIterator;
 
 import java.nio.file.Path;
 
@@ -11,7 +12,7 @@ public interface TofQueue {
 
     boolean offer(FurnisherData furnisherData);
 
-    Cargo[] elements();
+    CargoIterator elements(Topic topic);
 
     /**
      * @return the path of persistent files

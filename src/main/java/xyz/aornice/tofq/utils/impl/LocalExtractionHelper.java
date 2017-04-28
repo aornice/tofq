@@ -14,16 +14,18 @@ import java.util.*;
  */
 public class LocalExtractionHelper implements ExtractionHelper {
 
-    private static ExtractionHelper instance = new LocalExtractionHelper();
-
-    private TopicCenter topicCenter = LocalTopicCenter.newInstance();
+    private TopicCenter topicCenter = LocalTopicCenter.getInstance();
 
     private Map<String, Long> startIndexMap;
 
     private Harbour harbour;
 
-    public static ExtractionHelper newInstance() {
-        return instance;
+    public static ExtractionHelper getInstance() {
+        return Singleton.INSTANCE;
+    }
+
+    private static class Singleton{
+        static ExtractionHelper INSTANCE = new LocalExtractionHelper();
     }
 
     private LocalExtractionHelper() {

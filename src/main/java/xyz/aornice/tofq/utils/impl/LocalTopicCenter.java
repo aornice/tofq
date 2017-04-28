@@ -62,8 +62,12 @@ public class LocalTopicCenter implements TopicCenter {
 
     private static Map<String, List<String>> topicFileMap = new HashMap<>();
 
-    public static TopicCenter newInstance() {
-        return instance;
+    public static TopicCenter getInstance() {
+        return Singleton.INSTANCE;
+    }
+
+    private static class Singleton{
+        static TopicCenter INSTANCE = new LocalTopicCenter();
     }
 
 
@@ -322,5 +326,4 @@ public class LocalTopicCenter implements TopicCenter {
         return files.subList(startInd, endInd + 1);
     }
 
-    private volatile static TopicCenter instance = new LocalTopicCenter();
 }
