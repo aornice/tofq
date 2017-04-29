@@ -1,4 +1,4 @@
-package impl;
+package extraction;
 
 import xyz.aornice.tofq.utils.ExtractionHelper;
 import xyz.aornice.tofq.utils.impl.LocalExtractionHelper;

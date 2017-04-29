@@ -83,7 +83,7 @@ public class LocalExtractionHelper implements ExtractionHelper {
             }
             long endOffset = offsets.get(endInd);
 
-            byte[] rawMsgs = harbour.get(CargoFileUtil.filePath(topicCenter.getPath(topic), fileName), startOffset, endOffset);
+            byte[] rawMsgs = harbour.get(CargoFileUtil.filePath(topicCenter.getTopicFolder(topic), fileName), startOffset, endOffset);
 
             for (int i = startInd; i < endInd; i++) {
                 // TODO msg may be bigger than INT.MAX

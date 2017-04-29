@@ -60,7 +60,12 @@ public class LocalTopicCenter implements TopicCenter {
 
     private static final int INIT_TOPIC_FILES = 128;
 
-    private static Map<String, List<String>> topicFileMap = new HashMap<>();
+
+    // topic file full path approximately takes 2 times the memory of file name
+    // but the concat time elapse is 11 times the time of get full path directly
+    private static Map<String, List<String>> topicFileFullNameMap = new HashMap<>();
+
+    private static Map<String, List<String>> topicFileNameMap = new HashMap<>();
 
     public static TopicCenter getInstance() {
         return Singleton.INSTANCE;
@@ -73,15 +78,18 @@ public class LocalTopicCenter implements TopicCenter {
 
     private LocalTopicCenter() {
         for (String topicName : topicNames) {
-            ArrayList<String> files = createFileList();
+            ArrayList<String> fileFullNames = createFileList();
 
-            Path topicFolder = Paths.get(getPath(topicName));
+            ArrayList<String> fileNames = createFileList();
+
+            Path topicFolder = Paths.get(getTopicFolder(topicName));
             SimpleFileVisitor<Path> finder = new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attr) throws IOException {
                     if (attr.isRegularFile()) {
                         String fileName = file.getFileName().toString();
-                        files.add(topicFolder + File.separator + fileName);
+                        fileFullNames.add(topicFolder + File.separator + fileName);
+                        fileNames.add(fileName);
                     }
                     return super.visitFile(file, attr);
                 }
@@ -91,11 +99,13 @@ public class LocalTopicCenter implements TopicCenter {
                 Files.walkFileTree(topicFolder, Collections.EMPTY_SET, 1, finder);
 
                 // file name format is YYYYMMDD{Number}SUFFIX
-                files.sort(CargoFileUtil.getFileSortComparator());
+                fileFullNames.sort(CargoFileUtil.getFileSortComparator());
+                fileNames.sort(CargoFileUtil.getFileSortComparator());
 
-                topicFileMap.put(topicName, files);
+                topicFileFullNameMap.put(topicName, fileFullNames);
+                topicFileNameMap.put(topicName, fileNames);
 
-                topicObjMap.put(topicName, new Topic(topicName, files.get(files.size() - 1)));
+                topicObjMap.put(topicName, new Topic(topicName, fileFullNames.get(fileFullNames.size() - 1)));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -172,9 +182,10 @@ public class LocalTopicCenter implements TopicCenter {
             }
         }
 
-        String fileName = folderName + CargoFileUtil.getFileSeperator() + FileName.DATE_FORMAT.format(Calendar.getInstance().getTime()) + FileName.START_IND + FileName.SUFFIX;
+        String fileName = CargoFileUtil.dateStr(Calendar.getInstance().getTime()) + FileName.START_IND + FileName.SUFFIX;
+        String fileFullName = folderName + CargoFileUtil.getFileSeperator() + fileName;
 
-        boolean fileCreated = harbour.create(fileName);
+        boolean fileCreated = harbour.create(fileFullName);
 
         if (!fileCreated) {
             // not delete the folder: maybe there are some files in the folder
@@ -183,21 +194,23 @@ public class LocalTopicCenter implements TopicCenter {
 
         topicPathMap.put(topicName, new InnerTopicInfo(topicFolder + CargoFileUtil.getFileSeperator() + topicName));
 
-        Topic createdTopic = new Topic(topicName, fileName);
+        Topic createdTopic = new Topic(topicName, fileFullName);
 
         topicObjMap.put(topicName, createdTopic);
         topicAdded(createdTopic);
 
 
-        // update topicFileMap
-        topicFileMap.put(topicName, Arrays.asList(fileName));
+        // update topicFileFullNameMap and topicFileNameMap
+        topicFileFullNameMap.put(topicName, Arrays.asList(fileFullName));
+        topicFileNameMap.put(topicName, Arrays.asList(fileName));
 
         return true;
     }
 
     @Override
     public boolean remove(String topicName) {
-        String folderName = topicFolder + CargoFileUtil.getFileSeperator() + topicName;
+        String folderName = getTopicFolder(topicName);
+//        String folderName = topicFolder + CargoFileUtil.getFileSeperator() + topicName;
         // delete the topic folder
         boolean fileDeleted = harbour.remove(folderName);
         if (!fileDeleted) {
@@ -205,14 +218,17 @@ public class LocalTopicCenter implements TopicCenter {
         }
         // clean the cache
         topicPathMap.remove(topicName);
-        Topic topic = topicObjMap.get(topicName);
         topicObjMap.remove(topicName);
+        topicFileNameMap.remove(topicName);
+        topicFileFullNameMap.remove(topicName);
+
+        Topic topic = topicObjMap.get(topicName);
         topicDeleted(topic);
         return true;
     }
 
     @Override
-    public String getPath(String topic) {
+    public String getTopicFolder(String topic) {
         return topicPathMap.get(topic).getPath();
     }
 
@@ -254,10 +270,10 @@ public class LocalTopicCenter implements TopicCenter {
      */
     @Override
     public void registerNewFile(String topic, String filename) {
-        List<String> files = topicFileMap.get(topic);
+        List<String> files = topicFileFullNameMap.get(topic);
         if (files == null) {
             files = createFileList();
-            topicFileMap.put(topic, files);
+            topicFileFullNameMap.put(topic, files);
         }
         // the new file must be the last file
         files.add(filename);
@@ -265,8 +281,8 @@ public class LocalTopicCenter implements TopicCenter {
 
     @Override
     public Map<String, String> topicsNewestFile() {
-        HashMap<String, String> rst = new HashMap<>(topicFileMap.size());
-        for (Map.Entry<String, List<String>> e : topicFileMap.entrySet()) {
+        HashMap<String, String> rst = new HashMap<>(topicFileFullNameMap.size());
+        for (Map.Entry<String, List<String>> e : topicFileFullNameMap.entrySet()) {
             List<String> files = e.getValue();
             rst.put(e.getKey(), files.get(files.size() - 1));
         }
@@ -274,20 +290,31 @@ public class LocalTopicCenter implements TopicCenter {
     }
 
     @Override
-    public String topicNewestFile(String topic) {
-        List<String> files = topicFileMap.get(topic);
+    public String topicNewestFile(String topicName) {
+        List<String> files = topicFileFullNameMap.get(topicName);
         return files.get(files.size() - 1);
     }
 
     @Override
-    public String topicOldestFile(String topic) {
-        return topicFileMap.get(topic).get(0);
+    public String topicOldestFile(String topicName) {
+        return topicFileFullNameMap.get(topicName).get(0);
+    }
+
+    @Override
+    public String topicNewestFileShortName(String topicName) {
+        List<String> files = topicFileNameMap.get(topicName);
+        return files.get(files.size()-1);
+    }
+
+    @Override
+    public String topicOldestFileShortName(String topicName) {
+        return topicFileNameMap.get(topicName).get(0);
     }
 
     @Override
     public String iThFile(String topic, int i) {
-        if (i < topicFileMap.get(topic).size()) {
-            return topicFileMap.get(topic).get(i);
+        if (i < topicFileFullNameMap.get(topic).size()) {
+            return topicFileFullNameMap.get(topic).get(i);
         }
         return null;
     }
@@ -297,17 +324,19 @@ public class LocalTopicCenter implements TopicCenter {
      *
      * @param topic
      * @param from
-     * @param to    exclusice
+     * @param to    exclusive
      * @return
      */
     @Override
     public List<String> dateRangedFiles(String topic, Date from, Date to) {
-        List<String> files = topicFileMap.get(topic);
+        List<String> files = topicFileNameMap.get(topic);
         int endInd = files.size() - 1;
-        for (int i = files.size() - 1; i >= 0; i--) {
-            int compareRes = CargoFileUtil.compareToDate(files.get(i), to);
+        String toStr = CargoFileUtil.dateStr(to);
+        String fromStr = CargoFileUtil.dateStr(from);
+        for (int i = endInd; i >= 0; i--) {
+            int compareRes = CargoFileUtil.fileCompareDateStr(files.get(i), toStr);
             if (compareRes >= 0) {
-                endInd--;
+                endInd = i-1;
             } else {
                 break;
             }
@@ -315,7 +344,7 @@ public class LocalTopicCenter implements TopicCenter {
 
         int startInd = 0;
         for (int i = endInd; i >= 0; i--) {
-            int compareRes = CargoFileUtil.compareToDate(files.get(i), from);
+            int compareRes = CargoFileUtil.fileCompareDateStr(files.get(i), fromStr);
             if (compareRes >= 0) {
                 startInd = i;
             } else {
@@ -323,7 +352,7 @@ public class LocalTopicCenter implements TopicCenter {
             }
         }
 
-        return files.subList(startInd, endInd + 1);
+        return topicFileFullNameMap.get(topic).subList(startInd, endInd + 1);
     }
 
 }
