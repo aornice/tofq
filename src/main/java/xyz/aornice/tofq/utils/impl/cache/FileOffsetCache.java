@@ -19,7 +19,7 @@ public class FileOffsetCache extends LocalDepositCache<Long> implements MessageL
 
     private FileOffsetCache(int initCapacity) {
         lruHashMap = new LRUHashMap(initCapacity);
-        extractionHelper = LocalExtractionHelper.newInstance();
+        extractionHelper = LocalExtractionHelper.getInstance();
     }
 
     @Override

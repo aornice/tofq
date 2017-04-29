@@ -1,4 +1,4 @@
-package impl;
+package extraction;
 
 import xyz.aornice.tofq.utils.ExtractionHelper;
 import xyz.aornice.tofq.utils.impl.LocalExtractionHelper;
@@ -10,7 +10,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class ExtractionHelperTest {
     public static void main(String[] args){
-        ExtractionHelper test = LocalExtractionHelper.newInstance();
+        ExtractionHelper test = LocalExtractionHelper.getInstance();
         assertEquals(1024, test.nextStartIndex(1));
         assertEquals(1024, test.nextStartIndex(0));
         assertEquals(1024, test.nextStartIndex(1023));

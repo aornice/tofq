@@ -3,11 +3,13 @@ package xyz.aornice.tofq.impl;
 import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.CargoExtraction;
 import xyz.aornice.tofq.TofQueue;
+import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.depostion.CargoDeposition;
 import xyz.aornice.tofq.depostion.support.AbstractDeposition;
 import xyz.aornice.tofq.depostion.support.LocalDeposition;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.harbour.LocalHarbour;
+import xyz.aornice.tofq.utils.CargoIterator;
 
 import java.nio.file.Path;
 
@@ -34,8 +36,9 @@ public class LocalTofQueue implements TofQueue {
     }
 
     @Override
-    public Cargo[] elements() {
-        return null;
+    public CargoIterator elements(Topic topic) {
+        CargoIterator cargos = extraction.readAll(topic);
+        return cargos;
     }
 
     @Override

@@ -1,8 +1,6 @@
 package xyz.aornice.tofq.utils.impl.cache;
 
 import xyz.aornice.tofq.Topic;
-import xyz.aornice.tofq.TopicFileFormat;
-import xyz.aornice.tofq.TopicFileFormat.*;
 import xyz.aornice.tofq.utils.*;
 import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
 
@@ -15,7 +13,7 @@ import java.util.Map;
  */
 public abstract class LocalDepositCache<T> implements DepositCache {
 
-    private TopicCenter topicCenter = LocalTopicCenter.newInstance();
+    private TopicCenter topicCenter = LocalTopicCenter.getInstance();
 
     private final int SHIFT_COUNT = 32;
 

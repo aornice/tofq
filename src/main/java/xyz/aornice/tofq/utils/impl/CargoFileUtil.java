@@ -29,17 +29,18 @@ public class CargoFileUtil {
     };
 
     private static final Comparator<String> dateComparator = (String str1, String str2) -> {
+        int diff;
         for (int i = 0; i < FileName.DATE_LENGTH; i++) {
-            if (str1.charAt(i) != str2.charAt(i)) {
-                return str1.charAt(i) - str2.charAt(i);
+            diff = str1.charAt(i) - str2.charAt(i);
+            if (diff != 0 ) {
+                return diff>0? 1:-1;
             }
         }
         return 0;
     };
 
-    public static int compareToDate(String fileName, Date date) {
-        String target = FileName.DATE_FORMAT.format(date);
-        return dateComparator.compare(fileName, target);
+    public static int fileCompareDateStr(String fileName, String date) {
+        return dateComparator.compare(fileName, date);
     }
 
 
@@ -57,5 +58,9 @@ public class CargoFileUtil {
 
     public static String filePath(String topicPath, String fileName) {
         return topicPath + FILE_SEPERATOR + fileName;
+    }
+
+    public static String dateStr(Date date){
+        return FileName.DATE_FORMAT.format(date);
     }
 }

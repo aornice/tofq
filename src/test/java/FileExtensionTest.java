@@ -14,7 +14,7 @@ public class FileExtensionTest {
     public void fileExtend() {
         CargoDeposition deposition = LocalDeposition.getInstance();
 //        deposition.start();
-        TopicCenter topicCenter = LocalTopicCenter.newInstance();
+        TopicCenter topicCenter = LocalTopicCenter.getInstance();
         String topicName = "test_topic1";
         topicCenter.remove(topicName);
         topicCenter.register(topicName);
