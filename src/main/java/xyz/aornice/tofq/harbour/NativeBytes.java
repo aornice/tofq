@@ -176,11 +176,6 @@ public class NativeBytes implements ReferenceCount {
         }
     }
 
-    public long refCount() {
-        return refCounter.getCount();
-    }
-
-
     @Override
     public void release() throws IllegalStateException {
         refCounter.release();
