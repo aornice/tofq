@@ -211,6 +211,11 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
          */
         private long timestamp;
 
+        /**
+         * Today date str represent with {@link FileName#DATE_FORMAT}
+         */
+        private String today = FileName.DATE_FORMAT.format(new Date());
+
 
         {
             cargoCache = new ArrayList<>(Setting.BATCH_DEPOSITION_SIZE * 3 / 2);
@@ -225,7 +230,7 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
                 logger.error("Unexpected exception: ", e);
             } finally {
                 if (status != SHUTTING)
-                    throw new IllegalDepositionStateException("The interrupt don't invoke by shutdown");
+                    throw new IllegalDepositionStateException("the interrupt don't invoke by shutdown");
                 status = SHUTDOWN;
             }
         }
@@ -233,6 +238,7 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
         final private void runHelper() {
             timestamp = System.nanoTime();
             for (; ; ) {
+                today = FileName.DATE_FORMAT.format(new Date());
                 if (System.nanoTime() - timestamp > Setting.DEPOSITION_INTERVAL_NANO) {
                     logger.debug("Time interval deposition start");
                     batchedTopics.clear();
@@ -274,25 +280,34 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
          * @param topic - The topic to be deposited
          */
         final private void deposit(Topic topic) {
-            topicMap.get(topic).takeAllSuccessive(topic.getMaxStoredId() + 1, cargoCache);
-            long maxStoredId = depositHelper(topic, cargoCache);
-            for (DepositionListener l : listeners)
-                l.notifyDeposition(topic, maxStoredId);
-            cargoCache.clear();
+            try {
+                topicMap.get(topic).takeAllSuccessive(topic.getMaxStoredId() + 1, cargoCache);
+
+                long oldMaxStoredId = topic.getMaxStoredId();
+                long maxStoredId = depositHelper(topic, cargoCache);
+
+                if (oldMaxStoredId == maxStoredId) return;
+
+                for (DepositionListener l : listeners)
+                    l.notifyDeposition(topic, maxStoredId);
+            } finally {
+                cargoCache.clear();
+            }
         }
 
         final private long depositHelper(Topic topic, List<Cargo> cargoes) {
             final int size = cargoes.size();
             if (size == 0) return topic.getMaxStoredId();
 
-            logger.debug("MaxStoredId {} ; size {}", topic.getMaxStoredId(), cargoes.size());
 
             if (cargoes.get(0).getId() != topic.getMaxStoredId() + 1)
-                throw new Error("Cargoes is not successive to lasted deposited cargo");
+                throw new Error(String.format("Cargoes %s is not successive to lasted deposited cargo %s", cargoes.get(0).getId(), topic.getMaxStoredId()));
 
-            logger.debug("Deposit topic {} start", topic.getName());
+            logger.debug("Deposit topic {} [maxStoredId {}, cargoesSize {}] start", topic.getName(), topic.getMaxStoredId(), cargoes.size());
 
             String topicFile = topic.getNewestFile();
+            if (!topicFile.startsWith(today)) topicFile = topic.newTopicFile();
+
             int start = 0, maxStoredId = 0, count;
             do {
                 int fileRemains;
@@ -300,37 +315,49 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
                     topicFile = topic.newTopicFile();
                 int end = fileRemains > (size - start) ? size : start + fileRemains;
 
-                /** put cargoes' offset */
-                {
-                    long putOffset = Offset.OFFSET_BYTE + count * Offset.OFFSET_SIZE_BYTE;
-                    long dataOffset = count == 0 ? Data.OFFSET_BYTE :
-                            harbour.getLong(topicFile, putOffset - Offset.OFFSET_SIZE_BYTE);
-                    for (int i = start; i < end; i++) {
-                        harbour.put(topicFile, dataOffset += cargoes.get(i).size(), putOffset);
-                        putOffset += Offset.OFFSET_SIZE_BYTE;
-                    }
+                depositDataHelper(topicFile, count, cargoes, start, end);
 
-                }
-
-                /** put cargoes' data */
-                {
-                    long putOffset = topic.getCount() == 0 ? Data.OFFSET_BYTE :
-                            harbour.getLong(topicFile, Offset.OFFSET_BYTE + (topic.getCount() - 1) * Offset.OFFSET_SIZE_BYTE);
-                    for (int i = start; i < end; i++) {
-                        harbour.put(topicFile, cargoes.get(i).getData(), putOffset);
-                        putOffset += cargoes.get(i).size();
-                    }
-                }
-
-                harbour.put(topicFile, count + end - start, Header.COUNT_OFFSET_BYTE);
-                harbour.flush(topicFile);
-                start = end;
                 topic.setMaxStoredId(cargoes.get(end - 1).getId());
+
                 logger.debug("Max Stored Cargo id {}", topic.getMaxStoredId());
+
+                start = end;
             } while (start != size);
+
             logger.debug("Deposit topic {} end", topic.getName());
             return maxStoredId;
         }
+
+        final private void depositDataHelper(String file, int count, List<Cargo> cargoes,
+                                             int start, int end) {
+            /** put cargoes' offset */
+            {
+                long putOffset = Offset.OFFSET_BYTE + count * Offset.OFFSET_SIZE_BYTE;
+                long dataOffset = count == 0 ? Data.OFFSET_BYTE :
+                        harbour.getLong(file, putOffset - Offset.OFFSET_SIZE_BYTE);
+                for (int i = start; i < end; i++) {
+                    harbour.put(file, dataOffset += cargoes.get(i).size(), putOffset);
+                    putOffset += Offset.OFFSET_SIZE_BYTE;
+                }
+
+            }
+
+            /** put cargoes' data */
+            {
+                long putOffset = count == 0 ? Data.OFFSET_BYTE :
+                        harbour.getLong(file, Offset.OFFSET_BYTE + (count - 1) * Offset.OFFSET_SIZE_BYTE);
+                for (int i = start; i < end; i++) {
+                    harbour.put(file, cargoes.get(i).getData(), putOffset);
+                    putOffset += cargoes.get(i).size();
+                }
+            }
+
+            /** Set count */
+            harbour.put(file, count + end - start, Header.COUNT_OFFSET_BYTE);
+            harbour.flush(file);
+        }
+
     }
+
 
 }
