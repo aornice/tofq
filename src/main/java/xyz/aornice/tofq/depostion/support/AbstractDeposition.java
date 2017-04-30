@@ -245,51 +245,56 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
 
         final private void runHelper() {
             timestamp = System.nanoTime();
-            boolean detectShutting = false;
             for (; ; ) {
                 today = FileName.DATE_FORMAT.format(new Date());
                 if (System.nanoTime() - timestamp > Setting.DEPOSITION_INTERVAL_NANO) {
                     logger.debug("Time interval deposition start");
-                    batchedTopics.clear();
-                    for (Topic topic : topicMap.keySet()) {
-                        if (cleaned.get(topic) != null && cleaned.get(topic))
-                            continue;
-                        deposit(topic);
-                        processingTopics.remove(topic);
-                    }
-                    for (Map.Entry<Topic, Boolean> e : cleaned.entrySet())
-                        e.setValue(false);
+                    runIntervalHelper();
                     timestamp = System.nanoTime();
                     logger.debug("Time interval deposition end");
                 } else {
                     try {
-                        final long waitingTime = Setting.DEPOSITION_INTERVAL_NANO - (System.nanoTime() - timestamp);
-                        Topic topic = batchedTopics.poll(waitingTime, TimeUnit.NANOSECONDS);
-                        if (topic == null) continue;
-                        logger.debug("Batch deposition start");
-                        deposit(topic);
-                        processingTopics.remove(topic);
-                        logger.debug("Batch deposition end");
-                        cleaned.put(topic, true);
+                        runBatchHelper();
                     } catch (InterruptedException e) {
                         logger.info("Detect interrupt, shutdown the deposition");
-                        return;
+                        Thread.interrupted();
                     }
                 }
+
                 if (Thread.interrupted()) {
                     logger.info("Detect interrupt, shutdown the deposition");
                     return;
                 }
 
                 if (status == SHUTTING) {
-                    if (detectShutting) {
-                        logger.info("Shutdown gracefully");
-                        return;
-                    } else {
-                        detectShutting = true;
-                    }
+                    for (Topic topic : topicMap.keySet()) deposit(topic);
+                    logger.info("Shutdown gracefully");
+                    return;
                 }
             }
+        }
+
+        final private void runIntervalHelper() {
+            batchedTopics.clear();
+            for (Topic topic : topicMap.keySet()) {
+                if (cleaned.get(topic) != null && cleaned.get(topic))
+                    continue;
+                deposit(topic);
+                processingTopics.remove(topic);
+            }
+            for (Map.Entry<Topic, Boolean> e : cleaned.entrySet())
+                e.setValue(false);
+        }
+
+        final private void runBatchHelper() throws InterruptedException {
+            final long waitingTime = Setting.DEPOSITION_INTERVAL_NANO - (System.nanoTime() - timestamp);
+            Topic topic = batchedTopics.poll(waitingTime, TimeUnit.NANOSECONDS);
+            if (topic == null) return;
+            logger.debug("Batch deposition start");
+            deposit(topic);
+            processingTopics.remove(topic);
+            logger.debug("Batch deposition end");
+            cleaned.put(topic, true);
         }
 
         /**
