@@ -12,6 +12,8 @@ import xyz.aornice.tofq.Setting;
 import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.depostion.support.AbstractDeposition;
 
+import java.util.Set;
+
 /**
  * Created by robin on 18/04/2017.
  */
@@ -32,8 +34,12 @@ public class DepositionTest {
     }
 
     @After
-    public void tearDown() {
-        deposition.shutdown();
+    public void tearDown() throws InterruptedException {
+        deposition.shutdownGracefully();
+        for (Thread t : Thread.getAllStackTraces().keySet()) {
+            if (t.isDaemon() || t == Thread.currentThread()) continue;
+            t.join();
+        }
     }
 
     @Test
@@ -44,10 +50,9 @@ public class DepositionTest {
             String msg = "msg-" + i;
             deposition.write(new Cargo(topic, topic.incrementAndGetId(), msg.getBytes()));
         }
-        Thread.sleep(10);
+        Thread.sleep(20);
         String msg = "msg-" + (startId + 10);
         deposition.write(new Cargo(topic, topic.incrementAndGetId(), msg.getBytes()));
-        Thread.sleep(50);
     }
 
     class Deposition extends AbstractDeposition {

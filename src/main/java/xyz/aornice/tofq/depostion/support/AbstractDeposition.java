@@ -103,6 +103,7 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
 
     @Override
     public void write(Cargo cargo) {
+        if (status != RUNNING) throw new RejectException();
         topicMap.get(cargo.getTopic()).put(cargo);
         notifyDeposition(cargo.getTopic());
     }
@@ -128,6 +129,13 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
             throw new IllegalDepositionStateException("The deposition isn't running");
         if (unsafe.compareAndSwapInt(this, statusOffset, RUNNING, SHUTTING))
             thread.interrupt();
+    }
+
+    @Override
+    public void shutdownGracefully() {
+        if (status != RUNNING)
+            throw new IllegalDepositionStateException("The deposition isn't running");
+        unsafe.compareAndSwapInt(this, statusOffset, RUNNING, SHUTTING);
     }
 
     @Override
@@ -237,6 +245,7 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
 
         final private void runHelper() {
             timestamp = System.nanoTime();
+            boolean detectShutting = false;
             for (; ; ) {
                 today = FileName.DATE_FORMAT.format(new Date());
                 if (System.nanoTime() - timestamp > Setting.DEPOSITION_INTERVAL_NANO) {
@@ -270,6 +279,15 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
                 if (Thread.interrupted()) {
                     logger.info("Detect interrupt, shutdown the deposition");
                     return;
+                }
+
+                if (status == SHUTTING) {
+                    if (detectShutting) {
+                        logger.info("Shutdown gracefully");
+                        return;
+                    } else {
+                        detectShutting = true;
+                    }
                 }
             }
         }
