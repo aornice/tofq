@@ -2,6 +2,7 @@ package deposition.mock;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xyz.aornice.tofq.TopicFileFormat;
 import xyz.aornice.tofq.harbour.Harbour;
 
 import java.nio.ByteBuffer;
@@ -15,7 +16,7 @@ public class HarbourMock implements Harbour {
 
     private static final Logger logger = LogManager.getLogger(HarbourMock.class);
 
-    private byte[] file = new byte[100000];
+    private byte[] file = new byte[(int)(TopicFileFormat.Data.OFFSET_BYTE + TopicFileFormat.Offset.CAPABILITY * 20)];
 
     {
         byte[] count = ByteBuffer.allocate(4).putInt(0).array();
