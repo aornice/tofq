@@ -1,5 +1,7 @@
 package xyz.aornice.tofq;
 
+import org.slf4j.LoggerFactory;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -13,12 +15,16 @@ public interface ReferenceCount extends Closeable {
 
     static void releaseAll(List<WeakReference<ReferenceCount>> refCountRefs) {
         for (WeakReference<? extends ReferenceCount> refCountRef : refCountRefs) {
-            if (refCountRef != null) {
+            if (refCountRef == null) {
                 continue;
             }
             ReferenceCount refCount = refCountRef.get();
             if (refCount != null) {
-                refCount.release();
+                try {
+                    refCount.release();
+                } catch (IllegalStateException e) {
+                    LoggerFactory.getLogger(ReferenceCount.class).debug("", e);
+                }
             }
         }
     }
@@ -28,6 +34,19 @@ public interface ReferenceCount extends Closeable {
     }
 
     void reserve() throws IllegalStateException;
+
+
+    default boolean tryReserve() {
+        try {
+            if (referenceCount() > 0) {
+                reserve();
+                return true;
+            }
+        } catch (IllegalStateException e) {
+            LoggerFactory.getLogger(ReferenceCount.class).debug("", e);
+        }
+        return false;
+    }
 
     long referenceCount();
 }
