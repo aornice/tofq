@@ -7,6 +7,8 @@ import xyz.aornice.tofq.util.StringUtils;
 import xyz.aornice.tofq.util.UnsafeMemory;
 
 /**
+ * MappedBytes represents a chunk of memory mapped data
+ * <p>
  * Created by drfish on 12/04/2017.
  */
 public class MappedBytes extends NativeBytes {
@@ -26,9 +28,9 @@ public class MappedBytes extends NativeBytes {
 //    }
 
     protected MappedBytes(ReferenceCount owner, long start, long address, long capacity) {
-        super(address, address + capacity, new OS.Unmapper(address, capacity, owner));
-        this.start = address;
-        this.end = address + capacity;
+        super(address, start + capacity, new OS.Unmapper(address, capacity, owner));
+        this.start = start;
+        this.end = start + capacity;
     }
 
 //    protected MappedBytes(MappedFile mappedFile) {
@@ -73,5 +75,10 @@ public class MappedBytes extends NativeBytes {
             sb.append((char) c);
         }
         return this;
+    }
+
+    @Override
+    protected long offset(long offset) {
+        return address - start + offset;
     }
 }
