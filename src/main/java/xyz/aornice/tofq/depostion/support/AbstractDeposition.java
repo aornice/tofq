@@ -329,7 +329,7 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
             logger.debug("Deposit topic {} [maxStoredId {}, cargoesSize {}] start", topic.getName(), topic.getMaxStoredId(), cargoes.size());
 
             String topicFile = topic.getNewestFile();
-            if (!topicFile.startsWith(today)) topicFile = topic.newTopicFile();
+            if (!topicFile.contains(today)) topicFile = topic.newTopicFile();
 
             int start = 0, maxStoredId = 0, count;
             do {
