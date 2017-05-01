@@ -1,3 +1,4 @@
+import deposition.LocalDepositionNonSingleton;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,7 +28,7 @@ public class BasicQueueTest {
     public void init() {
         topicCenter = LocalTopicCenter.getInstance();
         extraction = new LocalExtraction();
-        deposition = LocalDeposition.getInstance();
+        deposition = new LocalDepositionNonSingleton();
         deposition.start();
         registerTopics();
         generateCargoes();
@@ -60,8 +61,13 @@ public class BasicQueueTest {
     }
 
     @After
-    public void cleanup() {
+    public void cleanup() throws InterruptedException {
 //        topicCenter.remove(TOPIC_NAME_1);
 //        topicCenter.remove(TOPIC_NAME_2);
+        deposition.shutdownGracefully();
+        for (Thread t : Thread.getAllStackTraces().keySet()) {
+            if (t.isDaemon() || !t.getName().equals("DepositionTask")) continue;
+            t.join();
+        }
     }
 }

@@ -12,7 +12,6 @@ import xyz.aornice.tofq.Setting;
 import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.depostion.support.AbstractDeposition;
 
-import java.util.Set;
 
 /**
  * Created by robin on 18/04/2017.
@@ -37,7 +36,7 @@ public class DepositionTest {
     public void tearDown() throws InterruptedException {
         deposition.shutdownGracefully();
         for (Thread t : Thread.getAllStackTraces().keySet()) {
-            if (t.isDaemon() || t == Thread.currentThread()) continue;
+            if (t.isDaemon() || !t.getName().equals("DepositionTask")) continue;
             t.join();
         }
     }
