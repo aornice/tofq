@@ -34,7 +34,7 @@ public class BasicQueueTest {
     }
 
     private void registerTopics() {
-        topicCenter.remove(TOPIC_NAME_1);
+//        topicCenter.remove(TOPIC_NAME_1);
         topicCenter.register(TOPIC_NAME_1);
         topicCenter.register(TOPIC_NAME_2);
         topic1 = topicCenter.getTopic(TOPIC_NAME_1);
@@ -61,7 +61,7 @@ public class BasicQueueTest {
 
     @After
     public void cleanup() {
-        topicCenter.remove(TOPIC_NAME_1);
-        topicCenter.remove(TOPIC_NAME_2);
+//        topicCenter.remove(TOPIC_NAME_1);
+//        topicCenter.remove(TOPIC_NAME_2);
     }
 }
