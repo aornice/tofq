@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 
 public class LocalHarbour implements Harbour {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LocalHarbour.class);
+    private static final Logger logger = LoggerFactory.getLogger(LocalHarbour.class);
     private static final long DEFAULT_FILE_SIZE = 1000000;
     private static final long DEFAULT_CHUNK_SIZE = DEFAULT_FILE_SIZE + 1;
     private static final int BYTE_BITS = 8;
@@ -41,17 +41,7 @@ public class LocalHarbour implements Harbour {
 
     private MappedBytes getMappedBytes(String fileName, long fileSize) {
         // get mapped file
-        MappedFile mappedFile = null;
-        if (mappedFilesMap.containsKey(fileName)) {
-            mappedFile = mappedFilesMap.get(fileName);
-        } else {
-            try {
-                mappedFile = MappedFile.getMappedFile(fileName, DEFAULT_CHUNK_SIZE);
-                mappedFilesMap.put(fileName, mappedFile);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
+        MappedFile mappedFile = getMappedFile(fileName);
         // get mapped bytes from cache
         int index = (int) (fileSize / mappedFile.getChunkSize());
         if (bytesMap.containsKey(fileName)) {
@@ -75,6 +65,21 @@ public class LocalHarbour implements Harbour {
             e.printStackTrace();
         }
         return mappedBytes;
+    }
+
+    private MappedFile getMappedFile(String fileName) {
+        MappedFile mappedFile = null;
+        if (mappedFilesMap.containsKey(fileName)) {
+            mappedFile = mappedFilesMap.get(fileName);
+        } else {
+            try {
+                mappedFile = MappedFile.getMappedFile(fileName, DEFAULT_CHUNK_SIZE);
+                mappedFilesMap.put(fileName, mappedFile);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return mappedFile;
     }
 
     @Override
@@ -136,7 +141,12 @@ public class LocalHarbour implements Harbour {
 
     @Override
     public void flush(String fileName) {
-        // TODO flush the file to disk
+        MappedFile mappedFile = getMappedFile(fileName);
+        try {
+            mappedFile.force(false);
+        } catch (IOException e) {
+            logger.debug("Flush file content of {} failed", fileName);
+        }
     }
 
     @Override

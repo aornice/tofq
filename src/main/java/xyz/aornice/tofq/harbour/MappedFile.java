@@ -105,6 +105,20 @@ public class MappedFile implements ReferenceCount {
         }
     }
 
+    /**
+     * Forces any updates to this mapped file to be written to the storage
+     * device that contains it.
+     *
+     * @param metaData If <tt>true</tt> then this method is required to force changes
+     *                 to both the file's content and metadata to be written to
+     *                 storage; otherwise, it need only force content changes to be
+     *                 written
+     * @throws IOException
+     */
+    public void force(boolean metaData) throws IOException {
+        fileChannel.force(metaData);
+    }
+
     private void doRelease() {
         for (int i = 0; i < cache.size(); i++) {
             WeakReference<MappedBytes> mbRef = cache.get(i);
