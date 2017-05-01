@@ -55,7 +55,7 @@ public class NativeBytes implements ReferenceCount {
     }
 
     @SuppressWarnings("ignore boundry check")
-    private long offset(long offset) {
+    protected long offset(long offset) {
 //        if (offset < 0 || offset > maximumLimit) {
 //            throw new IllegalArgumentException("offset exceeds in NativeBytes");
 //        }

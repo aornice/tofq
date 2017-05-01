@@ -42,10 +42,10 @@ public class MappedFile implements ReferenceCount {
         this.capacity = capacity;
     }
 
-    public static MappedFile getMappedFile(String fileName, long blockSize, long overlapSize) throws FileNotFoundException {
+    public static MappedFile getMappedFile(String fileName, long chunkSize, long overlapSize) throws FileNotFoundException {
         checkDir(fileName);
         RandomAccessFile rFile = new RandomAccessFile(fileName, "rw");
-        return new MappedFile(rFile, blockSize, overlapSize, DEFAULT_CAPACITY);
+        return new MappedFile(rFile, chunkSize, overlapSize, DEFAULT_CAPACITY);
     }
 
     private static void checkDir(String filename) {
@@ -57,8 +57,8 @@ public class MappedFile implements ReferenceCount {
         }
     }
 
-    public static MappedFile getMappedFile(String fileName, long blockSize) throws FileNotFoundException {
-        return getMappedFile(fileName, blockSize, OS.pageSize());
+    public static MappedFile getMappedFile(String fileName, long chunkSize) throws FileNotFoundException {
+        return getMappedFile(fileName, chunkSize, OS.pageSize());
     }
 
     public MappedBytes acquireBytes(long position) throws IOException, InvocationTargetException, IllegalAccessException {
@@ -105,7 +105,6 @@ public class MappedFile implements ReferenceCount {
         }
     }
 
-
     private void doRelease() {
         for (int i = 0; i < cache.size(); i++) {
             WeakReference<MappedBytes> mbRef = cache.get(i);
@@ -133,6 +132,18 @@ public class MappedFile implements ReferenceCount {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public long getCapacity() {
+        return capacity;
+    }
+
+    public long getChunkSize() {
+        return chunkSize;
+    }
+
+    public long getOverlapSize() {
+        return overlapSize;
     }
 
     @Override
