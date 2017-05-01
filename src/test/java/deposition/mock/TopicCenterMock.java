@@ -13,7 +13,7 @@ import java.util.*;
  */
 public class TopicCenterMock implements TopicCenter {
 
-    Topic topic = new Topic("testtopic", Setting.BASE_PATH + "testtopic/201704180.tof", new HarbourMock());
+    Topic topic = new Topic("testtopic", Setting.TOPIC_ROOT + "/testtopic/201704180.tof", new HarbourMock());
 
     @Override
     public Set<Topic> getTopics() {
@@ -41,7 +41,7 @@ public class TopicCenterMock implements TopicCenter {
     }
 
     @Override
-    public String getPath(String topicName) {
+    public String getTopicFolder(String topicName) {
         return null;
     }
 
@@ -77,6 +77,16 @@ public class TopicCenterMock implements TopicCenter {
 
     @Override
     public String topicOldestFile(String topic) {
+        return null;
+    }
+
+    @Override
+    public String topicNewestFileShortName(String topicName) {
+        return null;
+    }
+
+    @Override
+    public String topicOldestFileShortName(String topicName) {
         return null;
     }
 

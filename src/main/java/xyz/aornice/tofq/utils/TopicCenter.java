@@ -28,7 +28,7 @@ public interface TopicCenter {
      */
     boolean remove(String topicName);
 
-    String getPath(String topicName);
+    String getTopicFolder(String topicName);
 
     boolean existsTopic(String topicName);
 
@@ -49,9 +49,13 @@ public interface TopicCenter {
 
     Map<String, String> topicsNewestFile();
 
-    String topicNewestFile(String topic);
+    String topicNewestFile(String topicName);
 
-    String topicOldestFile(String topic);
+    String topicOldestFile(String topicName);
+
+    String topicNewestFileShortName(String topicName);
+
+    String topicOldestFileShortName(String topicName);
 
     String iThFile(String topic, int i);
 

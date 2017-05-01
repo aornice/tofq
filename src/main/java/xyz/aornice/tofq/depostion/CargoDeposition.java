@@ -26,7 +26,19 @@ public interface CargoDeposition {
      */
     void addDepositionListener(DepositionListener listener);
 
+    /**
+     * Start deposition task
+     */
     void start();
 
+    /**
+     * Shutdown deposition right now
+     */
     void shutdown();
+
+    /**
+     * Shutdown deposition gracefully, deposit the cargoes have already been
+     * write to CargoDeposition
+     */
+    void shutdownGracefully();
 }

@@ -18,7 +18,7 @@ public class LocalDeposition extends AbstractDeposition{
         static LocalDeposition INSTANCE = new LocalDeposition();
 
         static {
-            INSTANCE.setTopicCenter(LocalTopicCenter.newInstance());
+            INSTANCE.setTopicCenter(LocalTopicCenter.getInstance());
             INSTANCE.setHarbour(new LocalHarbour());
         }
     }

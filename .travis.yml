@@ -2,3 +2,14 @@ language: java
 
 jdk:
     - oraclejdk8
+
+notifications:
+    email:
+          recipients:
+                  - nxvdovehx@gmail.com
+                  - shenjianan@126.com
+          on_success: never # default: change
+          on_failure: always # default: always
+
+after_success:
+  - ./gradlew check jacocoTestReport coveralls

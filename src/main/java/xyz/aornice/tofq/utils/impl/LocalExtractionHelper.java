@@ -14,16 +14,18 @@ import java.util.*;
  */
 public class LocalExtractionHelper implements ExtractionHelper {
 
-    private static ExtractionHelper instance = new LocalExtractionHelper();
-
-    private TopicCenter topicCenter = LocalTopicCenter.newInstance();
+    private TopicCenter topicCenter = LocalTopicCenter.getInstance();
 
     private Map<String, Long> startIndexMap;
 
     private Harbour harbour;
 
-    public static ExtractionHelper newInstance() {
-        return instance;
+    public static ExtractionHelper getInstance() {
+        return Singleton.INSTANCE;
+    }
+
+    private static class Singleton{
+        static ExtractionHelper INSTANCE = new LocalExtractionHelper();
     }
 
     private LocalExtractionHelper() {
@@ -81,7 +83,7 @@ public class LocalExtractionHelper implements ExtractionHelper {
             }
             long endOffset = offsets.get(endInd);
 
-            byte[] rawMsgs = harbour.get(CargoFileUtil.filePath(topicCenter.getPath(topic), fileName), startOffset, endOffset);
+            byte[] rawMsgs = harbour.get(CargoFileUtil.filePath(topicCenter.getTopicFolder(topic), fileName), startOffset, endOffset);
 
             for (int i = startInd; i < endInd; i++) {
                 // TODO msg may be bigger than INT.MAX

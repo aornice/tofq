@@ -1,4 +1,4 @@
-package impl;
+package extraction;
 
 import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.harbour.LocalHarbour;
@@ -10,6 +10,8 @@ import static org.junit.Assert.assertEquals;
  * Created by cat on 2017/4/12.
  */
 public class LocalExtractionTest {
+
+
     public static void main(String[] args) {
         LocalExtraction test = new LocalExtraction(new LocalHarbour());
         assertEquals(0x03, test.read(new Topic("topic1", "201704141.tof"), 1).getData()[0]);
