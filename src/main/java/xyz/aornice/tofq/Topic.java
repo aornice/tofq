@@ -4,20 +4,20 @@ package xyz.aornice.tofq;
  * Created by robin on 10/04/2017.
  */
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.harbour.LocalHarbour;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static xyz.aornice.tofq.TopicFileFormat.Header;
+import static xyz.aornice.tofq.TopicFileFormat.FileName;
 
 public class Topic {
-    private static final Logger logger = LoggerFactory.getLogger(Topic.class);
+    private static final Logger logger = LogManager.getLogger(Topic.class);
 
     private String name;
     private AtomicLong maxId;
@@ -86,7 +86,7 @@ public class Topic {
     }
 
     public String newTopicFile() {
-        String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
+        String date = FileName.DATE_FORMAT.format(new Date());
         final String basePath = Setting.TOPIC_ROOT + File.separator + getName() + File.separator;
         int num = 0, prefixLen = basePath.length();
         if (newestFile.substring(prefixLen, prefixLen + 8).equals(date))

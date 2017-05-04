@@ -14,12 +14,16 @@ public class LocalDeposition extends AbstractDeposition{
         return Singleton.INSTANCE;
     }
 
+    protected static void init(AbstractDeposition deposition) {
+        deposition.setTopicCenter(LocalTopicCenter.getInstance());
+        deposition.setHarbour(new LocalHarbour());
+    }
+
     private static class Singleton {
         static LocalDeposition INSTANCE = new LocalDeposition();
 
         static {
-            INSTANCE.setTopicCenter(LocalTopicCenter.getInstance());
-            INSTANCE.setHarbour(new LocalHarbour());
+            init(INSTANCE);
         }
     }
 }

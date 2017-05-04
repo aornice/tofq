@@ -1,5 +1,7 @@
 package xyz.aornice.tofq.harbour;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.ReferenceCount;
 import xyz.aornice.tofq.ReferenceCounter;
 import xyz.aornice.tofq.util.OS;
@@ -20,29 +22,30 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Created by drfish on 11/04/2017.
  */
 public class MappedFile implements ReferenceCount {
+    private static final Logger logger = LoggerFactory.getLogger(MappedFile.class);
     public static final long DEFAULT_CAPACITY = 1L << 30;
 
     private final RandomAccessFile randomFile;
     private final FileChannel fileChannel;
-    private final long blockSize;
+    private final long chunkSize;
     private final long overlapSize;
     private final AtomicBoolean isClosed = new AtomicBoolean();
     private final long capacity;
     private final List<WeakReference<MappedBytes>> cache = new ArrayList<>();
     ReferenceCounter refCounter = new ReferenceCounter(this::doRelease);
 
-    protected MappedFile(RandomAccessFile rFile, long blockSize, long overlapSize, long capacity) {
+    protected MappedFile(RandomAccessFile rFile, long chunkSize, long overlapSize, long capacity) {
         this.randomFile = rFile;
         this.fileChannel = rFile.getChannel();
-        this.blockSize = blockSize;
+        this.chunkSize = chunkSize;
         this.overlapSize = overlapSize;
         this.capacity = capacity;
     }
 
-    public static MappedFile getMappedFile(String fileName, long blockSize, long overlapSize) throws FileNotFoundException {
+    public static MappedFile getMappedFile(String fileName, long chunkSize, long overlapSize) throws FileNotFoundException {
         checkDir(fileName);
         RandomAccessFile rFile = new RandomAccessFile(fileName, "rw");
-        return new MappedFile(rFile, blockSize, overlapSize, DEFAULT_CAPACITY);
+        return new MappedFile(rFile, chunkSize, overlapSize, DEFAULT_CAPACITY);
     }
 
     private static void checkDir(String filename) {
@@ -54,8 +57,8 @@ public class MappedFile implements ReferenceCount {
         }
     }
 
-    public static MappedFile getMappedFile(String fileName, long blockSize) throws FileNotFoundException {
-        return getMappedFile(fileName, blockSize, OS.pageSize());
+    public static MappedFile getMappedFile(String fileName, long chunkSize) throws FileNotFoundException {
+        return getMappedFile(fileName, chunkSize, OS.pageSize());
     }
 
     public MappedBytes acquireBytes(long position) throws IOException, InvocationTargetException, IllegalAccessException {
@@ -65,38 +68,56 @@ public class MappedFile implements ReferenceCount {
         if (position < 0) {
             throw new IOException("Attempt to access a negative position");
         }
-        int blocks = (int) (position / blockSize);
+        int chunk = (int) (position / chunkSize);
         synchronized (cache) {
-            while (cache.size() <= blocks) {
+            while (cache.size() <= chunk) {
                 cache.add(null);
             }
-            WeakReference<MappedBytes> mbRef = cache.get(blocks);
+            WeakReference<MappedBytes> mbRef = cache.get(chunk);
             if (mbRef != null) {
                 MappedBytes mb = mbRef.get();
-                if (mb != null) {
+                if (mb != null && mb.tryReserve()) {
                     return mb;
                 }
             }
-            long minSize = (blocks + 1) * blockSize + overlapSize;
+            long minSize = (chunk + 1) * chunkSize + overlapSize;
             long size = fileChannel.size();
             if (size < minSize) {
-                try (FileLock lock = fileChannel.lock()) {
-                    size = fileChannel.size();
-                    if (size < minSize) {
-                        randomFile.setLength(minSize);
+                try {
+                    try (FileLock lock = fileChannel.lock()) {
+                        size = fileChannel.size();
+                        if (size < minSize) {
+                            randomFile.setLength(minSize);
+                        }
                     }
+                } catch (IOException e) {
+                    throw new IOException("Failed to resize to" + minSize, e);
                 }
             }
-
-//            long mappedSize = blockSize + overlapSize;
-//            long address = OS.map(fileChannel, FileChannel.MapMode.READ_WRITE, blocks * blockSize, mappedSize);
-            long address = OS.map(fileChannel, FileChannel.MapMode.READ_WRITE, 0, position);
-            MappedBytes mb = new MappedBytes(this, blocks * blockSize, address, position);
-            cache.set(blocks, new WeakReference<>(mb));
+            long mappedSize = chunkSize + overlapSize;
+            long address = OS.map(fileChannel, FileChannel.MapMode.READ_WRITE, chunk * chunkSize, mappedSize);
+            long safeCapacity = chunkSize + overlapSize / 2;
+//            long address = OS.map(fileChannel, FileChannel.MapMode.READ_WRITE, 0, position);
+            MappedBytes mb = new MappedBytes(this, chunk * chunkSize, address, safeCapacity);
+            cache.set(chunk, new WeakReference<>(mb));
+            mb.reserve();
             return mb;
         }
     }
 
+    /**
+     * Forces any updates to this mapped file to be written to the storage
+     * device that contains it.
+     *
+     * @param metaData If <tt>true</tt> then this method is required to force changes
+     *                 to both the file's content and metadata to be written to
+     *                 storage; otherwise, it need only force content changes to be
+     *                 written
+     * @throws IOException
+     */
+    public void force(boolean metaData) throws IOException {
+        fileChannel.force(metaData);
+    }
 
     private void doRelease() {
         for (int i = 0; i < cache.size(); i++) {
@@ -106,9 +127,13 @@ public class MappedFile implements ReferenceCount {
             }
             MappedBytes mb = mbRef.get();
             if (mb != null) {
-                long count = mb.refCount();
+                long count = mb.referenceCount();
                 if (count > 0) {
-                    mb.release();
+                    try {
+                        mb.release();
+                    } catch (IllegalStateException e) {
+                        logger.debug("", e);
+                    }
                     if (count > 1) {
                         continue;
                     }
@@ -121,6 +146,18 @@ public class MappedFile implements ReferenceCount {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public long getCapacity() {
+        return capacity;
+    }
+
+    public long getChunkSize() {
+        return chunkSize;
+    }
+
+    public long getOverlapSize() {
+        return overlapSize;
     }
 
     @Override

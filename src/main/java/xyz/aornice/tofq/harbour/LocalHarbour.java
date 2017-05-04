@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.Setting;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -17,12 +18,13 @@ import java.util.concurrent.ConcurrentMap;
  */
 
 public class LocalHarbour implements Harbour {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LocalHarbour.class);
+    private static final Logger logger = LoggerFactory.getLogger(LocalHarbour.class);
     private static final long DEFAULT_FILE_SIZE = 1000000;
-    private static final long DEFAULT_BLOCK_SIZE = 4048;
+    private static final long DEFAULT_CHUNK_SIZE = DEFAULT_FILE_SIZE + 1;
     private static final int BYTE_BITS = 8;
     private static final String TEMP_FILE_PRIFIX = "tmp_";
-    private static final ConcurrentMap<String, MappedBytes> bytes = new ConcurrentHashMap();
+    private static final ConcurrentMap<String, List<MappedBytes>> bytesMap = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, MappedFile> mappedFilesMap = new ConcurrentHashMap<>();
     private String location;
 
     public LocalHarbour() {
@@ -38,19 +40,46 @@ public class LocalHarbour implements Harbour {
     }
 
     private MappedBytes getMappedBytes(String fileName, long fileSize) {
+        // get mapped file
+        MappedFile mappedFile = getMappedFile(fileName);
+        // get mapped bytes from cache
+        int index = (int) (fileSize / mappedFile.getChunkSize());
+        if (bytesMap.containsKey(fileName)) {
+            List<MappedBytes> bytes = bytesMap.get(fileName);
+            if (index < bytes.size() && bytes.get(index) != null) {
+                return bytes.get(index);
+            }
+        } else {
+            bytesMap.put(fileName, new ArrayList<>());
+        }
+        // acquire new mapped bytes from mapped file
         MappedBytes mappedBytes = null;
-        if (bytes.containsKey(fileName)) {
-            mappedBytes = bytes.get(fileName);
+        try {
+            mappedBytes = mappedFile.acquireBytes(fileSize);
+            List<MappedBytes> bytesList = bytesMap.get(fileName);
+            while (bytesList.size() <= index) {
+                bytesList.add(null);
+            }
+            bytesList.set(index, mappedBytes);
+        } catch (IOException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return mappedBytes;
+    }
+
+    private MappedFile getMappedFile(String fileName) {
+        MappedFile mappedFile = null;
+        if (mappedFilesMap.containsKey(fileName)) {
+            mappedFile = mappedFilesMap.get(fileName);
         } else {
             try {
-                MappedFile mappedFile = MappedFile.getMappedFile(fileName, DEFAULT_BLOCK_SIZE);
-                mappedBytes = mappedFile.acquireBytes(fileSize);
-                bytes.put(fileName, mappedBytes);
-            } catch (IllegalAccessException | IOException | InvocationTargetException e) {
+                mappedFile = MappedFile.getMappedFile(fileName, DEFAULT_CHUNK_SIZE);
+                mappedFilesMap.put(fileName, mappedFile);
+            } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
         }
-        return mappedBytes;
+        return mappedFile;
     }
 
     @Override
@@ -112,7 +141,12 @@ public class LocalHarbour implements Harbour {
 
     @Override
     public void flush(String fileName) {
-        // TODO flush the file to disk
+        MappedFile mappedFile = getMappedFile(fileName);
+        try {
+            mappedFile.force(false);
+        } catch (IOException e) {
+            logger.debug("Flush file content of {} failed", fileName);
+        }
     }
 
     @Override

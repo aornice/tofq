@@ -20,6 +20,9 @@ out/
 # ide settings
 .idea/
 
+# test data
+testtopic/
+
 .DS_Store
 
 

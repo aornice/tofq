@@ -16,7 +16,7 @@ public class FileExtensionTest {
 //        deposition.start();
         TopicCenter topicCenter = LocalTopicCenter.getInstance();
         String topicName = "test_topic1";
-        topicCenter.remove(topicName);
+//        topicCenter.remove(topicName);
         topicCenter.register(topicName);
         Topic topic = topicCenter.getTopic(topicName);
         for(int i=0;i<100000;i++) {
