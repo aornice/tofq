@@ -48,24 +48,24 @@ public class LocalTopicCenter implements TopicCenter {
         }
     }
 
-    private static ConcurrentHashMap<String, InnerTopicInfo> topicPathMap = new ConcurrentHashMap<>();
-    private static Set<String> topicNames = topicPathMap.keySet();
-    private static ConcurrentHashMap<String, Topic> topicObjMap = new ConcurrentHashMap<>();
-    private static Path topicFolder = Paths.get(CargoFileUtil.getTopicRoot());
+    private ConcurrentHashMap<String, InnerTopicInfo> topicPathMap = new ConcurrentHashMap<>();
+    private Set<String> topicNames = topicPathMap.keySet();
+    private ConcurrentHashMap<String, Topic> topicObjMap = new ConcurrentHashMap<>();
+    private Path topicRoot = Paths.get(CargoFileUtil.getTopicRoot());
 
-    private static Queue<TopicChangeListener> topicListeners = new ConcurrentLinkedQueue<>();
+    private Queue<TopicChangeListener> topicListeners = new ConcurrentLinkedQueue<>();
 
     private Harbour harbour = new LocalHarbour();
 
 
-    private static final int INIT_TOPIC_FILES = 128;
+    private final int INIT_TOPIC_FILES = 128;
 
 
     // topic file full path approximately takes 2 times the memory of file name
     // but the concat time elapse is 11 times the time of get full path directly
-    private static Map<String, List<String>> topicFileFullNameMap = new HashMap<>();
+    private Map<String, List<String>> topicFileFullNameMap = new HashMap<>();
 
-    private static Map<String, List<String>> topicFileNameMap = new HashMap<>();
+    private Map<String, List<String>> topicFileNameMap = new HashMap<>();
 
     public static TopicCenter getInstance() {
         return Singleton.INSTANCE;
@@ -77,6 +77,43 @@ public class LocalTopicCenter implements TopicCenter {
 
 
     private LocalTopicCenter() {
+        {
+            SimpleFileVisitor<Path> finder = new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attr) throws IOException {
+                    if (attr.isDirectory()) {
+                        String topicName = file.getFileName().toString();
+                        topicPathMap.put(topicName, new InnerTopicInfo(topicRoot + CargoFileUtil.getFileSeperator() + topicName));
+
+                        // load old topic info
+                        String folderName = topicRoot + CargoFileUtil.getFileSeperator() + topicName;
+                        String fileName = folderName + CargoFileUtil.getFileSeperator() + FileName.DATE_FORMAT.format(Calendar.getInstance().getTime()) + FileName.START_IND + FileName.SUFFIX;
+                        Topic createdTopic = new Topic(topicName, fileName);
+                        topicObjMap.put(topicName, createdTopic);
+                        topicNames = topicPathMap.keySet();
+                    }
+
+                    return super.visitFile(file, attr);
+                }
+            };
+
+            // check if the basic topicRoot is created
+            File file = topicRoot.toFile();
+            if (!file.exists()) {
+                boolean isCreated = file.mkdirs();
+                if (!isCreated) {
+                    LOGGER.error("creating topic folder failed!");
+                }
+            }
+
+            try {
+                // not scanning symlink path, max depth is 1
+                Files.walkFileTree(topicRoot, Collections.EMPTY_SET, 1, finder);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         for (String topicName : topicNames) {
             ArrayList<String> fileFullNames = createFileList();
 
@@ -112,44 +149,6 @@ public class LocalTopicCenter implements TopicCenter {
         }
     }
 
-
-    static {
-        SimpleFileVisitor<Path> finder = new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attr) throws IOException {
-                if (attr.isDirectory()) {
-                    String topicName = file.getFileName().toString();
-                    topicPathMap.put(topicName, new InnerTopicInfo(topicFolder + CargoFileUtil.getFileSeperator() + topicName));
-
-                    // load old topic info
-                    String folderName = topicFolder + CargoFileUtil.getFileSeperator() + topicName;
-                    String fileName = folderName + CargoFileUtil.getFileSeperator() + FileName.DATE_FORMAT.format(Calendar.getInstance().getTime()) + FileName.START_IND + FileName.SUFFIX;
-                    Topic createdTopic = new Topic(topicName, fileName);
-                    topicObjMap.put(topicName, createdTopic);
-                    topicNames = topicPathMap.keySet();
-                }
-
-                return super.visitFile(file, attr);
-            }
-        };
-
-        // check if the basic topicFolder is created
-        File file = topicFolder.toFile();
-        if (!file.exists()) {
-            boolean isCreated = file.mkdirs();
-            if (!isCreated) {
-                LOGGER.error("creating topic folder failed!");
-            }
-        }
-
-        try {
-            // not scanning symlink path, max depth is 1
-            java.nio.file.Files.walkFileTree(topicFolder, Collections.EMPTY_SET, 1, finder);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public Set<Topic> getTopics() {
         return new HashSet<>(topicObjMap.values());
@@ -173,7 +172,7 @@ public class LocalTopicCenter implements TopicCenter {
         }
 
         // make the topic folder
-        String folderName = topicFolder + CargoFileUtil.getFileSeperator() + topicName;
+        String folderName = topicRoot + CargoFileUtil.getFileSeperator() + topicName;
         File folder = new File(folderName);
         if (!folder.exists() || !folder.isDirectory()) {
             boolean folderCreated = new File(folderName).mkdir();
@@ -185,16 +184,10 @@ public class LocalTopicCenter implements TopicCenter {
         String fileName = CargoFileUtil.dateStr(Calendar.getInstance().getTime()) + FileName.START_IND + FileName.SUFFIX;
         String fileFullName = folderName + CargoFileUtil.getFileSeperator() + fileName;
 
-        boolean fileCreated = harbour.create(fileFullName);
-
-        if (!fileCreated) {
-            // not delete the folder: maybe there are some files in the folder
-            return false;
-        }
-
-        topicPathMap.put(topicName, new InnerTopicInfo(topicFolder + CargoFileUtil.getFileSeperator() + topicName));
-
         Topic createdTopic = new Topic(topicName, fileFullName);
+        createdTopic.newTopicFile();
+
+        topicPathMap.put(topicName, new InnerTopicInfo(topicRoot + CargoFileUtil.getFileSeperator() + topicName));
 
         topicObjMap.put(topicName, createdTopic);
         topicAdded(createdTopic);
@@ -264,7 +257,7 @@ public class LocalTopicCenter implements TopicCenter {
         }
     }
 
-    private static ArrayList<String> createFileList() {
+    private ArrayList<String> createFileList() {
         return new ArrayList<String>(INIT_TOPIC_FILES);
     }
 
