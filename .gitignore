@@ -21,3 +21,7 @@ out/
 .idea/
 
 .DS_Store
+
+
+# tmp path
+testtopic/*

@@ -8,6 +8,10 @@ import xyz.aornice.tofq.utils.impl.LocalExtractionHelper;
 import java.util.List;
 
 /**
+ *
+ * cache the message offsets in a file
+ *
+ *
  * Created by shen on 2017/4/21.
  */
 public class FileOffsetCache extends LocalDepositCache<Long> implements MessageListener {

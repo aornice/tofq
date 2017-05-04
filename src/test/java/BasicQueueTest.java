@@ -24,7 +24,7 @@ public class BasicQueueTest {
     private static final Cargo[] cargoes = new Cargo[10];
 
     @Before
-    public void init() {
+    public void init() throws InterruptedException {
         topicCenter = LocalTopicCenter.getInstance();
         extraction = new LocalExtraction();
         deposition = LocalDeposition.getInstance();
@@ -34,7 +34,6 @@ public class BasicQueueTest {
     }
 
     private void registerTopics() {
-        topicCenter.remove(TOPIC_NAME_1);
         topicCenter.register(TOPIC_NAME_1);
         topicCenter.register(TOPIC_NAME_2);
         topic1 = topicCenter.getTopic(TOPIC_NAME_1);
@@ -61,7 +60,7 @@ public class BasicQueueTest {
 
     @After
     public void cleanup() {
-        topicCenter.remove(TOPIC_NAME_1);
-        topicCenter.remove(TOPIC_NAME_2);
+//        topicCenter.remove(TOPIC_NAME_1);
+//        topicCenter.remove(TOPIC_NAME_2);
     }
 }

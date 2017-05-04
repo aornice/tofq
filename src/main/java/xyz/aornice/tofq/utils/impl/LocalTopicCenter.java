@@ -210,7 +210,9 @@ public class LocalTopicCenter implements TopicCenter {
     @Override
     public boolean remove(String topicName) {
         String folderName = getTopicFolder(topicName);
-//        String folderName = topicFolder + CargoFileUtil.getFileSeperator() + topicName;
+        if (folderName == null){
+            return false;
+        }
         // delete the topic folder
         boolean fileDeleted = harbour.remove(folderName);
         if (!fileDeleted) {
@@ -229,7 +231,12 @@ public class LocalTopicCenter implements TopicCenter {
 
     @Override
     public String getTopicFolder(String topic) {
-        return topicPathMap.get(topic).getPath();
+        InnerTopicInfo topicInfo = topicPathMap.get(topic);
+        if (topicInfo == null){
+            return null;
+        }else {
+            return topicInfo.getPath();
+        }
     }
 
     @Override
@@ -252,7 +259,9 @@ public class LocalTopicCenter implements TopicCenter {
     }
 
     private void topicDeleted(Topic topic) {
-        topicListeners.stream().forEach(listener -> listener.topicDeleted(topic));
+        if (topic != null) {
+            topicListeners.stream().forEach(listener -> listener.topicDeleted(topic));
+        }
     }
 
     private static ArrayList<String> createFileList() {
