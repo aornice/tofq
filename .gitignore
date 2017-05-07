@@ -24,3 +24,7 @@ out/
 testtopic/
 
 .DS_Store
+
+
+# tmp path
+testtopic/*
