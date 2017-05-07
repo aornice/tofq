@@ -17,6 +17,9 @@ import xyz.aornice.tofq.utils.TopicCenter;
 import xyz.aornice.tofq.utils.impl.LocalExtractionHelper;
 import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -55,7 +58,7 @@ public class LocalExtractionHelperTest {
         topicCenter.register(TOPIC_NAME_1);
     }
 
-    @Test
+//    @Test
     public void fileName() throws InterruptedException {
         deposition.addDepositionListener((topic, cargoId) -> {
             if (cargoId == capability/2 ){
@@ -77,12 +80,22 @@ public class LocalExtractionHelperTest {
         assertEquals(capability, extractionHelper.nextStartIndex(0));
 
 
+        int depositCount = capability+1;
+
+        CountDownLatch latch = new CountDownLatch(depositCount);
+
+
         deposition.addDepositionListener((topic, cargoId) -> {
-            if (cargoId == capability ){
-                assertEquals(0, extractionHelper.startIndex(TOPIC_NAME_1, topicCenter.topicOldestFile(TOPIC_NAME_1)));
-            }
+            PublicMethods.notified(topic, latch, depositCount);
         });
-        depositCargoes(topicCenter.getTopic(TOPIC_NAME_1), capability+1);
+
+        depositCargoes(topicCenter.getTopic(TOPIC_NAME_1), depositCount);
+
+        latch.await(20000, TimeUnit.MICROSECONDS);
+
+        assertEquals(0, extractionHelper.startIndex(TOPIC_NAME_1, topicCenter.topicOldestFile(TOPIC_NAME_1)));
+
+        System.out.println("============\nTest Finish\n============");
     }
 
 

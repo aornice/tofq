@@ -5,12 +5,13 @@ import org.junit.*;
 import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.depostion.CargoDeposition;
-import xyz.aornice.tofq.harbour.LocalHarbour;
 import xyz.aornice.tofq.utils.TopicCenter;
 import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
@@ -39,8 +40,8 @@ public class LocalTopicCenterTest {
         topic1 = topicCenter.getTopic(TOPIC_NAME_1);
     }
 
-    private void depositCargoes() throws InterruptedException {
-        for (int i = 0; i < cargoes.length; i++) {
+    private void depositCargoes(int count) throws InterruptedException {
+        for (int i = 0; i < count; i++) {
             cargoes[i] = new Cargo(topic1, topic1.incrementAndGetId(), ("message" + i).getBytes());
             deposition.write(cargoes[i]);
         }
@@ -54,18 +55,29 @@ public class LocalTopicCenterTest {
 
     @Test
     public void readTopics() throws InterruptedException {
+        int count = 10;
+        CountDownLatch latch = new CountDownLatch(count);
         deposition.addDepositionListener((topic, cargoId) -> {
-            if (cargoId == cargoes.length-1){
-                assertEquals(9, topicCenter.getTopic(TOPIC_NAME_1).getMaxStoredId());
-                System.out.println(topicCenter.getTopic(TOPIC_NAME_1).getCount());
-            }
+            PublicMethods.notified(topic1, latch, count);
         });
-        depositCargoes();
+        depositCargoes(count);
+
+        latch.await(2000, TimeUnit.MILLISECONDS);
+
+        assertEquals(9, topicCenter.getTopic(TOPIC_NAME_1).getMaxStoredId());
     }
 
     @Test
     public void fileNames() throws InterruptedException {
-        depositCargoes();
+        int count = 9;
+        CountDownLatch latch = new CountDownLatch(count);
+
+        deposition.addDepositionListener((topic, cargoId) -> {
+            PublicMethods.notified(topic1, latch, count);
+        });
+        depositCargoes(count);
+
+        latch.await(2000, TimeUnit.MILLISECONDS);
 
         assertEquals(topicCenter.topicOldestFile(TOPIC_NAME_1), topicCenter.iThFile(TOPIC_NAME_1, 0));
 
