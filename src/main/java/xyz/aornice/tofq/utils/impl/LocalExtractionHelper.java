@@ -1,9 +1,12 @@
 package xyz.aornice.tofq.utils.impl;
 
+import com.sun.org.apache.bcel.internal.generic.INSTANCEOF;
+import org.omg.PortableInterceptor.INACTIVE;
 import xyz.aornice.tofq.TopicFileFormat.Header;
 import xyz.aornice.tofq.TopicFileFormat.Offset;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.harbour.LocalHarbour;
+import xyz.aornice.tofq.impl.LocalExtraction;
 import xyz.aornice.tofq.utils.ExtractionHelper;
 import xyz.aornice.tofq.utils.TopicCenter;
 
@@ -25,12 +28,22 @@ public class LocalExtractionHelper implements ExtractionHelper {
     }
 
     private static class Singleton{
-        static ExtractionHelper INSTANCE = new LocalExtractionHelper();
+        static LocalExtractionHelper INSTANCE = new LocalExtractionHelper();
+        static{
+            init(INSTANCE);
+        }
     }
 
     private LocalExtractionHelper() {
-        startIndexMap = new HashMap<>(topicCenter.getTopicNames().size());
-        harbour = new LocalHarbour("path");
+    }
+
+    private static void init(LocalExtractionHelper instance){
+        instance.startIndexMap = new HashMap<>(instance.topicCenter.getTopicNames().size());
+        instance.harbour = new LocalHarbour();
+    }
+
+    public static void TEST_InitInstance(){
+        init(Singleton.INSTANCE);
     }
 
     @Override

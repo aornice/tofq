@@ -30,6 +30,11 @@ public class LocalHarbour implements Harbour {
     public LocalHarbour() {
     }
 
+    public static void TEST_InitFields(){
+        bytesMap.clear();
+        mappedFilesMap.clear();
+    }
+
     public LocalHarbour(String location) {
         this.location = location;
     }

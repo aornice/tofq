@@ -57,6 +57,10 @@ public class Topic {
         return maxId.incrementAndGet();
     }
 
+    public long maxID(){
+        return maxId.get();
+    }
+
     public long getMaxStoredId() {
         return maxStoredId.get();
     }
@@ -89,7 +93,7 @@ public class Topic {
         String date = FileName.DATE_FORMAT.format(new Date());
         final String basePath = Setting.TOPIC_ROOT + File.separator + getName() + File.separator;
         int num = 0, prefixLen = basePath.length();
-        if (newestFile.substring(prefixLen, prefixLen + 8).equals(date))
+        if (newestFile != null && newestFile.substring(prefixLen, prefixLen + 8).equals(date))
             num = Integer.valueOf(newestFile.substring(prefixLen + 8, newestFile.length() - 4)) + 1;
         final String newTopicFile = basePath + date + num + ".tof";
 

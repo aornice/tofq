@@ -1,14 +1,17 @@
 package extraction;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import deposition.LocalDepositionNonSingleton;
+import org.junit.*;
+import xyz.aornice.tofq.Cargo;
+import xyz.aornice.tofq.Topic;
+import xyz.aornice.tofq.depostion.CargoDeposition;
 import xyz.aornice.tofq.utils.TopicCenter;
 import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
 
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
@@ -19,71 +22,84 @@ public class LocalTopicCenterTest {
 
     private TopicCenter topicCenter;
     private static final String TOPIC_NAME_1 = "test_topic1";
-    private static final String TOPIC_NAME_2 = "test_topic2";
+
+    private CargoDeposition deposition;
+    private static Topic topic1;
+    private static final Cargo[] cargoes = new Cargo[10];
 
 
     @Before
-    public void init() {
+    public void init(){
         topicCenter = LocalTopicCenter.getInstance();
+        PublicMethods.initFields();
+
+        deposition = new LocalDepositionNonSingleton();
+        deposition.start();
+
+        topicCenter.register(TOPIC_NAME_1);
+        topic1 = topicCenter.getTopic(TOPIC_NAME_1);
+    }
+
+    private void depositCargoes(int count) throws InterruptedException {
+        for (int i = 0; i < count; i++) {
+            cargoes[i] = new Cargo(topic1, topic1.incrementAndGetId(), ("message" + i).getBytes());
+            deposition.write(cargoes[i]);
+        }
     }
 
     @Test
-    public void createTopic() {
-//        assertEquals(true, topicCenter.register(TOPIC_NAME_1));
-//        assertEquals(true, topicCenter.register(TOPIC_NAME_2));
-//        assertEquals(false, topicCenter.register(TOPIC_NAME_2));
-//        assertEquals(TOPIC_NAME_1, topicCenter.getTopic(TOPIC_NAME_1).getName());
-//        assertEquals(-1, topicCenter.getTopic(TOPIC_NAME_1).getMaxStoredId());
-//
-//        assertEquals(true, topicCenter.existsTopic(TOPIC_NAME_1));
-//        assertEquals(true, topicCenter.existsTopic(TOPIC_NAME_2));
-    }
-
-
-    @Test
-    public void readTopics(){
-//        assertEquals(2, topicCenter.getTopics().size());
-//        assertEquals(-1, topicCenter.getTopic(TOPIC_NAME_1).getMaxStoredId());
-//        assertEquals(0, topicCenter.getTopic(TOPIC_NAME_1).getCount());
+    public void topicInfo(){
+        assertEquals(true, topicCenter.existsTopic(TOPIC_NAME_1));
+        assertEquals(-1, topicCenter.getTopic(TOPIC_NAME_1).getMaxStoredId());
     }
 
     @Test
-    public void fileNames(){
-//        assertEquals("testtopic/topic_test_topic1/201704290.tof", topicCenter.topicNewestFile(TOPIC_NAME_1));
-//        assertEquals("testtopic/topic_test_topic1/201704280.tof",topicCenter.topicOldestFile(TOPIC_NAME_1));
-//        assertEquals("201704290.tof",topicCenter.topicNewestFileShortName(TOPIC_NAME_1));
-//        assertEquals("201704280.tof",topicCenter.topicOldestFileShortName(TOPIC_NAME_1));
-//
-//        assertEquals(topicCenter.topicOldestFile(TOPIC_NAME_1), topicCenter.iThFile(TOPIC_NAME_1, 0));
-//
-//        assertEquals("testtopic/topic_test_topic1", topicCenter.getTopicFolder(TOPIC_NAME_1));
-//
-//        assertEquals(topicCenter.topicNewestFile(TOPIC_NAME_1), topicCenter.topicsNewestFile().get(TOPIC_NAME_1));
-//        assertEquals(topicCenter.topicNewestFile(TOPIC_NAME_2), topicCenter.topicsNewestFile().get(TOPIC_NAME_2));
-//
-//        Calendar calendar = Calendar.getInstance();
-//        Date today = calendar.getTime();
-//        calendar.add(Calendar.DAY_OF_MONTH, -1);
-//        Date yesterday = calendar.getTime();
-//        calendar.add(Calendar.DAY_OF_MONTH,2);
-//        Date tomorrow = calendar.getTime();
-//
-//
-//        System.out.println(Arrays.toString(topicCenter.dateRangedFiles(TOPIC_NAME_1, yesterday, today).toArray()));
-//        System.out.println(Arrays.toString(topicCenter.dateRangedFiles(TOPIC_NAME_1, yesterday, tomorrow).toArray()));
-//        System.out.println(Arrays.toString(topicCenter.dateRangedFiles(TOPIC_NAME_1, today, tomorrow).toArray()));
+    public void readTopics() throws InterruptedException {
+        int count = 10;
+        CountDownLatch latch = new CountDownLatch(count);
+        deposition.addDepositionListener((topic, cargoId) -> {
+            PublicMethods.notified(topic1, latch, count);
+        });
+        depositCargoes(count);
+
+        latch.await(2000, TimeUnit.MILLISECONDS);
+
+        assertEquals(9, topicCenter.getTopic(TOPIC_NAME_1).getMaxStoredId());
+    }
+
+    @Test
+    public void fileNames() throws InterruptedException {
+        int count = 9;
+        CountDownLatch latch = new CountDownLatch(count);
+
+        deposition.addDepositionListener((topic, cargoId) -> {
+            PublicMethods.notified(topic1, latch, count);
+        });
+        depositCargoes(count);
+
+        latch.await(2000, TimeUnit.MILLISECONDS);
+
+        assertEquals(topicCenter.topicOldestFile(TOPIC_NAME_1), topicCenter.iThFile(TOPIC_NAME_1, 0));
+
+        assertEquals(topicCenter.topicNewestFile(TOPIC_NAME_1), topicCenter.topicsNewestFile().get(TOPIC_NAME_1));
+
+        Calendar calendar = Calendar.getInstance();
+        Date today = calendar.getTime();
+        calendar.add(Calendar.DAY_OF_MONTH, -1);
+        Date yesterday = calendar.getTime();
+        calendar.add(Calendar.DAY_OF_MONTH,2);
+        Date tomorrow = calendar.getTime();
 
 
-//        assertEquals(1,topicCenter.dateRangedFiles(TOPIC_NAME_1, today, tomorrow).size());
-//        assertEquals(0, topicCenter.dateRangedFiles(TOPIC_NAME_1, yesterday, today).size());
-//        assertEquals(1, topicCenter.dateRangedFiles(TOPIC_NAME_1, yesterday, tomorrow).size());
-
+        assertEquals(0, topicCenter.dateRangedFiles(TOPIC_NAME_1, yesterday, today).size());
+        assertEquals(1, topicCenter.dateRangedFiles(TOPIC_NAME_1, yesterday, tomorrow).size());
+        assertEquals(1, topicCenter.dateRangedFiles(TOPIC_NAME_1, today, tomorrow).size());
     }
 
     @After
-    public void cleanup() {
-//        assertEquals(true, topicCenter.remove(TOPIC_NAME_1));
-//        assertEquals(true, topicCenter.remove(TOPIC_NAME_2));
+    public void cleanup() throws InterruptedException {
+        topicCenter.remove(TOPIC_NAME_1);
+        PublicMethods.cleanupDeposition(deposition);
     }
 
 }
