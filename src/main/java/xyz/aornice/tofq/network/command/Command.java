@@ -9,16 +9,36 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * {@link Command} represents command sent between clients and servers, it has different {@link CommandType}.
- * A command contains two parts, one is body, the other is body.
+ * The specific instruction of each command is determined by its {@link #code} field.
+ * All data needed in the command is provided by {@link #body} field.
  * Created by drfish on 07/05/2017.
  */
 public class Command {
     private static final Logger logger = LoggerFactory.getLogger(Command.class);
     private static AtomicInteger requestId = new AtomicInteger(0);
+    /**
+     * communicating code between C/S, refer {@link xyz.aornice.tofq.network.command.protocol.RequestCode} and {@link xyz.aornice.tofq.network.command.protocol.ResponseCode}
+     */
     private int code;
+    /**
+     * both of the request and the response of a communication have the same opaque code
+     */
     private int opaque = requestId.getAndIncrement();
+    /**
+     * type of the command
+     */
     private CommandType type;
+    /**
+     * mark of one way command
+     */
+    private boolean isOneway;
+    /**
+     * fields in the commandBody
+     */
     private Map<String, String> fields;
+    /**
+     * real command instance
+     */
     private transient CommandBody body;
 
     private Command() {
@@ -75,6 +95,14 @@ public class Command {
 
     public void setType(CommandType type) {
         this.type = type;
+    }
+
+    public boolean isOneway() {
+        return isOneway;
+    }
+
+    public void setOneway(boolean oneway) {
+        isOneway = oneway;
     }
 
     public Map<String, String> getFields() {

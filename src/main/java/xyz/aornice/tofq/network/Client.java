@@ -9,5 +9,7 @@ import xyz.aornice.tofq.network.command.Command;
 public interface Client extends State {
     Command invokeSync(String addr, Command request, long timeoutMillis);
 
-    void invokeAsync(String addr, Command request, long timeoutMillis);
+    void invokeAsync(String addr, Command request, long timeoutMillis, AsyncCallback asyncCallback);
+
+    void invokeOneway(String addr, Command request, long timeoutMillis);
 }
