@@ -1,6 +1,7 @@
 package xyz.aornice.tofq.network.netty;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -60,9 +61,9 @@ public class TofqNettyCodecFactory {
                 ByteBuffer byteBuffer = frame.nioBuffer();
                 return codec.decode(byteBuffer);
             } catch (Exception e) {
-                logger.error("{} decode exception",ctx.channel().remoteAddress());
+                logger.error("{} decode exception", ctx.channel().remoteAddress());
                 NetworkHelper.closeChannel(ctx.channel());
-            }finally {
+            } finally {
                 if (frame != null) {
                     frame.release();
                 }
@@ -71,5 +72,11 @@ public class TofqNettyCodecFactory {
         }
     }
 
+    public ChannelHandler getDecoder() {
+        return new NettyDecoder();
+    }
 
+    public ChannelHandler getEncoder() {
+        return new NettyEncoder();
+    }
 }

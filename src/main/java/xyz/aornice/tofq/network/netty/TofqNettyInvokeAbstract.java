@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.network.AsyncCallback;
 import xyz.aornice.tofq.network.ResponseFuture;
+import xyz.aornice.tofq.network.codec.Codec;
 import xyz.aornice.tofq.network.command.Command;
 import xyz.aornice.tofq.network.command.protocol.ResponseCode;
 import xyz.aornice.tofq.network.exception.NetworkSendRequestException;
@@ -325,5 +326,10 @@ public abstract class TofqNettyInvokeAbstract {
                 throw new NetworkTimeoutException(message);
             }
         }
+    }
+
+    protected Codec getCodec() {
+        // TODO choose proper codec
+        return null;
     }
 }
