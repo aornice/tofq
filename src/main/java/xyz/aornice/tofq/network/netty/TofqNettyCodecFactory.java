@@ -7,7 +7,6 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.MessageToByteEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import xyz.aornice.tofq.network.NetworkHelper;
 import xyz.aornice.tofq.network.codec.Codec;
 import xyz.aornice.tofq.network.command.Command;
 
@@ -43,7 +42,7 @@ public class TofqNettyCodecFactory {
                 if (command != null) {
                     logger.error(command.toString());
                 }
-                NetworkHelper.closeChannel(ctx.channel());
+                ctx.channel().close();
             }
         }
     }
@@ -71,7 +70,7 @@ public class TofqNettyCodecFactory {
                 return codec.decode(byteBuffer);
             } catch (Exception e) {
                 logger.error("{} decode exception", ctx.channel().remoteAddress());
-                NetworkHelper.closeChannel(ctx.channel());
+                ctx.channel().close();
             } finally {
                 if (frame != null) {
                     frame.release();
