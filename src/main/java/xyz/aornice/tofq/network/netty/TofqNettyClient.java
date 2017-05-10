@@ -11,8 +11,14 @@ import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.network.AsyncCallback;
 import xyz.aornice.tofq.network.Client;
 import xyz.aornice.tofq.network.command.Command;
+import xyz.aornice.tofq.network.exception.NetworkConnectException;
+import xyz.aornice.tofq.network.exception.NetworkSendRequestException;
+import xyz.aornice.tofq.network.exception.NetworkTimeoutException;
+import xyz.aornice.tofq.network.exception.NetworkTooManyRequestsException;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -70,22 +76,80 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
 
     @Override
     public void shutdown() {
-        // clear channel map
+        try {
+            // clear channel map
+            for (Map.Entry<String, ChannelWrapper> entry : this.channelMap.entrySet()) {
+                closeChannel(entry.getKey(), entry.getValue().getChannel());
+            }
+            this.channelMap.clear();
+            this.eventLoopGroupWorker.shutdownGracefully();
+            if (this.defaultEventExecutorGroup != null) {
+                this.defaultEventExecutorGroup.shutdownGracefully();
+            }
+        } catch (Exception e) {
+            logger.error("client shutdown exception {}", e);
+        }
+        if (this.publicExecutor != null) {
+            try {
+                this.publicExecutor.shutdown();
+            } catch (Exception e) {
+                logger.error("server shutdown exception {}", e);
+            }
+        }
     }
 
     @Override
-    public Command invokeSync(String address, Command request, long timeoutMillis) {
-        return null;
+    public Command invokeSync(String address, Command request, long timeoutMillis) throws InterruptedException, NetworkConnectException, NetworkTimeoutException, NetworkSendRequestException {
+        Channel channel = getOrCreateChannel(address);
+        if (channel != null && channel.isActive()) {
+            try {
+                Command response = this.doInvokeSync(channel, request, timeoutMillis);
+                return response;
+            } catch (NetworkTimeoutException e) {
+                // TODO whether should close channel when response timeout
+                logger.warn("client invokeSync: wait response time out for {}", address);
+                throw e;
+            } catch (NetworkSendRequestException e) {
+                logger.warn("client invokeSync: send request exception, close {}", address);
+                this.closeChannel(address, channel);
+                throw e;
+            }
+        } else {
+            closeChannel(address, channel);
+            throw new NetworkConnectException(address);
+        }
     }
 
     @Override
-    public void invokeAsync(String address, Command request, long timeoutMillis, AsyncCallback asyncCallback) {
+    public void invokeAsync(String address, Command request, long timeoutMillis, AsyncCallback asyncCallback) throws InterruptedException, NetworkConnectException, NetworkSendRequestException, NetworkTooManyRequestsException {
+        Channel channel = getOrCreateChannel(address);
+        if (channel != null && channel.isActive()) {
+            try {
+                this.doInvokeAsync(channel, request, timeoutMillis, asyncCallback);
+            } catch (NetworkSendRequestException e) {
+                logger.warn("client invokeAsync: send request exception, close {}", address);
+                closeChannel(address, channel);
+                throw e;
+            }
+        } else {
+            closeChannel(address, channel);
+            throw new NetworkConnectException(address);
+        }
 
     }
 
     @Override
-    public void invokeOneway(String address, Command request, long timeoutMillis) {
-
+    public void invokeOneway(String address, Command request, long timeoutMillis) throws InterruptedException, NetworkTooManyRequestsException, NetworkTimeoutException, NetworkSendRequestException {
+        Channel channel = getOrCreateChannel(address);
+        if (channel != null && channel.isActive()) {
+            try {
+                this.doInvokeOneway(channel, request, timeoutMillis);
+            } catch (NetworkSendRequestException e) {
+                logger.warn("client invokeOneway: send request exception, close {}", address);
+                closeChannel(address, channel);
+                throw e;
+            }
+        }
     }
 
     private Channel getOrCreateChannel(String address) throws InterruptedException {
@@ -120,7 +184,7 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
                 this.channelMapLock.unlock();
             }
         } else {
-            logger.warn("try to get channel map lock timeout");
+            logger.warn("create channel: try to get channel map lock timeout");
         }
         if (channelWrapper != null) {
             ChannelFuture channelFuture = channelWrapper.getChannelFuture();
@@ -141,11 +205,52 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
         if (channel == null) {
             return;
         }
+        String remoteAddress = address == null ? getAddressFromChannel(channel) : address;
+        try {
+            if (this.channelMapLock.tryLock(CHANNEL_MAP_LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+                try {
+                    boolean removeOld = true;
+                    ChannelWrapper prevChannelWrapper = this.channelMap.get(remoteAddress);
+                    if (prevChannelWrapper == null) {
+                        removeOld = false;
+                    } else if (prevChannelWrapper.getChannel() != channel) {
+                        removeOld = false;
+                    }
+                    if (removeOld) {
+                        this.channelMap.remove(remoteAddress);
+                    }
+                    channel.close();
+                } catch (Exception e) {
+                    logger.error("close channel of {} failed {}", remoteAddress, e);
+                } finally {
+                    this.channelMapLock.unlock();
+                }
+            } else {
+                logger.warn("close channel: try to get channel map lock timeout");
+            }
+        } catch (InterruptedException e) {
+            logger.error("close channel: exception {}", e);
+        }
 
     }
 
+    private String getAddressFromChannel(Channel channel) {
+        if (channel == null) {
+            return "";
+        }
+        SocketAddress remote = channel.remoteAddress();
+        String address = remote != null ? remote.toString() : "";
+        if (address.length() > 0) {
+            int index = address.lastIndexOf("/");
+            if (index >= 0) {
+                return address.substring(index + 1);
+            }
+        }
+        return address;
+    }
+
     private InetSocketAddress string2InetSocketAddress(String address) {
-        String[] splits = address.split(";");
+        String[] splits = address.split(":");
         InetSocketAddress socketAddress = new InetSocketAddress(splits[0], Integer.valueOf(splits[1]));
         return socketAddress;
     }
@@ -153,7 +258,7 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
 
     @Override
     public ExecutorService getCallbackExecutor() {
-        return null;
+        return this.publicExecutor;
     }
 
     class TofqClientHandler extends SimpleChannelInboundHandler<Command> {

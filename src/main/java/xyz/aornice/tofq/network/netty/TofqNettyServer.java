@@ -26,8 +26,8 @@ import java.util.concurrent.Executors;
 public class TofqNettyServer extends TofqNettyInvokeAbstract implements Server {
     private static final Logger logger = LoggerFactory.getLogger(TofqNettyServer.class);
     private final ServerBootstrap serverBootstrap;
-    private final EventLoopGroup eventLoopGroupBoss;
-    private final EventLoopGroup eventLoopGroupWorker;
+    private final EventLoopGroup bossGroup;
+    private final EventLoopGroup workerGroup;
     private final TofqNettyServerConfig serverConfig;
     private final ExecutorService publicExecutor;
     private int port;
@@ -47,15 +47,15 @@ public class TofqNettyServer extends TofqNettyInvokeAbstract implements Server {
         }
         this.publicExecutor = Executors.newFixedThreadPool(callbackExecutorCount);
 
-        this.eventLoopGroupBoss = new NioEventLoopGroup(1);
-        this.eventLoopGroupWorker = new NioEventLoopGroup(serverConfig.getServerSelectorCount());
+        this.bossGroup = new NioEventLoopGroup(1);
+        this.workerGroup = new NioEventLoopGroup(serverConfig.getServerSelectorCount());
     }
 
     @Override
     public void start() {
         this.defaultEventExecutorGroup = new DefaultEventExecutorGroup(serverConfig.getServerWorkerCount());
         TofqNettyCodecFactory codecFactory = new TofqNettyCodecFactory(getCodec());
-        this.serverBootstrap.group(this.eventLoopGroupBoss, this.eventLoopGroupWorker).channel(NioServerSocketChannel.class)
+        this.serverBootstrap.group(this.bossGroup, this.workerGroup).channel(NioServerSocketChannel.class)
                 .option(ChannelOption.TCP_NODELAY, true)
                 .option(ChannelOption.SO_SNDBUF, serverConfig.getServerSocketSndBufSize())
                 .option(ChannelOption.SO_RCVBUF, serverConfig.getServerSocketRcvBufSize())
@@ -84,8 +84,8 @@ public class TofqNettyServer extends TofqNettyInvokeAbstract implements Server {
     @Override
     public void shutdown() {
         try {
-            this.eventLoopGroupBoss.shutdownGracefully();
-            this.eventLoopGroupWorker.shutdownGracefully();
+            this.bossGroup.shutdownGracefully();
+            this.workerGroup.shutdownGracefully();
             if (this.defaultEventExecutorGroup != null) {
                 this.defaultEventExecutorGroup.shutdownGracefully();
             }
