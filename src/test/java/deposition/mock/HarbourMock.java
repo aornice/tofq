@@ -86,4 +86,9 @@ public class HarbourMock implements Harbour {
         logger.debug("Remove file {}", fileName);
         return true;
     }
+
+    @Override
+    public void put(String fileName, ByteBuffer buf, long offset) {
+
+    }
 }

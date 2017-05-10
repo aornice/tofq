@@ -1,5 +1,6 @@
 package xyz.aornice.tofq.harbour;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -95,4 +96,6 @@ public interface Harbour {
      * <code>false</code> otherwise
      */
     boolean remove(String fileName);
+
+    void put(String fileName, ByteBuffer buf, long offset);
 }

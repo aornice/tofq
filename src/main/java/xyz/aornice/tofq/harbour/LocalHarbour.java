@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -174,6 +175,11 @@ public class LocalHarbour implements Harbour {
             }
         }
         return false;
+    }
+
+    @Override
+    public void put(String fileName, ByteBuffer buf, long offset) {
+        put(fileName, buf.array(), offset);
     }
 
     private boolean deleteDir(File file) {
