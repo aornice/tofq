@@ -16,29 +16,35 @@ import xyz.aornice.tofq.furnisher.message.Operation;
 import xyz.aornice.tofq.furnisher.message.payload.Put;
 import xyz.aornice.tofq.furnisher.message.payload.PutBuilder;
 import xyz.aornice.tofq.furnisher.util.Varint32;
+import xyz.aornice.tofq.furnisher.util.support.ArraySortedMap;
 
 public class FurnisherTest {
 
     MessageBuilder msgBuilder = new MessageBuilder();
     PutBuilder putBuilder = new PutBuilder();
 
-//    @Test
-//    public void t() {
-//        ByteBuf buf = new PooledByteBufAllocator().buffer();
-//        buf.writeByte(1);
-//        buf.writeByte(1);
-//        ByteBuffer b = buf.nioBuffer();
-//        System.out.println(Arrays.toString(buf.array()));
-//        System.out.println(buf.refCnt());
-//        buf.setChar(1, 'c');
-//        System.out.println(Arrays.toString(buf.array()));
-//        System.out.println(Arrays.toString(b.array()));
-//        buf.release();
-////        System.out.println(Arrays.toString(buf.array()));
-//        System.out.println(Arrays.toString(b.array()));
-//    }
-
     @Test
+    public void testArraySortedMap() {
+        ArraySortedMap a = new ArraySortedMap(4);
+        a.add(0, 0);
+        a.add(1, 1);
+        a.add(3, 3);
+        a.add(4, 4);
+        assertEquals(4, a.size());
+        assertEquals(1, a.findLEAndClear(2));
+        assertEquals(2, a.size());
+        a.add(6, 6);
+        a.add(7, 7);
+        assertEquals(a.size(), 4);
+        a.add(9, 9);
+        a.add(10, 10);
+        a.add(11, 11);
+        assertEquals(7, a.size());
+        assertEquals(10, a.findLEAndClear(10));
+        assertEquals(1, a.size());
+    }
+
+//    @Test
     public void testMessageDecoder() {
 
 
