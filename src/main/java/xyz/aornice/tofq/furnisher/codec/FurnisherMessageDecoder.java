@@ -1,6 +1,7 @@
 package xyz.aornice.tofq.furnisher.codec;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import xyz.aornice.tofq.furnisher.message.MessageBuilder;
@@ -8,6 +9,7 @@ import xyz.aornice.tofq.furnisher.message.MessageBuilder;
 import java.util.List;
 
 
+@ChannelHandler.Sharable
 public class FurnisherMessageDecoder extends MessageToMessageDecoder<ByteBuf> {
 
     private MessageBuilder builder;

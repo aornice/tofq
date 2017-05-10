@@ -27,6 +27,14 @@ public interface CargoDeposition {
     void addDepositionListener(DepositionListener listener);
 
     /**
+     * thread-safe
+     * Add {@link DepositionListener} to {@link CargoDeposition}. CargoDeposition will notify
+     * the listener when the topic deposition has been done.
+     * @param listener - the listener to add
+     */
+    void addDepositionListener(Topic topic, DepositionListener listener);
+
+    /**
      * Start deposition task
      */
     void start();

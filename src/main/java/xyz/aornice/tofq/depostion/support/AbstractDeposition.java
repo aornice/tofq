@@ -11,7 +11,7 @@ import xyz.aornice.tofq.Setting;
 import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.depostion.CargoDeposition;
 import xyz.aornice.tofq.depostion.DepositionListener;
-import xyz.aornice.tofq.depostion.util.ConcurrentSuccessiveList;
+import xyz.aornice.tofq.depostion.util.support.ConcurrentSuccessiveList;
 import xyz.aornice.tofq.depostion.util.SuccessiveList;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.util.Memory;
@@ -110,6 +110,12 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
 
     @Override
     public void addDepositionListener(DepositionListener listener) {
+        listeners.add(listener);
+    }
+
+    @Override
+    public void addDepositionListener(Topic topic, DepositionListener listener) {
+        // need to complete in future
         listeners.add(listener);
     }
 
@@ -370,7 +376,7 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
                 long putOffset = count == 0 ? Data.OFFSET_BYTE :
                         harbour.getLong(file, Offset.OFFSET_BYTE + (count - 1) * Offset.OFFSET_SIZE_BYTE);
                 for (int i = start; i < end; i++) {
-                    harbour.put(file, cargoes.get(i).getData(), putOffset);
+                    harbour.put(file, cargoes.get(i).getDataArray(), putOffset);
                     putOffset += cargoes.get(i).size();
                 }
             }

@@ -7,4 +7,6 @@ public interface Recyclable extends ReferenceCounted {
 
     boolean releaseDeep();
 
+    void reset();
+
 }

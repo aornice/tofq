@@ -7,7 +7,7 @@ import xyz.aornice.tofq.furnisher.util.Varint32;
 import xyz.aornice.tofq.furnisher.util.support.AbstractBuilder;
 
 @ChannelHandler.Sharable
-public class MessageBuilder extends AbstractBuilder<MessageBuilder.Message> {
+public class MessageBuilder extends AbstractBuilder<Message> {
 
     public MessageBuilder() {
         super();
@@ -18,12 +18,12 @@ public class MessageBuilder extends AbstractBuilder<MessageBuilder.Message> {
     }
 
     public Message build(Operation op, Recyclable payload) {
-        return build().setOp(op).setPayload(payload);
+        return ((MessageImpl)build()).setOp(op).setPayload(payload);
     }
 
     @Override
     protected Message buildPartial() {
-        return new Message();
+        return new MessageImpl();
     }
 
     @Override
@@ -32,11 +32,11 @@ public class MessageBuilder extends AbstractBuilder<MessageBuilder.Message> {
         return build(op, op.getBuilder().build(in));
     }
 
-    public class Message extends AbstractBuilder.ElementAdapter {
+    class MessageImpl extends AbstractBuilder.ElementAdapter implements Message{
         private Operation op;
         private Recyclable payload;
 
-        Message() {
+        MessageImpl() {
         }
 
         @Override
@@ -58,12 +58,12 @@ public class MessageBuilder extends AbstractBuilder<MessageBuilder.Message> {
             payload.releaseDeep();
         }
 
-        Message setOp(Operation op) {
+        MessageImpl setOp(Operation op) {
             this.op = op;
             return this;
         }
 
-        Message setPayload(Recyclable payload) {
+        MessageImpl setPayload(Recyclable payload) {
             this.payload = payload;
             return this;
         }

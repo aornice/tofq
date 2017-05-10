@@ -10,8 +10,10 @@ import static org.junit.Assert.*;
 
 import xyz.aornice.tofq.furnisher.codec.FurnisherMessageDecoder;
 import xyz.aornice.tofq.furnisher.codec.FurnisherVarint32FrameDecoder;
+import xyz.aornice.tofq.furnisher.message.Message;
 import xyz.aornice.tofq.furnisher.message.MessageBuilder;
 import xyz.aornice.tofq.furnisher.message.Operation;
+import xyz.aornice.tofq.furnisher.message.payload.Put;
 import xyz.aornice.tofq.furnisher.message.payload.PutBuilder;
 import xyz.aornice.tofq.furnisher.util.Varint32;
 
@@ -20,15 +22,31 @@ public class FurnisherTest {
     MessageBuilder msgBuilder = new MessageBuilder();
     PutBuilder putBuilder = new PutBuilder();
 
+//    @Test
+//    public void t() {
+//        ByteBuf buf = new PooledByteBufAllocator().buffer();
+//        buf.writeByte(1);
+//        buf.writeByte(1);
+//        ByteBuffer b = buf.nioBuffer();
+//        System.out.println(Arrays.toString(buf.array()));
+//        System.out.println(buf.refCnt());
+//        buf.setChar(1, 'c');
+//        System.out.println(Arrays.toString(buf.array()));
+//        System.out.println(Arrays.toString(b.array()));
+//        buf.release();
+////        System.out.println(Arrays.toString(buf.array()));
+//        System.out.println(Arrays.toString(b.array()));
+//    }
+
     @Test
     public void testMessageDecoder() {
 
 
-        MessageBuilder.Message oMsg = msgBuilder.build(
+        Message oMsg = msgBuilder.build(
                 Operation.PUT,
                 putBuilder.build("faketopic", 2, Unpooled.copiedBuffer("Hello World", CharsetUtil.UTF_8))
         );
-        PutBuilder.Put oPut = (PutBuilder.Put) oMsg.getPayload();
+        Put oPut = (Put) oMsg.getPayload();
 
         ByteBuf buf = Unpooled.buffer();
 
@@ -57,10 +75,10 @@ public class FurnisherTest {
         assertTrue(ch.writeInbound(buf.duplicate()));
         assertTrue(ch.finish());
 
-        MessageBuilder.Message msg = ch.readInbound();
+        Message msg = ch.readInbound();
 
         assertEquals(msg.getOp(), oMsg.getOp());
-        PutBuilder.Put put = (PutBuilder.Put) msg.getPayload();
+        Put put = (Put) msg.getPayload();
         assertEquals(put.getTopic(), oPut.getTopic());
         assertEquals(put.getSeq(), oPut.getSeq());
         assertEquals(put.getData(), oPut.getData());

@@ -1,10 +1,11 @@
-package xyz.aornice.tofq.depostion.util;
+package xyz.aornice.tofq.depostion.util.support;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import xyz.aornice.tofq.Identifiable;
+import xyz.aornice.tofq.depostion.util.SuccessiveList;
 import xyz.aornice.tofq.util.Memory;
 import xyz.aornice.tofq.util.UnsafeMemory;
 

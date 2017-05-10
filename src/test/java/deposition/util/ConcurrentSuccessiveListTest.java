@@ -5,7 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import xyz.aornice.tofq.Cargo;
-import xyz.aornice.tofq.depostion.util.ConcurrentSuccessiveList;
+import xyz.aornice.tofq.depostion.util.support.ConcurrentSuccessiveList;
 
 import java.util.ArrayList;
 import java.util.List;

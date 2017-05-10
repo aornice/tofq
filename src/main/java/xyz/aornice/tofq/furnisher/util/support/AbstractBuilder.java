@@ -9,7 +9,7 @@ import xyz.aornice.tofq.util.support.MQueuePool;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-public abstract class AbstractBuilder<E extends AbstractBuilder.Element> implements Builder<E>{
+public abstract class AbstractBuilder<E extends Recyclable> implements Builder<E>{
 
     private final static int DEFAULT_INITIAL = 1 << 4;
 

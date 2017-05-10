@@ -4,9 +4,10 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.TypeParameterMatcher;
-import xyz.aornice.tofq.furnisher.message.MessageBuilder;
+import xyz.aornice.tofq.furnisher.message.Message;
+import xyz.aornice.tofq.furnisher.util.Recyclable;
 
-public abstract class MessageInboundHandler<M> extends ChannelInboundHandlerAdapter {
+public abstract class MessageInboundHandler<M extends Recyclable> extends ChannelInboundHandlerAdapter {
 
     private final TypeParameterMatcher matcher;
 
@@ -15,23 +16,24 @@ public abstract class MessageInboundHandler<M> extends ChannelInboundHandlerAdap
     }
 
     public boolean acceptInboundMessage(Object msg) throws Exception {
-        if (!(msg instanceof MessageBuilder.Message)) return false;
+        if (!(msg instanceof Message)) return false;
         @SuppressWarnings("unchecked")
-        MessageBuilder.Message imsg = (MessageBuilder.Message) msg;
+        Message imsg = (Message) msg;
         return matcher.match(imsg.getPayload());
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (acceptInboundMessage(msg)) {
+            M imsg = null;
             try {
                 @SuppressWarnings("unchecked")
-                MessageBuilder.Message message = (MessageBuilder.Message) msg;
-                @SuppressWarnings("unchecked")
-                M imsg = (M) message.getPayload();
+                Message message = (Message) msg;
+                imsg = (M) message.getPayload();
                 messageReceived(ctx, imsg);
             } finally {
                 ReferenceCountUtil.release(msg);
+                if (imsg != null) ReferenceCountUtil.release(imsg);
             }
         } else {
             ctx.fireChannelRead(msg);

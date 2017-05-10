@@ -51,7 +51,7 @@ public class FileContentCache extends LocalDepositCache<byte[]> implements Messa
         long hash = hashValue(cargo.getTopic(), cargo.getId());
         List<byte[]> fileContent = lruHashMap.get(hash);
         if (fileContent != null){
-            fileContent.add(cargo.getData());
+            fileContent.add(cargo.getDataArray());
         }
     }
 }

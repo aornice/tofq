@@ -1,5 +1,9 @@
 package xyz.aornice.tofq;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
@@ -8,12 +12,18 @@ import java.util.Arrays;
 public class Cargo implements Identifiable {
     private Topic topic;
     private long id;
-    private byte[] data;
+    private ByteBuf data;
 
     public Cargo() {
     }
 
     public Cargo(Topic topic, long id, byte[] data) {
+        this.topic = topic;
+        this.id = id;
+        this.data = Unpooled.wrappedBuffer(data);
+    }
+
+    public Cargo(Topic topic, long id, ByteBuf data) {
         this.topic = topic;
         this.id = id;
         this.data = data;
@@ -35,16 +45,30 @@ public class Cargo implements Identifiable {
         this.id = id;
     }
 
-    public byte[] getData() {
-        return data;
+    public ByteBuf getData() {
+        return data.retainedSlice();
     }
 
-    public void setData(byte[] data) {
+    public ByteBuffer getDataByteBuffer() {
+        return data.nioBuffer();
+    }
+
+    public byte[] getDataArray() {
+        byte[] bytes = new byte[data.readableBytes()];
+        data.getBytes(data.readerIndex(), bytes);
+        return bytes;
+    }
+
+    public void setData(ByteBuf data) {
         this.data = data;
     }
 
+    public void setData(byte[] data) {
+        this.data = Unpooled.wrappedBuffer(data);
+    }
+
     public int size() {
-        return data.length;
+        return data.readableBytes();
     }
 
     public boolean equals(Object obj) {
@@ -59,7 +83,7 @@ public class Cargo implements Identifiable {
 
     @Override
     public String toString() {
-        String description = String.format("topic: %s, id: %d, data: %s\n", topic.getName(), id, Arrays.toString(data));
+        String description = String.format("topic: %s, id: %d, data: %s\n", topic.getName(), id, Arrays.toString(getDataArray()));
         return description;
     }
 }
