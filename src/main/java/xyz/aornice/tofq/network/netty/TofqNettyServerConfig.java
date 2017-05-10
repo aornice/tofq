@@ -1,18 +1,42 @@
 package xyz.aornice.tofq.network.netty;
 
 /**
+ * Tofq server config
  * Created by drfish on 07/05/2017.
  */
 public class TofqNettyServerConfig {
+    /**
+     * port which is listened by server
+     */
     private int port = 31515;
+    /**
+     * server concurrent oneway requests' count
+     */
     private int serverOnewaySemaphoreValue = 256;
+    /**
+     * server concurrent asynchronous requests' count
+     */
     private int serverAsyncSemaphoreValue = 64;
+    /**
+     * server callback executors' count
+     */
     private int serverCallbackExecutorCount = 4;
+    /**
+     * server select pool's threads count in reactor model
+     */
     private int serverSelectorCount = 3;
+    /**
+     * server worker executors count
+     */
     private int serverWorkerCount = 8;
-
-    private int serverSocketSndBufSize = 65535;
-    private int serverSocketRcvBufSize = 65535;
+    /**
+     * server socket send buffer size
+     */
+    private int serverSocketSndBufSize = 1024;
+    /**
+     * server socket receive buffer size
+     */
+    private int serverSocketRcvBufSize = 1024;
 
     public int getPort() {
         return port;

@@ -5,7 +5,6 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.network.AsyncCallback;
@@ -29,14 +28,33 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
     private static final Logger logger = LoggerFactory.getLogger(TofqNettyClient.class);
+    /**
+     * client config
+     */
     private final TofqNettyClientConfig clientConfig;
+    /**
+     * bootstrap channels to use for clients
+     */
     private final Bootstrap bootstrap = new Bootstrap();
-    private final EventLoopGroup eventLoopGroupWorker;
-
+    /**
+     * handle all the events with the to-be-created Channel
+     */
+    private final EventLoopGroup workerGroup;
+    /**
+     * public thread pool to deal with callback methods
+     */
     private final ExecutorService publicExecutor;
-    private DefaultEventExecutorGroup defaultEventExecutorGroup;
+    /**
+     * cache ip address and its channel in a map
+     */
     private final ConcurrentMap<String, ChannelWrapper> channelMap = new ConcurrentHashMap<>();
+    /**
+     * lock for {@link #channelMap} modification
+     */
     private final Lock channelMapLock = new ReentrantLock();
+    /**
+     * maximum time to wait for the {@link #channelMapLock}
+     */
     private static final int CHANNEL_MAP_LOCK_TIMEOUT_MILLIS = 2000;
 
     public TofqNettyClient(TofqNettyClientConfig clientConfig) {
@@ -47,16 +65,14 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
         if (callbackExecutorCount <= 0) {
             callbackExecutorCount = 4;
         }
-
         this.publicExecutor = Executors.newFixedThreadPool(callbackExecutorCount);
-        this.eventLoopGroupWorker = new NioEventLoopGroup(1);
+        this.workerGroup = new NioEventLoopGroup(1);
     }
 
     @Override
     public void start() {
-        this.defaultEventExecutorGroup = new DefaultEventExecutorGroup(clientConfig.getClientWorkerCount());
         TofqNettyCodecFactory tofqNettyCodecFactory = new TofqNettyCodecFactory(getCodec());
-        this.bootstrap.group(this.eventLoopGroupWorker).channel(NioSocketChannel.class)
+        this.bootstrap.group(this.workerGroup).channel(NioSocketChannel.class)
                 .option(ChannelOption.TCP_NODELAY, true)
                 .option(ChannelOption.SO_KEEPALIVE, false)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, clientConfig.getConnectTimeoutMillis())
@@ -66,7 +82,6 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline().addLast(
-                                defaultEventExecutorGroup,
                                 tofqNettyCodecFactory.getEncoder(),
                                 tofqNettyCodecFactory.getDecoder(),
                                 new TofqClientHandler());
@@ -82,10 +97,8 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
                 closeChannel(entry.getKey(), entry.getValue().getChannel());
             }
             this.channelMap.clear();
-            this.eventLoopGroupWorker.shutdownGracefully();
-            if (this.defaultEventExecutorGroup != null) {
-                this.defaultEventExecutorGroup.shutdownGracefully();
-            }
+
+            this.workerGroup.shutdownGracefully();
         } catch (Exception e) {
             logger.error("client shutdown exception {}", e);
         }
@@ -93,7 +106,7 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
             try {
                 this.publicExecutor.shutdown();
             } catch (Exception e) {
-                logger.error("server shutdown exception {}", e);
+                logger.error("public callback executors shutdown exception {}", e);
             }
         }
     }
@@ -152,16 +165,27 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
         }
     }
 
+    /**
+     * get or create if there is not related channel with the ip address
+     *
+     * @param address ip address
+     * @return related channel
+     * @throws InterruptedException
+     */
     private Channel getOrCreateChannel(String address) throws InterruptedException {
+        // get channel from cache map
         ChannelWrapper channelWrapper = this.channelMap.get(address);
         if (channelWrapper != null && channelWrapper.isActive()) {
             return channelWrapper.getChannel();
         }
+        // create a new connection with ip address to get channel and update cache map
         if (this.channelMapLock.tryLock(CHANNEL_MAP_LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
             try {
                 boolean createNewConnection;
+                // double check
                 channelWrapper = this.channelMap.get(address);
                 if (channelWrapper != null) {
+                    // if the channel is active or hasn't been completed, there is no need to create new connection
                     if (channelWrapper.isActive()) {
                         return channelWrapper.getChannel();
                     } else if (!channelWrapper.getChannelFuture().isDone()) {
@@ -173,6 +197,7 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
                 } else {
                     createNewConnection = true;
                 }
+                //create new connection and update cache
                 if (createNewConnection) {
                     ChannelFuture channelFuture = this.bootstrap.connect(string2InetSocketAddress(address));
                     channelWrapper = new ChannelWrapper(channelFuture);
@@ -186,6 +211,7 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
         } else {
             logger.warn("create channel: try to get channel map lock timeout");
         }
+        // wait for the channel to complete its task or connecting
         if (channelWrapper != null) {
             ChannelFuture channelFuture = channelWrapper.getChannelFuture();
             if (channelFuture.awaitUninterruptibly(this.clientConfig.getConnectTimeoutMillis())) {
@@ -201,15 +227,23 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
         return null;
     }
 
+    /**
+     * close the channel with an ip address, must represent channel since ip address can be got from channel
+     *
+     * @param address ip address, can be {@code null}
+     * @param channel channel, cannot be {@code null}
+     */
     private void closeChannel(String address, Channel channel) {
         if (channel == null) {
             return;
         }
+        // get ip address if it is not presented
         String remoteAddress = address == null ? getAddressFromChannel(channel) : address;
         try {
             if (this.channelMapLock.tryLock(CHANNEL_MAP_LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
                 try {
                     boolean removeOld = true;
+                    // check if there is need to update cache map
                     ChannelWrapper prevChannelWrapper = this.channelMap.get(remoteAddress);
                     if (prevChannelWrapper == null) {
                         removeOld = false;
@@ -219,6 +253,7 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
                     if (removeOld) {
                         this.channelMap.remove(remoteAddress);
                     }
+                    // close the channel anyway
                     channel.close();
                 } catch (Exception e) {
                     logger.error("close channel of {} failed {}", remoteAddress, e);
@@ -234,6 +269,12 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
 
     }
 
+    /**
+     * get the remote address where the channel is connected to
+     *
+     * @param channel I/O channel
+     * @return remote address related to the channel
+     */
     private String getAddressFromChannel(Channel channel) {
         if (channel == null) {
             return "";
@@ -261,6 +302,9 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
         return this.publicExecutor;
     }
 
+    /**
+     * client handler to deal with inbound command messages' I/O process
+     */
     class TofqClientHandler extends SimpleChannelInboundHandler<Command> {
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, Command msg) throws Exception {
@@ -268,6 +312,10 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
         }
     }
 
+    /**
+     * {@link ChannelWrapper} is a wrapper class for {@link ChannelFuture} which represents the result of an asynchronous channel I/O operation
+     * This class's aim is just to simplify usage of state check of the channel, like method {@link #isActive()}
+     */
     static class ChannelWrapper {
         private final ChannelFuture channelFuture;
 
@@ -275,6 +323,12 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
             this.channelFuture = channelFuture;
         }
 
+
+        /**
+         * whether the channelFuture connects with a channel and the channel is active(connected)
+         *
+         * @return return {@code true} if so, else {@code false}
+         */
         public boolean isActive() {
             return this.channelFuture.channel() != null && this.channelFuture.channel().isActive();
         }

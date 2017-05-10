@@ -5,7 +5,6 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.network.AsyncCallback;
@@ -25,14 +24,30 @@ import java.util.concurrent.Executors;
  */
 public class TofqNettyServer extends TofqNettyInvokeAbstract implements Server {
     private static final Logger logger = LoggerFactory.getLogger(TofqNettyServer.class);
+    /**
+     * bootstrap serverChannel for server
+     */
     private final ServerBootstrap serverBootstrap;
+    /**
+     * main reactor in netty reactor pattern
+     */
     private final EventLoopGroup bossGroup;
+    /**
+     * sub reactor in netty reactor pattern
+     */
     private final EventLoopGroup workerGroup;
+    /**
+     * server config
+     */
     private final TofqNettyServerConfig serverConfig;
+    /**
+     * public thread pool to deal with callback methods
+     */
     private final ExecutorService publicExecutor;
+    /**
+     * the port server is listening
+     */
     private int port;
-
-    private DefaultEventExecutorGroup defaultEventExecutorGroup;
 
 
     public TofqNettyServer(TofqNettyServerConfig serverConfig) {
@@ -40,20 +55,19 @@ public class TofqNettyServer extends TofqNettyInvokeAbstract implements Server {
         this.serverBootstrap = new ServerBootstrap();
         this.serverConfig = serverConfig;
 
-
         int callbackExecutorCount = serverConfig.getServerCallbackExecutorCount();
         if (callbackExecutorCount <= 0) {
             callbackExecutorCount = 4;
         }
         this.publicExecutor = Executors.newFixedThreadPool(callbackExecutorCount);
 
+        // there is just one port needs to listen, so main reactor only needs one thread
         this.bossGroup = new NioEventLoopGroup(1);
         this.workerGroup = new NioEventLoopGroup(serverConfig.getServerSelectorCount());
     }
 
     @Override
     public void start() {
-        this.defaultEventExecutorGroup = new DefaultEventExecutorGroup(serverConfig.getServerWorkerCount());
         TofqNettyCodecFactory codecFactory = new TofqNettyCodecFactory(getCodec());
         this.serverBootstrap.group(this.bossGroup, this.workerGroup).channel(NioServerSocketChannel.class)
                 .option(ChannelOption.TCP_NODELAY, true)
@@ -64,13 +78,14 @@ public class TofqNettyServer extends TofqNettyInvokeAbstract implements Server {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline().addLast(
-                                defaultEventExecutorGroup,
                                 codecFactory.getEncoder(),
                                 codecFactory.getDecoder(),
                                 new TofqSeverHandler());
                     }
                 });
+
         try {
+            // wait until finish binding the channel to specific port
             ChannelFuture sync = this.serverBootstrap.bind().sync();
             logger.debug("tofq sever start");
             logger.debug("tofq server config: {}", serverConfig);
@@ -86,9 +101,7 @@ public class TofqNettyServer extends TofqNettyInvokeAbstract implements Server {
         try {
             this.bossGroup.shutdownGracefully();
             this.workerGroup.shutdownGracefully();
-            if (this.defaultEventExecutorGroup != null) {
-                this.defaultEventExecutorGroup.shutdownGracefully();
-            }
+
             if (this.publicExecutor != null) {
                 this.publicExecutor.shutdown();
             }
@@ -122,6 +135,9 @@ public class TofqNettyServer extends TofqNettyInvokeAbstract implements Server {
         return this.publicExecutor;
     }
 
+    /**
+     * server handler to deal with inbound command messages' I/O process
+     */
     class TofqSeverHandler extends SimpleChannelInboundHandler<Command> {
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, Command msg) throws Exception {

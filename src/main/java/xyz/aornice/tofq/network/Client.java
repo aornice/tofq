@@ -11,9 +11,44 @@ import xyz.aornice.tofq.network.exception.NetworkTooManyRequestsException;
  * Created by drfish on 07/05/2017.
  */
 public interface Client extends State {
+    /**
+     * send a synchronous request to an ip address
+     *
+     * @param address       ip address
+     * @param request       request command
+     * @param timeoutMillis timeout in milliseconds
+     * @return response command
+     * @throws InterruptedException
+     * @throws NetworkConnectException
+     * @throws NetworkTimeoutException
+     * @throws NetworkSendRequestException
+     */
     Command invokeSync(String address, Command request, long timeoutMillis) throws InterruptedException, NetworkConnectException, NetworkTimeoutException, NetworkSendRequestException;
 
+    /**
+     * send a asynchronous request to an ip address
+     *
+     * @param address       ip address
+     * @param request       request command
+     * @param timeoutMillis timeout in milliseconds
+     * @param asyncCallback asynchronous callback methed
+     * @throws InterruptedException
+     * @throws NetworkConnectException
+     * @throws NetworkSendRequestException
+     * @throws NetworkTooManyRequestsException
+     */
     void invokeAsync(String address, Command request, long timeoutMillis, AsyncCallback asyncCallback) throws InterruptedException, NetworkConnectException, NetworkSendRequestException, NetworkTooManyRequestsException;
 
+    /**
+     * send a oneway request to an ip address
+     *
+     * @param address       ip address
+     * @param request       request command
+     * @param timeoutMillis timeout in milliseconds
+     * @throws InterruptedException
+     * @throws NetworkTooManyRequestsException
+     * @throws NetworkTimeoutException
+     * @throws NetworkSendRequestException
+     */
     void invokeOneway(String address, Command request, long timeoutMillis) throws InterruptedException, NetworkTooManyRequestsException, NetworkTimeoutException, NetworkSendRequestException;
 }

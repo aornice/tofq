@@ -11,11 +11,49 @@ import xyz.aornice.tofq.network.exception.NetworkTooManyRequestsException;
  * Created by drfish on 07/05/2017.
  */
 public interface Server extends State {
+    /**
+     * get the port which is being listened by server
+     *
+     * @return listening port
+     */
     int port();
 
+    /**
+     * send a synchronous request to a channel
+     *
+     * @param channel       a nexus of the network socket with client
+     * @param request       request command
+     * @param timeoutMillis timeout in milliseconds
+     * @return response command
+     * @throws InterruptedException
+     * @throws NetworkTimeoutException
+     * @throws NetworkSendRequestException
+     */
     Command invokeSync(Channel channel, Command request, long timeoutMillis) throws InterruptedException, NetworkTimeoutException, NetworkSendRequestException;
 
+    /**
+     * send a asynchronous request to a channel
+     *
+     * @param channel       a nexus of the network socket with client
+     * @param request       request command
+     * @param timeoutMillis timeout in milliseconds
+     * @param asyncCallback asynchronous callback method
+     * @throws InterruptedException
+     * @throws NetworkTooManyRequestsException
+     * @throws NetworkSendRequestException
+     */
     void invokeAsync(Channel channel, Command request, long timeoutMillis, AsyncCallback asyncCallback) throws InterruptedException, NetworkTooManyRequestsException, NetworkSendRequestException;
 
+    /**
+     * send a oneway request to a channel
+     *
+     * @param channel       a nexus of the network socket with client
+     * @param request       request command
+     * @param timeoutMillis timeout in milliseconds
+     * @throws InterruptedException
+     * @throws NetworkSendRequestException
+     * @throws NetworkTooManyRequestsException
+     * @throws NetworkTimeoutException
+     */
     void invokeOneway(Channel channel, Command request, long timeoutMillis) throws InterruptedException, NetworkSendRequestException, NetworkTooManyRequestsException, NetworkTimeoutException;
 }

@@ -20,12 +20,18 @@ import java.nio.ByteBuffer;
 public class TofqNettyCodecFactory {
     private static final Logger logger = LoggerFactory.getLogger(TofqNettyCodecFactory.class);
 
+    /**
+     * the codec used in C/S encode and decode process
+     */
     private Codec codec;
 
     public TofqNettyCodecFactory(Codec codec) {
         this.codec = codec;
     }
 
+    /***
+     * the encoder
+     */
     public class NettyEncoder extends MessageToByteEncoder<Command> {
         @Override
         protected void encode(ChannelHandlerContext ctx, Command command, ByteBuf out) throws Exception {
@@ -42,6 +48,9 @@ public class TofqNettyCodecFactory {
         }
     }
 
+    /**
+     * the decoder
+     */
     public class NettyDecoder extends LengthFieldBasedFrameDecoder {
         // TODO make this configurable
         private static final int FRAME_MAX_LENGTH = 1 << 20;
