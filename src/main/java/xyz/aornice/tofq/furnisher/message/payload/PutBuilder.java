@@ -6,7 +6,7 @@ import xyz.aornice.tofq.furnisher.util.Varint32;
 import xyz.aornice.tofq.furnisher.util.support.AbstractBuilder;
 
 
-public class PutBuilder extends AbstractBuilder<Put> {
+public class PutBuilder extends PayloadAbstractBuilder<Put>{
 
     public PutBuilder() {
         super();
@@ -29,7 +29,7 @@ public class PutBuilder extends AbstractBuilder<Put> {
     public Put build(ByteBuf in) throws Exception {
         final int topicLen = Varint32.readRawVarint32(in);
         return build(
-                in.readCharSequence(topicLen, CharsetUtil.UTF_8).toString(),
+                in.readCharSequence(topicLen, CharsetUtil.US_ASCII).toString(),
                 Varint32.readRawVarint32(in),
                 in.retainedSlice(in.readerIndex(), in.readableBytes())
         );
@@ -49,16 +49,24 @@ public class PutBuilder extends AbstractBuilder<Put> {
             data = null;
         }
 
+        @Override
         public String getTopic() {
             return topic;
         }
 
+        @Override
         public int getSeq() {
             return seq;
         }
 
+        @Override
         public ByteBuf getData() {
             return data;
+        }
+
+        @Override
+        public void write(ByteBuf out) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -80,7 +88,6 @@ public class PutBuilder extends AbstractBuilder<Put> {
             this.data = data;
             return this;
         }
-
     }
 
 }

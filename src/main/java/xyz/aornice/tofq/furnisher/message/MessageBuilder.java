@@ -1,7 +1,10 @@
 package xyz.aornice.tofq.furnisher.message;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
+import io.netty.util.CharsetUtil;
+import xyz.aornice.tofq.furnisher.message.payload.Payload;
 import xyz.aornice.tofq.furnisher.util.Recyclable;
 import xyz.aornice.tofq.furnisher.util.Varint32;
 import xyz.aornice.tofq.furnisher.util.support.AbstractBuilder;
@@ -17,7 +20,7 @@ public class MessageBuilder extends AbstractBuilder<Message> {
         super(initial);
     }
 
-    public Message build(Operation op, Recyclable payload) {
+    public Message build(Operation op, Payload payload) {
         return ((MessageImpl)build()).setOp(op).setPayload(payload);
     }
 
@@ -34,7 +37,7 @@ public class MessageBuilder extends AbstractBuilder<Message> {
 
     class MessageImpl extends AbstractBuilder.ElementAdapter implements Message{
         private Operation op;
-        private Recyclable payload;
+        private Payload payload;
 
         MessageImpl() {
         }
@@ -45,12 +48,25 @@ public class MessageBuilder extends AbstractBuilder<Message> {
             payload = null;
         }
 
+        @Override
         public Operation getOp() {
             return op;
         }
 
-        public Recyclable getPayload() {
+        @Override
+        public Payload getPayload() {
             return payload;
+        }
+
+        @Override
+        public void write(ByteBuf out) {
+            Varint32.writeRawVarint32(out, op.value());
+            payload.write(out);
+        }
+
+        @Override
+        protected void releaseHelper() {
+            payload.release();
         }
 
         @Override
@@ -63,7 +79,7 @@ public class MessageBuilder extends AbstractBuilder<Message> {
             return this;
         }
 
-        MessageImpl setPayload(Recyclable payload) {
+        MessageImpl setPayload(Payload payload) {
             this.payload = payload;
             return this;
         }

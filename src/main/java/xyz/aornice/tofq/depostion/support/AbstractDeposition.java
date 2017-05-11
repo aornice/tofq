@@ -311,7 +311,6 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
         final private void deposit(Topic topic) {
             try {
                 topicMap.get(topic).takeAllSuccessive(topic.getMaxStoredId() + 1, cargoCache);
-
                 long oldMaxStoredId = topic.getMaxStoredId();
                 long maxStoredId = depositHelper(topic, cargoCache);
 
@@ -337,7 +336,7 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
             String topicFile = topic.getNewestFile();
             if (!topicFile.contains(today)) topicFile = topic.newTopicFile();
 
-            int start = 0, maxStoredId = 0, count;
+            int start = 0, count;
             do {
                 int fileRemains;
                 while ((fileRemains = Offset.CAPABILITY - (count = topic.getCount())) == 0)
@@ -354,7 +353,7 @@ public abstract class AbstractDeposition implements CargoDeposition, TopicChange
             } while (start != size);
 
             logger.debug("Deposit topic {} end", topic.getName());
-            return maxStoredId;
+            return topic.getMaxStoredId();
         }
 
         final private void depositDataHelper(String file, int count, List<Cargo> cargoes,

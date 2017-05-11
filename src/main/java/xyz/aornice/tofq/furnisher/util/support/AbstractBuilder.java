@@ -23,8 +23,7 @@ public abstract class AbstractBuilder<E extends Recyclable> implements Builder<E
         for (int i = 0; i < initial; i++) pool.offer(buildPartial());
     }
 
-    @Override
-    public E build() {
+    protected E build() {
         E e = pool.poll();
         if (e != null) return e;
         e = buildPartial();

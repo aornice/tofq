@@ -5,9 +5,10 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.TypeParameterMatcher;
 import xyz.aornice.tofq.furnisher.message.Message;
+import xyz.aornice.tofq.furnisher.message.payload.Payload;
 import xyz.aornice.tofq.furnisher.util.Recyclable;
 
-public abstract class MessageInboundHandler<M extends Recyclable> extends ChannelInboundHandlerAdapter {
+public abstract class MessageInboundHandler<M extends Payload> extends ChannelInboundHandlerAdapter {
 
     private final TypeParameterMatcher matcher;
 
@@ -33,7 +34,6 @@ public abstract class MessageInboundHandler<M extends Recyclable> extends Channe
                 messageReceived(ctx, imsg);
             } finally {
                 ReferenceCountUtil.release(msg);
-                if (imsg != null) ReferenceCountUtil.release(imsg);
             }
         } else {
             ctx.fireChannelRead(msg);
