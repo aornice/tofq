@@ -3,13 +3,11 @@ package xyz.aornice.tofq.furnisher.message;
 import xyz.aornice.tofq.furnisher.message.payload.PayloadBuilder;
 import xyz.aornice.tofq.furnisher.message.payload.PutBuilder;
 import xyz.aornice.tofq.furnisher.message.payload.PutResponseBuilder;
-import xyz.aornice.tofq.furnisher.util.Builder;
 
 public enum Operation {
 
     PUT(0, new PutBuilder()),
-    PUT_RESP(1, new PutResponseBuilder()),
-    REGISTER(2, null);
+    PUT_RESP(1, new PutResponseBuilder());
 
     private final int value;
     private final PayloadBuilder builder;
@@ -25,8 +23,6 @@ public enum Operation {
                 return PUT;
             case 1:
                 return PUT_RESP;
-            case 2:
-                return REGISTER;
             default:
                 return null;
         }

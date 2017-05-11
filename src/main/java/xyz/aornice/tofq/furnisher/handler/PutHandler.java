@@ -56,6 +56,10 @@ public class PutHandler extends MessageInboundHandler<Put> implements Deposition
             throws Exception {
         if (topicCache == null || !topicCache.getName().equals(msg.getTopic())) {
             topicCache = topicCenter.getTopic(msg.getTopic());
+            if (topicCache == null) {
+                topicCenter.register(msg.getTopic());
+                topicCache = topicCenter.getTopic(msg.getTopic());
+            }
             deposition.addDepositionListener(topicCache, this);
         }
         final Topic topic = topicCache;

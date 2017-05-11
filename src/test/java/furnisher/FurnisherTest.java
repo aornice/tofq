@@ -39,7 +39,7 @@ public class FurnisherTest {
     PutResponseBuilder putRespBuilder = new PutResponseBuilder();
     String topic = "faketopic";
 
-    //    @Test
+    @Test
     public void testArraySortedMap() {
         ArraySortedMap a = new ArraySortedMap(4);
         a.add(0, 0);
@@ -58,6 +58,14 @@ public class FurnisherTest {
         assertEquals(7, a.size());
         assertEquals(10, a.findLEAndClear(10));
         assertEquals(1, a.size());
+    }
+
+    @Test
+    public void t() {
+        ByteBuf buf = Unpooled.copiedBuffer("Hello", CharsetUtil.UTF_8);
+        System.out.println(buf.refCnt());
+        buf.nioBuffer();
+        System.out.println(buf.refCnt());
     }
 
     @Test
@@ -113,7 +121,6 @@ public class FurnisherTest {
 
     @Test
     public void testBidirecttion() throws InterruptedException {
-        LocalTopicCenter.getInstance().register(topic);
         EmbeddedChannel ch = new EmbeddedChannel(
                 new FurnisherVarint32FrameDecoder(),
                 new FurnisherVarint32LengthFieldPrepender(),
