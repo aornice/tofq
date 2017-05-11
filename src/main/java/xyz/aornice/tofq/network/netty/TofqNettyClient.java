@@ -5,6 +5,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.network.AsyncCallback;
@@ -109,6 +110,13 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
                 logger.error("public callback executors shutdown exception {}", e);
             }
         }
+    }
+
+    @Override
+    public void registerProcessor(int requestCode, TofqNettyProcessor processor, ExecutorService executor) {
+        executor = executor == null ? this.publicExecutor : executor;
+        Pair<TofqNettyProcessor, ExecutorService> pair = new Pair<>(processor, executor);
+        this.processorMap.put(requestCode, pair);
     }
 
     @Override

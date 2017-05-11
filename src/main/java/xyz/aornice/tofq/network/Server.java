@@ -5,6 +5,9 @@ import xyz.aornice.tofq.network.command.Command;
 import xyz.aornice.tofq.network.exception.NetworkSendRequestException;
 import xyz.aornice.tofq.network.exception.NetworkTimeoutException;
 import xyz.aornice.tofq.network.exception.NetworkTooManyRequestsException;
+import xyz.aornice.tofq.network.netty.TofqNettyProcessor;
+
+import java.util.concurrent.ExecutorService;
 
 /**
  * server interface
@@ -17,6 +20,15 @@ public interface Server extends State {
      * @return listening port
      */
     int port();
+
+    /**
+     * register processor for specific type of request
+     *
+     * @param requestCode request type code
+     * @param processor   processor to deal with request
+     * @param executor    executors to execute processors' request
+     */
+    void registerProcessor(int requestCode, TofqNettyProcessor processor, ExecutorService executor);
 
     /**
      * send a synchronous request to a channel

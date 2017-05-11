@@ -5,6 +5,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.network.AsyncCallback;
@@ -29,11 +30,11 @@ public class TofqNettyServer extends TofqNettyInvokeAbstract implements Server {
      */
     private final ServerBootstrap serverBootstrap;
     /**
-     * main reactor in netty reactor pattern
+     * main reactor in netty reactor pattern, deal with TCP connecting requests
      */
     private final EventLoopGroup bossGroup;
     /**
-     * sub reactor in netty reactor pattern
+     * sub reactor in netty reactor pattern, deal with I/O read/write process
      */
     private final EventLoopGroup workerGroup;
     /**
@@ -74,7 +75,7 @@ public class TofqNettyServer extends TofqNettyInvokeAbstract implements Server {
                 .option(ChannelOption.SO_SNDBUF, serverConfig.getServerSocketSndBufSize())
                 .option(ChannelOption.SO_RCVBUF, serverConfig.getServerSocketRcvBufSize())
                 .localAddress(serverConfig.getPort())
-                .handler(new ChannelInitializer<SocketChannel>() {
+                .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline().addLast(
@@ -85,7 +86,7 @@ public class TofqNettyServer extends TofqNettyInvokeAbstract implements Server {
                 });
 
         try {
-            // wait until finish binding the channel to specific port
+            // bind and start to accept incoming connections
             ChannelFuture sync = this.serverBootstrap.bind().sync();
             logger.debug("tofq sever start");
             logger.debug("tofq server config: {}", serverConfig);
@@ -113,6 +114,13 @@ public class TofqNettyServer extends TofqNettyInvokeAbstract implements Server {
     @Override
     public int port() {
         return this.port;
+    }
+
+    @Override
+    public void registerProcessor(int requestCode, TofqNettyProcessor processor, ExecutorService executor) {
+        executor = executor == null ? this.publicExecutor : executor;
+        Pair<TofqNettyProcessor, ExecutorService> pair = new Pair<>(processor, executor);
+        this.processorMap.put(requestCode, pair);
     }
 
     @Override

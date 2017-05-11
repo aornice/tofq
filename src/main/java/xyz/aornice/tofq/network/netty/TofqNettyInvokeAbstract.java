@@ -39,13 +39,13 @@ public abstract class TofqNettyInvokeAbstract {
      * key is the opaque field of a request
      * value is the ResponseFuture of the related request
      */
-    protected final ConcurrentMap<Integer, ResponseFuture> responseTable = new ConcurrentHashMap<>(256);
+    protected final ConcurrentMap<Integer, ResponseFuture> responseMap = new ConcurrentHashMap<>(256);
     /**
      * each kind of requests can register their own processor, if a request code doesn't register its processor,
      * it will use {@link #defaultProcessor} by default
      * each processor has a thread pool to process requests
      */
-    protected final Map<Integer, Pair<TofqNettyProcessor, ExecutorService>> processorTable = new HashMap<>();
+    protected final Map<Integer, Pair<TofqNettyProcessor, ExecutorService>> processorMap = new HashMap<>();
     /**
      * default request processor
      */
@@ -55,6 +55,7 @@ public abstract class TofqNettyInvokeAbstract {
     public TofqNettyInvokeAbstract(int asyncCount, int onewayCount) {
         this.asyncSemaphore = new Semaphore(asyncCount, true);
         this.onewaySemaphore = new Semaphore(onewayCount, true);
+        // TODO init defaultProcessor
     }
 
     /**
@@ -92,7 +93,7 @@ public abstract class TofqNettyInvokeAbstract {
      */
     public void processRequestCommand(ChannelHandlerContext ctx, Command request) {
         int opaque = request.getOpaque();
-        final Pair<TofqNettyProcessor, ExecutorService> pair = this.processorTable.get(request.getCode()) == null ? defaultProcessor : this.processorTable.get(request.getCode());
+        final Pair<TofqNettyProcessor, ExecutorService> pair = this.processorMap.get(request.getCode()) == null ? defaultProcessor : this.processorMap.get(request.getCode());
         if (pair != null) {
             Runnable runnable = () -> {
                 try {
@@ -145,11 +146,11 @@ public abstract class TofqNettyInvokeAbstract {
      */
     public void processResponseCommand(ChannelHandlerContext ctx, Command response) {
         int opaque = response.getOpaque();
-        ResponseFuture responseFuture = responseTable.get(opaque);
+        ResponseFuture responseFuture = responseMap.get(opaque);
         if (responseFuture != null) {
             responseFuture.setResponseCommand(response);
             responseFuture.release();
-            responseTable.remove(opaque);
+            responseMap.remove(opaque);
 
             if (responseFuture.getAsyncCallback() != null) {
                 executeInvokeCallback(responseFuture);
@@ -175,7 +176,7 @@ public abstract class TofqNettyInvokeAbstract {
         int opaque = request.getOpaque();
         try {
             ResponseFuture responseFuture = new ResponseFuture(opaque, timeoutMillis, null, null);
-            this.responseTable.put(opaque, responseFuture);
+            this.responseMap.put(opaque, responseFuture);
             channel.writeAndFlush(request).addListener((channelFuture) -> {
                 if (channelFuture.isSuccess()) {
                     responseFuture.setSendRequestOK(true);
@@ -183,7 +184,7 @@ public abstract class TofqNettyInvokeAbstract {
                 } else {
                     responseFuture.setSendRequestOK(false);
                 }
-                responseTable.remove(opaque);
+                responseMap.remove(opaque);
                 responseFuture.setCause(channelFuture.cause());
                 responseFuture.putResponse(null);
                 logger.warn("send a request command to channel {} failed.", channel.remoteAddress());
@@ -198,7 +199,7 @@ public abstract class TofqNettyInvokeAbstract {
             }
             return responseCommand;
         } finally {
-            this.responseTable.remove(opaque);
+            this.responseMap.remove(opaque);
         }
     }
 
@@ -220,7 +221,7 @@ public abstract class TofqNettyInvokeAbstract {
         if (acquired) {
             SemaphoreReleaseOnlyOnce once = new SemaphoreReleaseOnlyOnce(this.asyncSemaphore);
             ResponseFuture responseFuture = new ResponseFuture(opaque, timeoutMillis, asyncCallback, once);
-            this.responseTable.put(opaque, responseFuture);
+            this.responseMap.put(opaque, responseFuture);
             try {
                 channel.writeAndFlush(request).addListener((channelFuture) -> {
                     // try to invoke synchronously
@@ -230,7 +231,7 @@ public abstract class TofqNettyInvokeAbstract {
                     } else {
                         responseFuture.setSendRequestOK(false);
                     }
-                    responseTable.remove(opaque);
+                    responseMap.remove(opaque);
                     responseFuture.putResponse(null);
                     // if invoke synchronously failed, invoke the callback method
                     executeInvokeCallback(responseFuture);
