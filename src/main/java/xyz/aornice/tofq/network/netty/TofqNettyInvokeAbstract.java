@@ -96,7 +96,8 @@ public abstract class TofqNettyInvokeAbstract {
      */
     public void processRequestCommand(ChannelHandlerContext ctx, Command request) {
         int opaque = request.getOpaque();
-        final Pair<TofqNettyProcessor, ExecutorService> pair = this.processorMap.get(request.getCode()) == null ? defaultProcessor : this.processorMap.get(request.getCode());
+        final Pair<TofqNettyProcessor, ExecutorService> pair = this.processorMap.get(request.getCode()) == null ?
+                defaultProcessor : this.processorMap.get(request.getCode());
         if (pair != null) {
             Runnable runnable = () -> {
                 try {
@@ -109,7 +110,8 @@ public abstract class TofqNettyInvokeAbstract {
                                 ctx.writeAndFlush(response);
                                 logger.debug("send response {} for request {}", response, request);
                             } catch (Throwable cause) {
-                                logger.error("finish processing request: {}, but response {} failed", request, response);
+                                logger.error("finish processing request: {}, but response {} failed", request,
+                                        response);
                             }
                         }
                     }
@@ -127,7 +129,8 @@ public abstract class TofqNettyInvokeAbstract {
                 pair.getValue().submit(runnable);
             } catch (RejectedExecutionException e) {
                 // thread pool reject to execute
-                logger.warn("{}, thread pool busy, RejectedExecutionException {}, request code: {}", ctx.channel().remoteAddress(), pair.getValue(), request.getCode());
+                logger.warn("{}, thread pool busy, RejectedExecutionException {}, request code: {}", ctx.channel()
+                        .remoteAddress(), pair.getValue(), request.getCode());
                 if (!request.isOneway()) {
                     final Command response = Command.createResponseCommand(ResponseCode.SYSTEM_BUSY);
                     response.setOpaque(request.getOpaque());
@@ -162,7 +165,8 @@ public abstract class TofqNettyInvokeAbstract {
                 responseFuture.putResponse(response);
             }
         } else {
-            logger.warn("receive response {} from {}, but not match any request", response.toString(), ctx.channel().remoteAddress().toString());
+            logger.warn("receive response {} from {}, but not match any request", response.toString(), ctx.channel()
+                    .remoteAddress().toString());
         }
     }
 
@@ -176,7 +180,8 @@ public abstract class TofqNettyInvokeAbstract {
      * @throws InterruptedException
      * @throws NetworkTimeoutException
      */
-    public Command doInvokeSync(Channel channel, Command request, long timeoutMillis) throws InterruptedException, NetworkTimeoutException, NetworkSendRequestException {
+    public Command doInvokeSync(Channel channel, Command request, long timeoutMillis) throws InterruptedException,
+            NetworkTimeoutException, NetworkSendRequestException {
         int opaque = request.getOpaque();
         try {
             ResponseFuture responseFuture = new ResponseFuture(opaque, timeoutMillis, null, null);
@@ -197,9 +202,11 @@ public abstract class TofqNettyInvokeAbstract {
             Command responseCommand = responseFuture.waitResponse(timeoutMillis);
             if (responseCommand == null) {
                 if (responseFuture.isSendRequestOK()) {
-                    throw new NetworkTimeoutException(channel.remoteAddress().toString(), timeoutMillis, responseFuture.getCause());
+                    throw new NetworkTimeoutException(channel.remoteAddress().toString(), timeoutMillis,
+                            responseFuture.getCause());
                 } else {
-                    throw new NetworkSendRequestException(channel.remoteAddress().toString(), responseFuture.getCause());
+                    throw new NetworkSendRequestException(channel.remoteAddress().toString(), responseFuture.getCause
+                            ());
                 }
             }
             return responseCommand;
@@ -219,7 +226,8 @@ public abstract class TofqNettyInvokeAbstract {
      * @throws NetworkSendRequestException
      * @throws NetworkTooManyRequestsException
      */
-    public void doInvokeAsync(Channel channel, Command request, long timeoutMillis, AsyncCallback asyncCallback) throws InterruptedException, NetworkSendRequestException, NetworkTooManyRequestsException {
+    public void doInvokeAsync(Channel channel, Command request, long timeoutMillis, AsyncCallback asyncCallback)
+            throws InterruptedException, NetworkSendRequestException, NetworkTooManyRequestsException {
         int opaque = request.getOpaque();
         boolean acquired = this.asyncSemaphore.tryAcquire(timeoutMillis, TimeUnit.MILLISECONDS);
         // check if there are too many asynchronous requests at the same time
@@ -248,7 +256,8 @@ public abstract class TofqNettyInvokeAbstract {
                 once.release();
             }
         } else {
-            String message = String.format("invokeAsyncImpl tryAcquire semaphore timeout, {}ms, waiting thread nums: {} semaphoreAsyncValue: {}",
+            String message = String.format("invokeAsyncImpl tryAcquire semaphore timeout, {}ms, waiting thread nums: " +
+                            "{} semaphoreAsyncValue: {}",
                     timeoutMillis,
                     this.asyncSemaphore.getQueueLength(),
                     this.asyncSemaphore.availablePermits()
@@ -258,7 +267,8 @@ public abstract class TofqNettyInvokeAbstract {
     }
 
     /**
-     * execute the callback method in callback executor, if there is no callback executor, run the callback method in current thread
+     * execute the callback method in callback executor, if there is no callback executor, run the callback method in
+     * current thread
      *
      * @param responseFuture response future
      */
@@ -282,7 +292,8 @@ public abstract class TofqNettyInvokeAbstract {
         } else {
             runInThisThread = true;
         }
-        // if there is no callback executor or get exception in callback process, try to execute callback in current thread
+        // if there is no callback executor or get exception in callback process, try to execute callback in current
+        // thread
         if (runInThisThread) {
             try {
                 responseFuture.executeAsyncCallback();
@@ -303,7 +314,8 @@ public abstract class TofqNettyInvokeAbstract {
      * @throws NetworkTooManyRequestsException
      * @throws NetworkTimeoutException
      */
-    public void doInvokeOneway(Channel channel, Command request, long timeoutMillis) throws InterruptedException, NetworkSendRequestException, NetworkTooManyRequestsException, NetworkTimeoutException {
+    public void doInvokeOneway(Channel channel, Command request, long timeoutMillis) throws InterruptedException,
+            NetworkSendRequestException, NetworkTooManyRequestsException, NetworkTimeoutException {
         request.setOneway(true);
         boolean acquired = this.onewaySemaphore.tryAcquire(timeoutMillis, TimeUnit.MILLISECONDS);
         // check if there are too many one way requests at the same time
@@ -324,7 +336,8 @@ public abstract class TofqNettyInvokeAbstract {
             if (timeoutMillis <= 0) {
                 throw new NetworkTooManyRequestsException("doInvokeOneway invoke too fast");
             } else {
-                String message = String.format("invokeAsyncImpl tryAcquire semaphore timeout, {}ms, waiting thread nums: {} semaphoreAsyncValue: {}",
+                String message = String.format("invokeAsyncImpl tryAcquire semaphore timeout, {}ms, waiting thread " +
+                                "nums: {} semaphoreAsyncValue: {}",
                         timeoutMillis,
                         this.asyncSemaphore.getQueueLength(),
                         this.asyncSemaphore.availablePermits()

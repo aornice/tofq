@@ -17,7 +17,8 @@ public class Command {
     private static final Logger logger = LoggerFactory.getLogger(Command.class);
     private static AtomicInteger requestId = new AtomicInteger(0);
     /**
-     * communicating code between C/S, refer {@link xyz.aornice.tofq.network.command.protocol.RequestCode} and {@link xyz.aornice.tofq.network.command.protocol.ResponseCode}
+     * communicating code between C/S, refer {@link xyz.aornice.tofq.network.command.protocol.RequestCode} and
+     * {@link xyz.aornice.tofq.network.command.protocol.ResponseCode}
      */
     private int code;
     /**
@@ -123,6 +124,7 @@ public class Command {
 
     @Override
     public String toString() {
-        return "Command [code=" + code + ", opaque=" + opaque + ", type=" + type + " fields=" + fields + " body=" + body + "]";
+        return "Command [code=" + code + ", opaque=" + opaque + ", type=" + type + " fields=" + fields + " body=" +
+                body + "]";
     }
 }

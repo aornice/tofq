@@ -41,7 +41,8 @@ public interface Server extends State {
      * @throws NetworkTimeoutException
      * @throws NetworkSendRequestException
      */
-    Command invokeSync(Channel channel, Command request, long timeoutMillis) throws InterruptedException, NetworkTimeoutException, NetworkSendRequestException;
+    Command invokeSync(Channel channel, Command request, long timeoutMillis) throws InterruptedException,
+            NetworkTimeoutException, NetworkSendRequestException;
 
     /**
      * send a asynchronous request to a channel
@@ -54,7 +55,8 @@ public interface Server extends State {
      * @throws NetworkTooManyRequestsException
      * @throws NetworkSendRequestException
      */
-    void invokeAsync(Channel channel, Command request, long timeoutMillis, AsyncCallback asyncCallback) throws InterruptedException, NetworkTooManyRequestsException, NetworkSendRequestException;
+    void invokeAsync(Channel channel, Command request, long timeoutMillis, AsyncCallback asyncCallback) throws
+            InterruptedException, NetworkTooManyRequestsException, NetworkSendRequestException;
 
     /**
      * send a oneway request to a channel
@@ -67,5 +69,6 @@ public interface Server extends State {
      * @throws NetworkTooManyRequestsException
      * @throws NetworkTimeoutException
      */
-    void invokeOneway(Channel channel, Command request, long timeoutMillis) throws InterruptedException, NetworkSendRequestException, NetworkTooManyRequestsException, NetworkTimeoutException;
+    void invokeOneway(Channel channel, Command request, long timeoutMillis) throws InterruptedException,
+            NetworkSendRequestException, NetworkTooManyRequestsException, NetworkTimeoutException;
 }

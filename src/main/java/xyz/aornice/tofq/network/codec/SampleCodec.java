@@ -28,10 +28,6 @@ public class SampleCodec implements Codec {
         return result;
     }
 
-    public static int getBodyLength(int length) {
-        return length & 0xFFFFFF;
-    }
-
     @Override
     public ByteBuffer encode(Command command) throws Exception {
         int length = 4;

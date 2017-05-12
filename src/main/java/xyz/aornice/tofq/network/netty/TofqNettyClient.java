@@ -30,6 +30,10 @@ import java.util.concurrent.locks.ReentrantLock;
 public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
     private static final Logger logger = LoggerFactory.getLogger(TofqNettyClient.class);
     /**
+     * maximum time to wait for the {@link #channelMapLock}
+     */
+    private static final int CHANNEL_MAP_LOCK_TIMEOUT_MILLIS = 2000;
+    /**
      * client config
      */
     private final TofqNettyClientConfig clientConfig;
@@ -53,10 +57,6 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
      * lock for {@link #channelMap} modification
      */
     private final Lock channelMapLock = new ReentrantLock();
-    /**
-     * maximum time to wait for the {@link #channelMapLock}
-     */
-    private static final int CHANNEL_MAP_LOCK_TIMEOUT_MILLIS = 2000;
 
     public TofqNettyClient(TofqNettyClientConfig clientConfig) {
         super(clientConfig.getClientAsyncSemaphoreValue(), clientConfig.getClientOnewaySemaphoreValue());
@@ -120,7 +120,8 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
     }
 
     @Override
-    public Command invokeSync(String address, Command request, long timeoutMillis) throws InterruptedException, NetworkConnectException, NetworkTimeoutException, NetworkSendRequestException {
+    public Command invokeSync(String address, Command request, long timeoutMillis) throws InterruptedException,
+            NetworkConnectException, NetworkTimeoutException, NetworkSendRequestException {
         Channel channel = getOrCreateChannel(address);
         if (channel != null && channel.isActive()) {
             try {
@@ -143,7 +144,9 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
     }
 
     @Override
-    public void invokeAsync(String address, Command request, long timeoutMillis, AsyncCallback asyncCallback) throws InterruptedException, NetworkConnectException, NetworkSendRequestException, NetworkTooManyRequestsException {
+    public void invokeAsync(String address, Command request, long timeoutMillis, AsyncCallback asyncCallback) throws
+            InterruptedException, NetworkConnectException, NetworkSendRequestException,
+            NetworkTooManyRequestsException {
         Channel channel = getOrCreateChannel(address);
         if (channel != null && channel.isActive()) {
             try {
@@ -161,7 +164,8 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
     }
 
     @Override
-    public void invokeOneway(String address, Command request, long timeoutMillis) throws InterruptedException, NetworkTooManyRequestsException, NetworkTimeoutException, NetworkSendRequestException {
+    public void invokeOneway(String address, Command request, long timeoutMillis) throws InterruptedException,
+            NetworkTooManyRequestsException, NetworkTimeoutException, NetworkSendRequestException {
         Channel channel = getOrCreateChannel(address);
         if (channel != null && channel.isActive()) {
             try {
@@ -314,17 +318,8 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
     }
 
     /**
-     * client handler to deal with inbound command messages' I/O process
-     */
-    class TofqClientHandler extends SimpleChannelInboundHandler<Command> {
-        @Override
-        protected void channelRead0(ChannelHandlerContext ctx, Command msg) throws Exception {
-            processMessageReceived(ctx, msg);
-        }
-    }
-
-    /**
-     * {@link ChannelWrapper} is a wrapper class for {@link ChannelFuture} which represents the result of an asynchronous channel I/O operation
+     * {@link ChannelWrapper} is a wrapper class for {@link ChannelFuture} which represents the result of an
+     * asynchronous channel I/O operation
      * This class's aim is just to simplify usage of state check of the channel, like method {@link #isActive()}
      */
     static class ChannelWrapper {
@@ -354,6 +349,16 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
 
         private Channel getChannel() {
             return this.channelFuture.channel();
+        }
+    }
+
+    /**
+     * client handler to deal with inbound command messages' I/O process
+     */
+    class TofqClientHandler extends SimpleChannelInboundHandler<Command> {
+        @Override
+        protected void channelRead0(ChannelHandlerContext ctx, Command msg) throws Exception {
+            processMessageReceived(ctx, msg);
         }
     }
 

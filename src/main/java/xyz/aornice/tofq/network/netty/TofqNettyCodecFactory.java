@@ -28,6 +28,14 @@ public class TofqNettyCodecFactory {
         this.codec = codec;
     }
 
+    public ChannelHandler getDecoder() {
+        return new NettyDecoder();
+    }
+
+    public ChannelHandler getEncoder() {
+        return new NettyEncoder();
+    }
+
     /***
      * the encoder
      */
@@ -83,13 +91,5 @@ public class TofqNettyCodecFactory {
             }
             return null;
         }
-    }
-
-    public ChannelHandler getDecoder() {
-        return new NettyDecoder();
-    }
-
-    public ChannelHandler getEncoder() {
-        return new NettyEncoder();
     }
 }

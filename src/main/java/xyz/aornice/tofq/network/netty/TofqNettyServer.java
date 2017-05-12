@@ -124,17 +124,20 @@ public class TofqNettyServer extends TofqNettyInvokeAbstract implements Server {
     }
 
     @Override
-    public Command invokeSync(Channel channel, Command request, long timeoutMillis) throws InterruptedException, NetworkTimeoutException, NetworkSendRequestException {
+    public Command invokeSync(Channel channel, Command request, long timeoutMillis) throws InterruptedException,
+            NetworkTimeoutException, NetworkSendRequestException {
         return this.doInvokeSync(channel, request, timeoutMillis);
     }
 
     @Override
-    public void invokeAsync(Channel channel, Command request, long timeoutMillis, AsyncCallback asyncCallback) throws InterruptedException, NetworkTooManyRequestsException, NetworkSendRequestException {
+    public void invokeAsync(Channel channel, Command request, long timeoutMillis, AsyncCallback asyncCallback) throws
+            InterruptedException, NetworkTooManyRequestsException, NetworkSendRequestException {
         this.doInvokeAsync(channel, request, timeoutMillis, asyncCallback);
     }
 
     @Override
-    public void invokeOneway(Channel channel, Command request, long timeoutMillis) throws InterruptedException, NetworkSendRequestException, NetworkTooManyRequestsException, NetworkTimeoutException {
+    public void invokeOneway(Channel channel, Command request, long timeoutMillis) throws InterruptedException,
+            NetworkSendRequestException, NetworkTooManyRequestsException, NetworkTimeoutException {
         this.doInvokeOneway(channel, request, timeoutMillis);
     }
 

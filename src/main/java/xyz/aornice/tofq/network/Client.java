@@ -35,7 +35,8 @@ public interface Client extends State {
      * @throws NetworkTimeoutException
      * @throws NetworkSendRequestException
      */
-    Command invokeSync(String address, Command request, long timeoutMillis) throws InterruptedException, NetworkConnectException, NetworkTimeoutException, NetworkSendRequestException;
+    Command invokeSync(String address, Command request, long timeoutMillis) throws InterruptedException,
+            NetworkConnectException, NetworkTimeoutException, NetworkSendRequestException;
 
     /**
      * send a asynchronous request to an ip address
@@ -49,7 +50,8 @@ public interface Client extends State {
      * @throws NetworkSendRequestException
      * @throws NetworkTooManyRequestsException
      */
-    void invokeAsync(String address, Command request, long timeoutMillis, AsyncCallback asyncCallback) throws InterruptedException, NetworkConnectException, NetworkSendRequestException, NetworkTooManyRequestsException;
+    void invokeAsync(String address, Command request, long timeoutMillis, AsyncCallback asyncCallback) throws
+            InterruptedException, NetworkConnectException, NetworkSendRequestException, NetworkTooManyRequestsException;
 
     /**
      * send a oneway request to an ip address
@@ -62,5 +64,6 @@ public interface Client extends State {
      * @throws NetworkTimeoutException
      * @throws NetworkSendRequestException
      */
-    void invokeOneway(String address, Command request, long timeoutMillis) throws InterruptedException, NetworkTooManyRequestsException, NetworkTimeoutException, NetworkSendRequestException;
+    void invokeOneway(String address, Command request, long timeoutMillis) throws InterruptedException,
+            NetworkTooManyRequestsException, NetworkTimeoutException, NetworkSendRequestException;
 }
