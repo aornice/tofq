@@ -8,11 +8,14 @@ import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.network.AsyncCallback;
 import xyz.aornice.tofq.network.ResponseFuture;
 import xyz.aornice.tofq.network.codec.Codec;
+import xyz.aornice.tofq.network.codec.SampleCodec;
 import xyz.aornice.tofq.network.command.Command;
+import xyz.aornice.tofq.network.command.CommandType;
 import xyz.aornice.tofq.network.command.protocol.ResponseCode;
 import xyz.aornice.tofq.network.exception.NetworkSendRequestException;
 import xyz.aornice.tofq.network.exception.NetworkTimeoutException;
 import xyz.aornice.tofq.network.exception.NetworkTooManyRequestsException;
+import xyz.aornice.tofq.network.serialize.JsonSerializable;
 import xyz.aornice.tofq.util.SemaphoreReleaseOnlyOnce;
 
 import java.util.HashMap;
@@ -101,9 +104,10 @@ public abstract class TofqNettyInvokeAbstract {
                     if (!request.isOneway()) {
                         if (response != null) {
                             response.setOpaque(opaque);
-
+                            response.setType(CommandType.RESPONSE);
                             try {
                                 ctx.writeAndFlush(response);
+                                logger.debug("send response {} for request {}", response, request);
                             } catch (Throwable cause) {
                                 logger.error("finish processing request: {}, but response {} failed", request, response);
                             }
@@ -177,6 +181,7 @@ public abstract class TofqNettyInvokeAbstract {
         try {
             ResponseFuture responseFuture = new ResponseFuture(opaque, timeoutMillis, null, null);
             this.responseMap.put(opaque, responseFuture);
+            logger.debug("try to send {} to channel {}", request, channel);
             channel.writeAndFlush(request).addListener((channelFuture) -> {
                 if (channelFuture.isSuccess()) {
                     responseFuture.setSendRequestOK(true);
@@ -331,6 +336,6 @@ public abstract class TofqNettyInvokeAbstract {
 
     protected Codec getCodec() {
         // TODO choose proper codec
-        return null;
+        return new SampleCodec(new JsonSerializable());
     }
 }
