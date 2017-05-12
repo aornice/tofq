@@ -36,6 +36,7 @@ public class TofqNettyCodecFactory {
         protected void encode(ChannelHandlerContext ctx, Command command, ByteBuf out) throws Exception {
             try {
                 ByteBuffer byteBuffer = codec.encode(command);
+                logger.debug("encode message {} to {}", command, byteBuffer);
                 out.writeBytes(byteBuffer);
             } catch (Exception e) {
                 logger.error("{} encode exception", ctx.channel().remoteAddress());
@@ -62,12 +63,16 @@ public class TofqNettyCodecFactory {
         protected Object decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
             ByteBuf frame = null;
             try {
+                logger.debug("try decode byteBuf {}", in);
                 frame = (ByteBuf) super.decode(ctx, in);
                 if (frame == null) {
                     return null;
                 }
                 ByteBuffer byteBuffer = frame.nioBuffer();
-                return codec.decode(byteBuffer);
+                logger.debug("frame: {}, byteBuffer: {}", frame, byteBuffer);
+                Object result = codec.decode(byteBuffer);
+                logger.debug("decode message to {}", result);
+                return result;
             } catch (Exception e) {
                 logger.error("{} decode exception", ctx.channel().remoteAddress());
                 ctx.channel().close();

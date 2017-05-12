@@ -123,6 +123,6 @@ public class Command {
 
     @Override
     public String toString() {
-        return "Command [code=" + code + ", opaque=" + opaque + ", type=" + type + "fields=" + fields + "]";
+        return "Command [code=" + code + ", opaque=" + opaque + ", type=" + type + " fields=" + fields + " body=" + body + "]";
     }
 }

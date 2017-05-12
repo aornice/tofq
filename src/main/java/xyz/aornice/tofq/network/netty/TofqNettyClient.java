@@ -125,6 +125,7 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
         if (channel != null && channel.isActive()) {
             try {
                 Command response = this.doInvokeSync(channel, request, timeoutMillis);
+                logger.debug("client sent request {} to {}", request, channel);
                 return response;
             } catch (NetworkTimeoutException e) {
                 // TODO whether should close channel when response timeout
@@ -207,7 +208,9 @@ public class TofqNettyClient extends TofqNettyInvokeAbstract implements Client {
                 }
                 //create new connection and update cache
                 if (createNewConnection) {
-                    ChannelFuture channelFuture = this.bootstrap.connect(string2InetSocketAddress(address));
+                    InetSocketAddress socketAddress = string2InetSocketAddress(address);
+                    ChannelFuture channelFuture = this.bootstrap.connect(socketAddress);
+                    logger.debug("create new connection with {}", socketAddress);
                     channelWrapper = new ChannelWrapper(channelFuture);
                     this.channelMap.put(address, channelWrapper);
                 }
