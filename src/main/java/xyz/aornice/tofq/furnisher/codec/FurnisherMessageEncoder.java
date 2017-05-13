@@ -17,11 +17,9 @@ public class FurnisherMessageEncoder extends MessageToMessageEncoder<Message>{
 
     private static final Logger logger = LogManager.getLogger(FurnisherMessageEncoder.class);
 
-    private final PooledByteBufAllocator allocator = new PooledByteBufAllocator();
-
     @Override
     protected void encode(ChannelHandlerContext ctx, Message msg, List<Object> out) throws Exception {
-        ByteBuf buf = allocator.buffer();
+        ByteBuf buf = ctx.alloc().buffer();
         msg.write(buf);
         out.add(buf);
     }
