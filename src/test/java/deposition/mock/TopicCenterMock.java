@@ -81,6 +81,16 @@ public class TopicCenterMock implements TopicCenter {
     }
 
     @Override
+    public int topicFileCount(String topicName) {
+        return 0;
+    }
+
+    @Override
+    public String topicIThFileShortName(String topicName, int i) {
+        return null;
+    }
+
+    @Override
     public String topicNewestFileShortName(String topicName) {
         return null;
     }

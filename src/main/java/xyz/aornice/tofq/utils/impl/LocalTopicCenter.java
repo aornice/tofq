@@ -359,6 +359,12 @@ public class LocalTopicCenter implements TopicCenter, TopicFileChangeListener {
     }
 
     @Override
+    public int topicFileCount(String topicName) {
+        return topicFileNameMap.get(topicName).size();
+    }
+
+
+    @Override
     public String topicNewestFileShortName(String topicName) {
         List<String> files = topicFileNameMap.get(topicName);
         return files.get(files.size() - 1);
@@ -367,6 +373,11 @@ public class LocalTopicCenter implements TopicCenter, TopicFileChangeListener {
     @Override
     public String topicOldestFileShortName(String topicName) {
         return topicFileNameMap.get(topicName).get(0);
+    }
+
+    @Override
+    public String topicIThFileShortName(String topicName, int i) {
+        return topicFileNameMap.get(topicName).get(i);
     }
 
     @Override

@@ -1,5 +1,8 @@
 package xyz.aornice.tofq.utils;
 
+import xyz.aornice.tofq.Topic;
+import xyz.aornice.tofq.TopicFileFormat;
+
 import java.util.List;
 
 /**
@@ -13,7 +16,7 @@ public interface ExtractionHelper {
      * @param index  the message index
      * @return       return null if the index is out of current bound or the topic does not exist
      */
-    String fileName(String topic, long index);
+    String fileName(Topic topic, long index);
 
     /**
      * Calculate the relative offset of a message in file
@@ -23,18 +26,19 @@ public interface ExtractionHelper {
      */
     int messageOffset(long index);
 
-    long startIndex(long msgIndex);
 
-    long nextStartIndex(long msgIndex);
+    static long startIndex(long msgIndex) {
+        return (msgIndex >> TopicFileFormat.Offset.CAPABILITY_POW) << TopicFileFormat.Offset.CAPABILITY_POW;
+    }
 
-    List<Long> msgByteOffsets(String topic, String fileName);
+    static long nextStartIndex(long msgIndex) {
+        return ((msgIndex >> TopicFileFormat.Offset.CAPABILITY_POW)+1) << TopicFileFormat.Offset.CAPABILITY_POW ;
+    }
 
-    int currentMsgCount(String topic, String fileName);
+    List<Long> msgByteOffsets(Topic topic, long startIndex);
 
-    List<byte[]> read(String topic, long msgFromInd, long msgToInd);
+    List<byte[]> read(Topic topic, long msgFromInd, long msgToInd);
 
-    long startIndex(String topic, String fileName);
-
-    List<byte[]> readInRange(String topic, String fromFile, String toFile, int fileCount);
+    long startIndex(Topic topic, int iThFile);
 
 }

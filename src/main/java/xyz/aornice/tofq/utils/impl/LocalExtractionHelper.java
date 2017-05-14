@@ -1,27 +1,36 @@
 package xyz.aornice.tofq.utils.impl;
 
-import com.sun.org.apache.bcel.internal.generic.INSTANCEOF;
-import org.omg.PortableInterceptor.INACTIVE;
+import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.TopicFileFormat.Header;
 import xyz.aornice.tofq.TopicFileFormat.Offset;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.harbour.LocalHarbour;
-import xyz.aornice.tofq.impl.LocalExtraction;
 import xyz.aornice.tofq.utils.ExtractionHelper;
 import xyz.aornice.tofq.utils.TopicCenter;
+import xyz.aornice.tofq.utils.cache.ContentCache;
+import xyz.aornice.tofq.utils.cache.OffsetCache;
+import xyz.aornice.tofq.utils.cache.StartIndexCache;
+import xyz.aornice.tofq.utils.cache.impl.FileContentCache;
+import xyz.aornice.tofq.utils.cache.impl.FileOffsetCache;
+import xyz.aornice.tofq.utils.cache.impl.FileStartIndexCache;
 
 import java.util.*;
 
 /**
  * Created by shen on 2017/4/16.
  */
-public class LocalExtractionHelper implements ExtractionHelper {
+public class LocalExtractionHelper implements ExtractionHelper{
 
     private TopicCenter topicCenter = LocalTopicCenter.getInstance();
 
     private Map<String, Long> startIndexMap;
 
     private Harbour harbour;
+
+    private final boolean USE_CACHE = true;
+    private OffsetCache offsetCache;
+    private ContentCache contentCache;
+    private StartIndexCache startIndexCache;
 
     public static ExtractionHelper getInstance() {
         return Singleton.INSTANCE;
@@ -35,11 +44,18 @@ public class LocalExtractionHelper implements ExtractionHelper {
     }
 
     private LocalExtractionHelper() {
+        offsetCache = new FileOffsetCache();
+        contentCache = new FileContentCache();
+        startIndexCache = new FileStartIndexCache();
     }
 
     private static void init(LocalExtractionHelper instance){
         instance.startIndexMap = new HashMap<>(instance.topicCenter.getTopicNames().size());
         instance.harbour = new LocalHarbour();
+
+        instance.offsetCache.clearCache();
+        instance.startIndexCache.clearCache();
+        instance.contentCache.clearCache();
     }
 
     public static void TEST_InitInstance(){
@@ -47,16 +63,32 @@ public class LocalExtractionHelper implements ExtractionHelper {
     }
 
     @Override
-    public List<Long> msgByteOffsets(String topic, String fileName) {
-        int msgCount = currentMsgCount(topic, fileName);
+    public List<Long> msgByteOffsets(Topic topic, long startIndex) {
+        List<Long> byteOffsets;
 
-        List<Long> byteOffsets = harbour.getLongs(fileName, Header.SIZE_BYTE, msgCount);
+        boolean cached = false;
+
+        if (USE_CACHE){
+            byteOffsets = offsetCache.getCache(topic, startIndex);
+            if (byteOffsets != null){
+                cached = true;
+            }
+        }
+
+        if (!cached) {
+            String fileName = fileName(topic, startIndex);
+            int msgCount = fileMsgCount(topic.getName(), fileName);
+            byteOffsets = harbour.getLongs(fileName, Header.SIZE_BYTE, msgCount);
+
+            if (USE_CACHE){
+                offsetCache.putCache(topic, startIndex, byteOffsets);
+            }
+        }
 
         return byteOffsets;
     }
 
-    @Override
-    public int currentMsgCount(String topic, String fileName) {
+    private int fileMsgCount(String topic, String fileName) {
         // if not the newest file, then current Msg Count is MESSAGE_PER_FILE
         if (CargoFileUtil.getFileSortComparator().compare(fileName, topicCenter.topicNewestFile(topic)) < 0) {
             return Offset.CAPABILITY;
@@ -73,37 +105,69 @@ public class LocalExtractionHelper implements ExtractionHelper {
      * @return
      */
     @Override
-    public List<byte[]> read(String topic, long msgFromInd, long msgToInd) {
+    public List<byte[]> read(Topic topic, long msgFromInd, long msgToInd) {
         long current = msgFromInd;
         long nextBound;
 
         List<byte[]> msgs = new ArrayList<>((int) (msgToInd - msgFromInd));
 
+        // do not cache if reading too much files
+        int approxFileCount = (int)(msgToInd- msgFromInd)/ Offset.CAPABILITY;
+        boolean cacheTooMuch = approxFileCount > contentCache.notCacheSize();
+
         do {
             nextBound = nextBound(topic, current);
             String fileName = fileName(topic, current);
-            List<Long> offsets = msgByteOffsets(topic, fileName);
+            long startIndex = ExtractionHelper.startIndex(current);
+            List<Long> offsets = msgByteOffsets(topic, startIndex);
 
             if (nextBound > msgToInd) {
                 nextBound = msgToInd + 1;
             }
-            int startInd = messageOffset(current);
-            int endInd = messageOffset(nextBound - 1);
+            int relativeStartInd = messageOffset(current);
+            int relativeEndInd = messageOffset(nextBound - 1);
 
             long startOffset = 0;
-            if (startInd != 0) {
-                startOffset = offsets.get(startInd - 1);
+            if (relativeStartInd != 0) {
+                startOffset = offsets.get(relativeStartInd - 1);
             }
-            long endOffset = offsets.get(endInd);
+            long endOffset = offsets.get(relativeEndInd);
 
-            byte[] rawMsgs = harbour.get(CargoFileUtil.filePath(topicCenter.getTopicFolder(topic), fileName), startOffset, endOffset);
+            List<byte[]> batchMsgs;
 
-            for (int i = startInd; i < endInd; i++) {
-                // TODO msg may be bigger than INT.MAX
-                // TODO use memory address later
-                int from = i == startInd ? 0 : (int) (offsets.get(startInd - 1) - startOffset);
-                int to = (int) (offsets.get(startInd) - startOffset);
-                msgs.add(Arrays.copyOfRange(rawMsgs, from, to));
+            boolean cached = false;
+
+            if (USE_CACHE){
+                batchMsgs = contentCache.getCache(topic, ExtractionHelper.startIndex(current));
+                if (batchMsgs != null){
+                    cached = true;
+                    msgs.addAll(batchMsgs);
+                }
+            }
+
+            if (!cached)
+            {
+                byte[] rawMsgs = harbour.get(filePath(topic , fileName), startOffset, endOffset);
+
+                List<byte[]> listToAdd;
+                if (!USE_CACHE || cacheTooMuch){
+                    listToAdd = msgs;
+                }else{
+                    batchMsgs = new ArrayList<>(relativeEndInd - relativeStartInd);
+                    listToAdd = batchMsgs;
+                }
+
+                for (int i = relativeStartInd; i < relativeEndInd; i++) {
+                    // TODO msg may be bigger than INT.MAX?
+                    int from = i == relativeStartInd ? 0 : (int) (offsets.get(relativeStartInd - 1) - startOffset);
+                    int to = (int) (offsets.get(relativeStartInd) - startOffset);
+                    listToAdd.add(Arrays.copyOfRange(rawMsgs, from, to));
+                }
+
+                if (USE_CACHE && !cacheTooMuch){
+                    contentCache.putCache(topic, startIndex, batchMsgs);
+                    msgs.addAll(batchMsgs);
+                }
             }
 
             current = nextBound;
@@ -112,20 +176,35 @@ public class LocalExtractionHelper implements ExtractionHelper {
         return msgs;
     }
 
-    @Override
-    public long startIndex(String topic, String fileName) {
-        long startInd = harbour.getLong(fileName, Header.ID_START_OFFSET_BYTE);
-        return startInd;
+    private String filePath(Topic topic, String fileName){
+        return CargoFileUtil.filePath(topicCenter.getTopicFolder(topic.getName()), fileName);
     }
 
     @Override
-    public List<byte[]> readInRange(String topic, String fromFile, String toFile, int fileCount) {
-        long fromInd = startIndex(topic, fromFile);
-        long toInd = startIndex(topic, toFile) + Offset.CAPABILITY;
+    public long startIndex(Topic topic, int iThFile) {
+        String fileName = topicCenter.topicIThFileShortName(topic.getName(), iThFile);
+        String filePath = filePath(topic, fileName);
 
-        return read(topic, fromInd, toInd);
+        Long startIndex;
+
+        boolean cached = false;
+
+        if (USE_CACHE){
+            startIndex = startIndexCache.getCache(topic, iThFile);
+            if (startIndex != null){
+                cached = true;
+            }
+        }
+
+        if (!cached){
+            startIndex = harbour.getLong(filePath, Header.ID_START_OFFSET_BYTE);
+            if (USE_CACHE){
+                startIndexCache.putCache(topic, iThFile, startIndex);
+            }
+        }
+
+        return startIndex;
     }
-
 
     /**
      * Calculate the relative offset of a message in file
@@ -138,17 +217,7 @@ public class LocalExtractionHelper implements ExtractionHelper {
         return (int) (index & (Offset.CAPABILITY - 1));
     }
 
-    @Override
-    public long startIndex(long msgIndex) {
-        return (msgIndex >> Offset.CAPABILITY_POW) << Offset.CAPABILITY_POW;
-    }
-
-    @Override
-    public long nextStartIndex(long msgIndex) {
-        return ((msgIndex >> Offset.CAPABILITY_POW)+1) << Offset.CAPABILITY_POW ;
-    }
-
-    private long nextBound(String topic, long index) {
+    private long nextBound(Topic topic, long index) {
         return (fileIndex(topic, index) + 1) << Offset.CAPABILITY_POW;
     }
 
@@ -156,22 +225,20 @@ public class LocalExtractionHelper implements ExtractionHelper {
      * TODO did not consider the case of deleting file
      * When consider deleting, file index can be calculated by minus a shift.
      * When delete file, the filename list in topicFileMap should also be adjusted.
-     * <p>
-     * TODO the file index is int, because java only permits at most Integer.MAX_VALUE elements in ArrayList
+     *
      *
      * @param topic
      * @param index
      * @return the file index
      */
-    private int fileIndex(String topic, long index) {
+    private int fileIndex(Topic topic, long index) {
         return (int) ((index - startIndex(topic)) >> Offset.CAPABILITY_POW);
     }
 
-    private long startIndex(String topic) {
+    private long startIndex(Topic topic) {
         Long startIndex = startIndexMap.get(topic);
         if (startIndex == null) {
-            String firstFile = topicCenter.iThFile(topic, 0);
-            startIndex = startIndex(topic, firstFile);
+            startIndex = startIndex(topic, 0);
         }
 
         return startIndex;
@@ -185,12 +252,12 @@ public class LocalExtractionHelper implements ExtractionHelper {
      * @return return null if the index is out of current bound or the topic does not exist
      */
     @Override
-    public String fileName(String topic, long index) {
-        if (!topicCenter.existsTopic(topic)) {
+    public String fileName(Topic topic, long index) {
+        if (!topicCenter.existsTopic(topic.getName())) {
             return null;
         }
 
         int fileInd = fileIndex(topic, index);
-        return topicCenter.iThFile(topic, fileInd);
+        return topicCenter.iThFile(topic.getName(), fileInd);
     }
 }

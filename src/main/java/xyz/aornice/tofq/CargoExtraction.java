@@ -14,8 +14,6 @@ public interface CargoExtraction {
 
     CargoIterator recentNCargosIterator(Topic topic, long nCargos);
 
-    CargoIterator recentNDayCargos(Topic topic, int nDays);
-
     /**
      * return cargos in topic of a range
      *

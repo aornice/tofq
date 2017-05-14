@@ -60,12 +60,13 @@ public class LocalExtractionHelperTest {
 
 //    @Test
     public void fileName() throws InterruptedException {
+        Topic topic1 = topicCenter.getTopic(TOPIC_NAME_1);
         deposition.addDepositionListener((topic, cargoId) -> {
             if (cargoId == capability/2 ){
-                assertEquals(topicCenter.iThFile(TOPIC_NAME_1, 0),extractionHelper.fileName(TOPIC_NAME_1, capability-1 ));
-                assertEquals(null,extractionHelper.fileName(TOPIC_NAME_1, capability));
+                assertEquals(topicCenter.iThFile(TOPIC_NAME_1, 0),extractionHelper.fileName(topic1, capability-1 ));
+                assertEquals(null,extractionHelper.fileName(topic1, capability));
             }else if(cargoId == capability){
-                assertEquals(topicCenter.iThFile(TOPIC_NAME_1, 1),extractionHelper.fileName(TOPIC_NAME_1, capability));
+                assertEquals(topicCenter.iThFile(TOPIC_NAME_1, 1),extractionHelper.fileName(topic1, capability));
             }
         });
 
@@ -74,10 +75,10 @@ public class LocalExtractionHelperTest {
 
     @Test
     public void startIndex() throws InterruptedException {
-        assertEquals(0, extractionHelper.startIndex(12));
-        assertEquals(capability, extractionHelper.startIndex(capability));
-        assertEquals(capability, extractionHelper.nextStartIndex(13));
-        assertEquals(capability, extractionHelper.nextStartIndex(0));
+        assertEquals(0, ExtractionHelper.startIndex(12));
+        assertEquals(capability, ExtractionHelper.startIndex(capability));
+        assertEquals(capability, ExtractionHelper.nextStartIndex(13));
+        assertEquals(capability, ExtractionHelper.nextStartIndex(0));
 
 
         int depositCount = capability+1;
@@ -89,11 +90,13 @@ public class LocalExtractionHelperTest {
             PublicMethods.notified(topic, latch, depositCount);
         });
 
-        depositCargoes(topicCenter.getTopic(TOPIC_NAME_1), depositCount);
+        Topic topic1 = topicCenter.getTopic(TOPIC_NAME_1);
+
+        depositCargoes(topic1, depositCount);
 
         latch.await(20000, TimeUnit.MICROSECONDS);
 
-        assertEquals(0, extractionHelper.startIndex(TOPIC_NAME_1, topicCenter.topicOldestFile(TOPIC_NAME_1)));
+        assertEquals(0, extractionHelper.startIndex(topic1, 0));
 
         System.out.println("============\nTest Finish\n============");
     }

@@ -1,4 +1,4 @@
-package xyz.aornice.tofq.utils.impl.cache;
+package xyz.aornice.tofq.utils.cache;
 
 import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.Topic;

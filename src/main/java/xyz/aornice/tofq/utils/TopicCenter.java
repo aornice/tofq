@@ -53,6 +53,10 @@ public interface TopicCenter {
 
     String topicOldestFile(String topicName);
 
+    int topicFileCount(String topicName);
+
+    String topicIThFileShortName(String topicName, int i);
+
     String topicNewestFileShortName(String topicName);
 
     String topicOldestFileShortName(String topicName);

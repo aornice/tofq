@@ -9,6 +9,9 @@ import xyz.aornice.tofq.utils.CargoIterator;
 import xyz.aornice.tofq.harbour.LocalHarbour;
 import xyz.aornice.tofq.utils.ExtractionHelper;
 import xyz.aornice.tofq.utils.TopicCenter;
+import xyz.aornice.tofq.utils.cache.ContentCache;
+import xyz.aornice.tofq.utils.cache.OffsetCache;
+import xyz.aornice.tofq.utils.cache.StartIndexCache;
 import xyz.aornice.tofq.utils.impl.LocalExtractionHelper;
 import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
 
@@ -26,6 +29,7 @@ public class LocalExtraction implements CargoExtraction {
     private TopicCenter topicCenter = LocalTopicCenter.getInstance();
     private ExtractionHelper extractionHelper = LocalExtractionHelper.getInstance();
 
+
     public LocalExtraction() {
         this(new LocalHarbour());
     }
@@ -36,33 +40,39 @@ public class LocalExtraction implements CargoExtraction {
 
     @Override
     public CargoIterator readAll(Topic topic) {
-        String fileName = topicCenter.topicOldestFile(topic.getName());
-        long firstInd = extractionHelper.startIndex(topic.getName(), fileName);
-        long endInd = topic.getMaxStoredId()+1;
+        long firstInd = extractionHelper.startIndex(topic, 0);
+        long endInd = topic.getMaxStoredId() + 1;
         return new CargoIteratorImpl(topic, firstInd, endInd);
     }
 
     @Override
     public Cargo read(Topic topic, long id) {
-        String fileName = extractionHelper.fileName(topic.getName(), id);
+        int msgOffset = extractionHelper.messageOffset(id);
+
+        byte[] message;
+        List<Long> offsets;
+
+        String fileName = extractionHelper.fileName(topic, id);
         // the id or topic does not exists
         if (fileName == null) {
             return null;
         }
+        offsets = extractionHelper.msgByteOffsets(topic, ExtractionHelper.startIndex(id));
 
-        int msgOffset = extractionHelper.messageOffset(id);
-        // TODO should use cache later
-        List<Long> offsets = extractionHelper.msgByteOffsets(topic.getName(), fileName);
         if (offsets.size() == 0) {
             return null;
         }
+
         long byteOffsetTo = offsets.get(msgOffset);
-        long byteOffsetFrom = TopicFileFormat.Header.SIZE_BYTE + TopicFileFormat.Offset.SIZE_BYTE;
+        long byteOffsetFrom;
 
         if (msgOffset != 0) {
             byteOffsetFrom = offsets.get(msgOffset - 1);
+        } else {
+            byteOffsetFrom = TopicFileFormat.Header.SIZE_BYTE + TopicFileFormat.Offset.SIZE_BYTE;
         }
-        byte[] message = harbour.get(fileName, byteOffsetFrom, byteOffsetTo);
+
+        message = harbour.get(fileName, byteOffsetFrom, byteOffsetTo);
 
         return new Cargo(topic, id, message);
     }
@@ -72,7 +82,11 @@ public class LocalExtraction implements CargoExtraction {
         long endInd = topic.getMaxStoredId() + 1;
         long startInd = endInd - nCargos;
 
-        List<byte[]> msgs = extractionHelper.read(topic.getName(), startInd, endInd);
+        int approxFileCount = (nCargos / TopicFileFormat.Offset.CAPABILITY);
+
+        List<byte[]> msgs;
+
+        msgs = extractionHelper.read(topic, startInd, endInd);
 
         Cargo[] cargos = new Cargo[msgs.size()];
 
@@ -81,6 +95,7 @@ public class LocalExtraction implements CargoExtraction {
         }
 
         return cargos;
+
     }
 
     @Override
@@ -90,44 +105,6 @@ public class LocalExtraction implements CargoExtraction {
 
         return new CargoIteratorImpl(topic, startInd, endInd);
     }
-
-    @Override
-    public CargoIterator recentNDayCargos(Topic topic, int nDays) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_MONTH, 1);
-        Date to = calendar.getTime();
-        calendar.add(Calendar.DAY_OF_MONTH, -nDays);
-        Date from = calendar.getTime();
-
-        List<String> files = topicCenter.dateRangedFiles(topic.getName(), from, to);
-
-        long startInd = extractionHelper.startIndex(topic.getName(), files.get(0));
-        long endInd = topic.getMaxStoredId()+1;
-
-        return new CargoIteratorImpl(topic, startInd, endInd);
-    }
-
-//    @Override
-//    public Cargo[] recentNDayCargos(Topic topic, int nDays) {
-//        Calendar calendar = Calendar.getInstance();
-//        calendar.add(Calendar.DAY_OF_MONTH, 1);
-//        Date to = calendar.getTime();
-//        calendar.add(Calendar.DAY_OF_MONTH, -nDays);
-//        Date from = calendar.getTime();
-//
-//        List<String> files = topicCenter.dateRangedFiles(topic.getName(), from, to);
-//
-//        List<byte[]> msgs = extractionHelper.readInRange(topic.getName(), files.get(0), files.get(files.size() - 1), files.size());
-//
-//        long startInd = extractionHelper.startIndex(topic.getName(), files.get(0));
-//
-//        Cargo[] cargos = new Cargo[msgs.size()];
-//        for (int i = 0; i < msgs.size(); i++) {
-//            cargos[i] = new Cargo(topic, startInd++, msgs.get(i));
-//        }
-//
-//        return cargos;
-//    }
 
     @Override
     public Cargo[] read(Topic topic, long from, long to) {
@@ -145,7 +122,7 @@ public class LocalExtraction implements CargoExtraction {
 
         Cargo[] cargos = new Cargo[(int) (bound - from)];
 
-        List<byte[]> messages = extractionHelper.read(topicName, from, bound);
+        List<byte[]> messages = extractionHelper.read(topic, from, bound);
 
         int pos = 0;
 
@@ -197,20 +174,19 @@ public class LocalExtraction implements CargoExtraction {
                 throw new NoSuchElementException();
             }
             if (tmpCargos == null || curId >= nextBound) {
-                long nextStartId = extractionHelper.nextStartIndex(curId);
-                this.nextBound = toId > nextStartId ? nextStartId : toId ;
+                long nextStartId = ExtractionHelper.nextStartIndex(curId);
+                this.nextBound = toId > nextStartId ? nextStartId : toId;
 
                 tmpCargos = read(topic, curId, nextBound);
                 curListInd = 0;
             }
 
-            curId ++;
+            curId++;
 
             return tmpCargos[curListInd++];
 
         }
     }
-
 
 
 }
