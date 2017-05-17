@@ -1,10 +1,10 @@
 package xyz.aornice.tofq.network;
 
 /**
- * {@link State} maintains the state of a client or server.
+ * {@link Lifecycle} maintains the state of a client or server.
  * Created by drfish on 07/05/2017.
  */
-public interface State {
+public interface Lifecycle {
     /**
      * start a C/S
      */

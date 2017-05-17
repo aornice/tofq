@@ -13,7 +13,7 @@ import java.util.concurrent.ExecutorService;
  * client interface
  * Created by drfish on 07/05/2017.
  */
-public interface Client extends State {
+public interface Client extends Lifecycle {
     /**
      * register processor for specific type of request
      *

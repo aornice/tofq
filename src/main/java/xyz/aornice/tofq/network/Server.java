@@ -13,7 +13,7 @@ import java.util.concurrent.ExecutorService;
  * server interface
  * Created by drfish on 07/05/2017.
  */
-public interface Server extends State {
+public interface Server extends Lifecycle {
     /**
      * get the port which is being listened by server
      *
