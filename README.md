@@ -1,29 +1,44 @@
 # tofq
-Message queue
 
 [![Build Status](https://travis-ci.org/aornice/tofq.svg?branch=master)](https://travis-ci.org/aornice/tofq)
 [![Coverage
 Status](https://coveralls.io/repos/github/aornice/tofq/badge.svg?branch=master)](https://coveralls.io/github/aornice/tofq?branch=master)
 [![License](https://img.shields.io/dub/l/vibe-d.svg)](https://opensource.org/licenses/MIT)
 
-## MIT License
+Tofq is a distributed persisted queue inspired by [Apache Kafka](http://kafka.apache.org/).
 
-Copyright (c) 2017 the AORNICE Team
+## Development
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Development of tofq has three stages:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. Local persisted queue
+2. network support
+3. distrubution
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+## Design
+
+### Data Structure
+
+All data of Tofq is stored in files. Table of contents is like below:
+
+```
+-- root
+    -- topic1
+        -- data0-0.tofq
+        -- data0-1.tofq
+        -- ...
+        -- data1-0.tofq
+    -- topic2
+```
+
+A file ending with "tofq" has three parts: headers, indexes and messages. The count of messages in each file is fixed. You can quickly find messages by date or sequence.
+
+### Persistence
+
+Tofq makes full usage of the disk space you have, so you are not limited by the main memory of your machine. 
+
+Tofq stores all saved data in memory mapped files, which has little influence on heap overhead.
+
+## License
+
+[MIT License](./LICENSE)
