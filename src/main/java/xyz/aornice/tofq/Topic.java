@@ -13,8 +13,8 @@ import java.io.File;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static xyz.aornice.tofq.TopicFileFormat.Header;
 import static xyz.aornice.tofq.TopicFileFormat.FileName;
+import static xyz.aornice.tofq.TopicFileFormat.Header;
 
 public class Topic {
     private static final Logger logger = LogManager.getLogger(Topic.class);
@@ -57,7 +57,7 @@ public class Topic {
         return maxId.incrementAndGet();
     }
 
-    public long maxID(){
+    public long maxID() {
         return maxId.get();
     }
 

@@ -13,8 +13,8 @@ public interface ExtractionHelper {
      * Calculate index of the file this message belongs to
      *
      * @param topic
-     * @param index  the message index
-     * @return       return null if the index is out of current bound or the topic does not exist
+     * @param index the message index
+     * @return return null if the index is out of current bound or the topic does not exist
      */
     String fileName(Topic topic, long index);
 
@@ -32,7 +32,7 @@ public interface ExtractionHelper {
     }
 
     static long nextStartIndex(long msgIndex) {
-        return ((msgIndex >> TopicFileFormat.Offset.CAPABILITY_POW)+1) << TopicFileFormat.Offset.CAPABILITY_POW ;
+        return ((msgIndex >> TopicFileFormat.Offset.CAPABILITY_POW) + 1) << TopicFileFormat.Offset.CAPABILITY_POW;
     }
 
     List<Long> msgByteOffsets(Topic topic, long startIndex);

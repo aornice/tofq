@@ -6,7 +6,6 @@ import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.TypeParameterMatcher;
 import xyz.aornice.tofq.furnisher.message.Message;
 import xyz.aornice.tofq.furnisher.message.payload.Payload;
-import xyz.aornice.tofq.furnisher.util.Recyclable;
 
 public abstract class MessageInboundHandler<M extends Payload> extends ChannelInboundHandlerAdapter {
 

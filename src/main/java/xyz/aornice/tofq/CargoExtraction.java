@@ -20,7 +20,7 @@ public interface CargoExtraction {
      * @param topic topic name
      * @param from  start index of the cargo, included
      * @param to    end index of the cargo, not included
-     * @return      return cargos, null if the topic not exists
+     * @return return cargos, null if the topic not exists
      */
     Cargo[] read(Topic topic, long from, long to);
 

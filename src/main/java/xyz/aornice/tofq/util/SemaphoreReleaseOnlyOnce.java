@@ -23,7 +23,7 @@ public class SemaphoreReleaseOnlyOnce {
         }
     }
 
-    public Semaphore getSemaphore(){
+    public Semaphore getSemaphore() {
         return this.semaphore;
     }
 }

@@ -32,8 +32,8 @@ public class CargoFileUtil {
         int diff;
         for (int i = 0; i < FileName.DATE_LENGTH; i++) {
             diff = str1.charAt(i) - str2.charAt(i);
-            if (diff != 0 ) {
-                return diff>0? 1:-1;
+            if (diff != 0) {
+                return diff > 0 ? 1 : -1;
             }
         }
         return 0;
@@ -60,7 +60,7 @@ public class CargoFileUtil {
         return topicPath + FILE_SEPERATOR + fileName;
     }
 
-    public static String dateStr(Date date){
+    public static String dateStr(Date date) {
         return FileName.DATE_FORMAT.format(date);
     }
 }

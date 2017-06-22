@@ -1,6 +1,5 @@
 package xyz.aornice.tofq.furnisher.handler;
 
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -4,16 +4,16 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.aornice.tofq.furnisher.util.Varint32;
 
 
 @ChannelHandler.Sharable
-public class FurnisherVarint32LengthFieldPrepender extends MessageToByteEncoder<ByteBuf>{
+public class FurnisherVarint32LengthFieldPrepender extends MessageToByteEncoder<ByteBuf> {
 
     private static final Logger logger = LogManager.getLogger(FurnisherVarint32LengthFieldPrepender.class);
+
     @Override
     protected void encode(ChannelHandlerContext ctx, ByteBuf msg, ByteBuf out)
             throws Exception {

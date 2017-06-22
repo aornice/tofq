@@ -9,18 +9,21 @@ public interface SuccessiveList<E> {
 
     /**
      * Insert the specified element to the sorted list, waiting for space to become available if the queue it full.
+     *
      * @param e - the element to add
      */
     void put(E e);
 
     /**
      * Return the number of elements in this queue.
+     *
      * @return the number of elements in this queue
      */
     int size();
 
     /**
      * Return the number of successive elements start from head in this queue.
+     *
      * @return the number of successive elements start from head in this queue
      */
     int successiveSize();

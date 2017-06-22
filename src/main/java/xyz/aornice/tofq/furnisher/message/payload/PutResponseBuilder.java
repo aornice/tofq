@@ -33,7 +33,8 @@ public class PutResponseBuilder extends PayloadAbstractBuilder<PutResponse> {
         }
 
         @Override
-        public void reset() {}
+        public void reset() {
+        }
 
         @Override
         public String getTopic() {

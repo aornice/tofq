@@ -1,18 +1,16 @@
 package xyz.aornice.tofq.utils.impl;
 
 import xyz.aornice.tofq.Topic;
-import xyz.aornice.tofq.utils.*;
+import xyz.aornice.tofq.utils.TopicCenter;
 import xyz.aornice.tofq.utils.cache.Cache;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * Created by shen on 2017/4/14.
  */
-public abstract class AbstractExtractionCache<T> implements Cache<T>{
+public abstract class AbstractExtractionCache<T> implements Cache<T> {
 
     private TopicCenter topicCenter = LocalTopicCenter.getInstance();
 
@@ -22,7 +20,7 @@ public abstract class AbstractExtractionCache<T> implements Cache<T>{
 
     protected final int NOT_CACHE_THRESHOLD;
 
-    protected AbstractExtractionCache(int capacity, int notCacheThreshold){
+    protected AbstractExtractionCache(int capacity, int notCacheThreshold) {
         this.CAPACITY = capacity;
         this.NOT_CACHE_THRESHOLD = notCacheThreshold;
     }
@@ -51,13 +49,13 @@ public abstract class AbstractExtractionCache<T> implements Cache<T>{
 
     public class LRUHashMap {
 
-        class Node{
+        class Node {
             Long key;
             T value;
             Node pre;
             Node next;
 
-            public Node(Long key, T value){
+            public Node(Long key, T value) {
                 this.key = key;
                 this.value = value;
             }
@@ -67,23 +65,23 @@ public abstract class AbstractExtractionCache<T> implements Cache<T>{
 
         int capacity;
         HashMap<Long, Node> map = new HashMap<>();
-        Node head=null;
-        Node end=null;
+        Node head = null;
+        Node end = null;
 
         public LRUHashMap(int capacity) {
             this.capacity = capacity;
             this.linkedNodes = new ConcurrentLinkedDeque<>();
             // reused nodes
-            for (int i=0;i<capacity; i++){
+            for (int i = 0; i < capacity; i++) {
                 this.linkedNodes.add(new Node(null, null));
             }
         }
 
         public T get(Long key) {
             Node n = map.get(key);
-            if (n == null){
+            if (n == null) {
                 return null;
-            }else{
+            } else {
                 if (n != head) {
                     removeInList(n);
                     setHead(n);
@@ -92,42 +90,42 @@ public abstract class AbstractExtractionCache<T> implements Cache<T>{
             }
         }
 
-        public void remove(Long key){
+        public void remove(Long key) {
             Node n = map.get(key);
             removeInList(n);
             map.remove(key);
             linkedNodes.push(n);
         }
 
-        private void removeInList(Node n){
-            if (n == null){
+        private void removeInList(Node n) {
+            if (n == null) {
                 return;
             }
 
-            if(n.pre!=null){
+            if (n.pre != null) {
                 n.pre.next = n.next;
-            }else{
+            } else {
                 head = n.next;
             }
 
-            if(n.next!=null){
+            if (n.next != null) {
                 n.next.pre = n.pre;
-            }else{
+            } else {
                 end = n.pre;
             }
 
         }
 
-        private void setHead(Node n){
+        private void setHead(Node n) {
             n.next = head;
             n.pre = null;
 
-            if(head!=null)
+            if (head != null)
                 head.pre = n;
 
             head = n;
 
-            if(end ==null)
+            if (end == null)
                 end = head;
         }
 
@@ -135,15 +133,15 @@ public abstract class AbstractExtractionCache<T> implements Cache<T>{
 
             Node old = map.get(key);
 
-            if (old != null){
+            if (old != null) {
                 old.value = value;
 
                 if (old != head) {
                     removeInList(old);
                     setHead(old);
                 }
-            }else{
-                if (map.size() >= capacity){
+            } else {
+                if (map.size() >= capacity) {
                     removeInList(end);
                     remove(end.key);
                 }
@@ -158,19 +156,19 @@ public abstract class AbstractExtractionCache<T> implements Cache<T>{
             }
         }
 
-        public void clear(){
+        public void clear() {
             map.clear();
             int i = linkedNodes.size();
-            while (i < capacity){
+            while (i < capacity) {
                 linkedNodes.add(new Node(null, null));
                 i++;
             }
         }
     }
 
-    protected long hashValue(Topic topic, long startIndex){
+    protected long hashValue(Topic topic, long startIndex) {
         long topicID = topicCenter.topicInnerID(topic.getName());
-        long hashValue = (startIndex<<SHIFT_COUNT) + topicID;
+        long hashValue = (startIndex << SHIFT_COUNT) + topicID;
 
         return hashValue;
     }

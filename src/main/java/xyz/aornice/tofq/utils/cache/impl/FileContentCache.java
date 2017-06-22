@@ -40,7 +40,7 @@ public class FileContentCache extends AbstractExtractionCache<List<byte[]>> impl
         init();
     }
 
-    private void init(){
+    private void init() {
         lruHashMap = new LRUHashMap(CAPACITY);
     }
 

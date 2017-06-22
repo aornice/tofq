@@ -1,11 +1,8 @@
 package xyz.aornice.tofq.furnisher.message;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
-import io.netty.util.CharsetUtil;
 import xyz.aornice.tofq.furnisher.message.payload.Payload;
-import xyz.aornice.tofq.furnisher.util.Recyclable;
 import xyz.aornice.tofq.furnisher.util.Varint32;
 import xyz.aornice.tofq.furnisher.util.support.AbstractBuilder;
 
@@ -21,7 +18,7 @@ public class MessageBuilder extends AbstractBuilder<Message> {
     }
 
     public Message build(Operation op, Payload payload) {
-        return ((MessageImpl)build()).setOp(op).setPayload(payload);
+        return ((MessageImpl) build()).setOp(op).setPayload(payload);
     }
 
     @Override
@@ -30,12 +27,12 @@ public class MessageBuilder extends AbstractBuilder<Message> {
     }
 
     @Override
-    public Message build(ByteBuf in) throws Exception{
+    public Message build(ByteBuf in) throws Exception {
         Operation op = Operation.valueOf(Varint32.readRawVarint32(in));
         return build(op, op.getBuilder().build(in));
     }
 
-    class MessageImpl extends AbstractBuilder.ElementAdapter implements Message{
+    class MessageImpl extends AbstractBuilder.ElementAdapter implements Message {
         private Operation op;
         private Payload payload;
 
