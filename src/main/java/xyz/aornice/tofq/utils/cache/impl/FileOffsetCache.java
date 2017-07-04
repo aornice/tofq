@@ -2,7 +2,6 @@ package xyz.aornice.tofq.utils.cache.impl;
 
 import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.Topic;
-import xyz.aornice.tofq.harbour.LocalHarbour;
 import xyz.aornice.tofq.utils.ExtractionHelper;
 import xyz.aornice.tofq.utils.cache.MessageListener;
 import xyz.aornice.tofq.utils.cache.OffsetCache;
@@ -13,7 +12,7 @@ import java.util.List;
 /**
  * Created by shen on 2017/5/14.
  */
-public class FileOffsetCache extends AbstractExtractionCache<List<Long>> implements OffsetCache,MessageListener {
+public class FileOffsetCache extends AbstractExtractionCache<List<Long>> implements OffsetCache, MessageListener {
 
     private LRUHashMap lruHashMap;
 
@@ -28,7 +27,7 @@ public class FileOffsetCache extends AbstractExtractionCache<List<Long>> impleme
     @Override
     public List<Long> getCache(Topic topic, long startIndex) {
         long hash = hashValue(topic, startIndex);
-        List<Long> offsets= lruHashMap.get(hash);
+        List<Long> offsets = lruHashMap.get(hash);
 
         return offsets;
     }
@@ -39,20 +38,20 @@ public class FileOffsetCache extends AbstractExtractionCache<List<Long>> impleme
     }
 
 
-    public void appendOffset(Cargo cargo, long startIndex, long offset){
+    public void appendOffset(Cargo cargo, long startIndex, long offset) {
         long hash = hashValue(cargo.getTopic(), startIndex);
         List<Long> offsets = lruHashMap.get(hash);
-        if (offsets != null){
+        if (offsets != null) {
             offsets.add(offset);
         }
     }
 
     public FileOffsetCache() {
-        super(capacity, (int)(capacity* prihibitRatio));
+        super(capacity, (int) (capacity * prihibitRatio));
         init();
     }
 
-    private void init(){
+    private void init() {
         lruHashMap = new LRUHashMap(CAPACITY);
     }
 
@@ -60,7 +59,7 @@ public class FileOffsetCache extends AbstractExtractionCache<List<Long>> impleme
     @Override
     public void messageAdded(Cargo cargo, long offset) {
         long startIndex = ExtractionHelper.startIndex(cargo.getId());
-        appendOffset(cargo,startIndex, offset);
+        appendOffset(cargo, startIndex, offset);
     }
 
     @Override

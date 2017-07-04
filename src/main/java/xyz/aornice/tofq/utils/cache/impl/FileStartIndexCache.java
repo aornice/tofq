@@ -11,7 +11,7 @@ public class FileStartIndexCache extends AbstractExtractionCache<Long> implement
 
     private LRUHashMap lruHashMap;
 
-    private final static int capacity = 2<<10;
+    private final static int capacity = 2 << 10;
     private final static double prihibitRatio = 1;
 
     @Override
@@ -20,11 +20,11 @@ public class FileStartIndexCache extends AbstractExtractionCache<Long> implement
     }
 
     public FileStartIndexCache() {
-        super(capacity, (int)(capacity*prihibitRatio));
+        super(capacity, (int) (capacity * prihibitRatio));
         init();
     }
 
-    private void init(){
+    private void init() {
         lruHashMap = new LRUHashMap(CAPACITY);
     }
 
@@ -36,7 +36,7 @@ public class FileStartIndexCache extends AbstractExtractionCache<Long> implement
 
     @Override
     public void putCache(Topic topic, long iThFile, Long startIndex) {
-        lruHashMap.set(hashValue(topic,iThFile), startIndex);
+        lruHashMap.set(hashValue(topic, iThFile), startIndex);
     }
 
 

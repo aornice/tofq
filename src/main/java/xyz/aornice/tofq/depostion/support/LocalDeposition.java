@@ -8,7 +8,7 @@ import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
 /**
  * Created by robin on 22/04/2017.
  */
-public class LocalDeposition extends AbstractDeposition{
+public class LocalDeposition extends AbstractDeposition {
 
     public static CargoDeposition getInstance() {
         return Singleton.INSTANCE;

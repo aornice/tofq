@@ -19,7 +19,7 @@ import java.util.*;
 /**
  * Created by shen on 2017/4/16.
  */
-public class LocalExtractionHelper implements ExtractionHelper{
+public class LocalExtractionHelper implements ExtractionHelper {
 
     private TopicCenter topicCenter = LocalTopicCenter.getInstance();
 
@@ -36,9 +36,10 @@ public class LocalExtractionHelper implements ExtractionHelper{
         return Singleton.INSTANCE;
     }
 
-    private static class Singleton{
+    private static class Singleton {
         static LocalExtractionHelper INSTANCE = new LocalExtractionHelper();
-        static{
+
+        static {
             init(INSTANCE);
         }
     }
@@ -49,7 +50,7 @@ public class LocalExtractionHelper implements ExtractionHelper{
         startIndexCache = new FileStartIndexCache();
     }
 
-    private static void init(LocalExtractionHelper instance){
+    private static void init(LocalExtractionHelper instance) {
         instance.startIndexMap = new HashMap<>(instance.topicCenter.getTopicNames().size());
         instance.harbour = new LocalHarbour();
 
@@ -58,7 +59,7 @@ public class LocalExtractionHelper implements ExtractionHelper{
         instance.contentCache.clearCache();
     }
 
-    public static void TEST_InitInstance(){
+    public static void TEST_InitInstance() {
         init(Singleton.INSTANCE);
     }
 
@@ -68,9 +69,9 @@ public class LocalExtractionHelper implements ExtractionHelper{
 
         boolean cached = false;
 
-        if (USE_CACHE){
+        if (USE_CACHE) {
             byteOffsets = offsetCache.getCache(topic, startIndex);
-            if (byteOffsets != null){
+            if (byteOffsets != null) {
                 cached = true;
             }
         }
@@ -80,7 +81,7 @@ public class LocalExtractionHelper implements ExtractionHelper{
             int msgCount = fileMsgCount(topic.getName(), fileName);
             byteOffsets = harbour.getLongs(fileName, Header.SIZE_BYTE, msgCount);
 
-            if (USE_CACHE){
+            if (USE_CACHE) {
                 offsetCache.putCache(topic, startIndex, byteOffsets);
             }
         }
@@ -112,7 +113,7 @@ public class LocalExtractionHelper implements ExtractionHelper{
         List<byte[]> msgs = new ArrayList<>((int) (msgToInd - msgFromInd));
 
         // do not cache if reading too much files
-        int approxFileCount = (int)(msgToInd- msgFromInd)/ Offset.CAPABILITY;
+        int approxFileCount = (int) (msgToInd - msgFromInd) / Offset.CAPABILITY;
         boolean cacheTooMuch = approxFileCount > contentCache.notCacheSize();
 
         do {
@@ -137,22 +138,21 @@ public class LocalExtractionHelper implements ExtractionHelper{
 
             boolean cached = false;
 
-            if (USE_CACHE){
+            if (USE_CACHE) {
                 batchMsgs = contentCache.getCache(topic, ExtractionHelper.startIndex(current));
-                if (batchMsgs != null){
+                if (batchMsgs != null) {
                     cached = true;
                     msgs.addAll(batchMsgs);
                 }
             }
 
-            if (!cached)
-            {
-                byte[] rawMsgs = harbour.get(filePath(topic , fileName), startOffset, endOffset);
+            if (!cached) {
+                byte[] rawMsgs = harbour.get(filePath(topic, fileName), startOffset, endOffset);
 
                 List<byte[]> listToAdd;
-                if (!USE_CACHE || cacheTooMuch){
+                if (!USE_CACHE || cacheTooMuch) {
                     listToAdd = msgs;
-                }else{
+                } else {
                     batchMsgs = new ArrayList<>(relativeEndInd - relativeStartInd);
                     listToAdd = batchMsgs;
                 }
@@ -164,7 +164,7 @@ public class LocalExtractionHelper implements ExtractionHelper{
                     listToAdd.add(Arrays.copyOfRange(rawMsgs, from, to));
                 }
 
-                if (USE_CACHE && !cacheTooMuch){
+                if (USE_CACHE && !cacheTooMuch) {
                     contentCache.putCache(topic, startIndex, batchMsgs);
                     msgs.addAll(batchMsgs);
                 }
@@ -176,7 +176,7 @@ public class LocalExtractionHelper implements ExtractionHelper{
         return msgs;
     }
 
-    private String filePath(Topic topic, String fileName){
+    private String filePath(Topic topic, String fileName) {
         return CargoFileUtil.filePath(topicCenter.getTopicFolder(topic.getName()), fileName);
     }
 
@@ -189,16 +189,16 @@ public class LocalExtractionHelper implements ExtractionHelper{
 
         boolean cached = false;
 
-        if (USE_CACHE){
+        if (USE_CACHE) {
             startIndex = startIndexCache.getCache(topic, iThFile);
-            if (startIndex != null){
+            if (startIndex != null) {
                 cached = true;
             }
         }
 
-        if (!cached){
+        if (!cached) {
             startIndex = harbour.getLong(filePath, Header.ID_START_OFFSET_BYTE);
-            if (USE_CACHE){
+            if (USE_CACHE) {
                 startIndexCache.putCache(topic, iThFile, startIndex);
             }
         }
@@ -225,7 +225,6 @@ public class LocalExtractionHelper implements ExtractionHelper{
      * TODO did not consider the case of deleting file
      * When consider deleting, file index can be calculated by minus a shift.
      * When delete file, the filename list in topicFileMap should also be adjusted.
-     *
      *
      * @param topic
      * @param index

@@ -1,23 +1,22 @@
 package xyz.aornice.tofq.depostion.support;
 
-import java.util.*;
-import java.util.concurrent.*;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import xyz.aornice.tofq.Cargo;
 import xyz.aornice.tofq.Setting;
 import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.depostion.CargoDeposition;
 import xyz.aornice.tofq.depostion.DepositionListener;
-import xyz.aornice.tofq.depostion.util.support.ConcurrentSuccessiveList;
 import xyz.aornice.tofq.depostion.util.SuccessiveList;
+import xyz.aornice.tofq.depostion.util.support.ConcurrentSuccessiveList;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.util.Memory;
 import xyz.aornice.tofq.util.UnsafeMemory;
 import xyz.aornice.tofq.utils.TopicCenter;
 import xyz.aornice.tofq.utils.TopicChangeListener;
+
+import java.util.*;
+import java.util.concurrent.*;
 
 import static xyz.aornice.tofq.TopicFileFormat.*;
 

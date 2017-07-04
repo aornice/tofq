@@ -31,7 +31,7 @@ public class LocalHarbour implements Harbour {
     public LocalHarbour() {
     }
 
-    public static void TEST_InitFields(){
+    public static void TEST_InitFields() {
         bytesMap.clear();
         mappedFilesMap.clear();
     }

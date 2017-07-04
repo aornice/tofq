@@ -5,18 +5,13 @@ import xyz.aornice.tofq.CargoExtraction;
 import xyz.aornice.tofq.Topic;
 import xyz.aornice.tofq.TopicFileFormat;
 import xyz.aornice.tofq.harbour.Harbour;
-import xyz.aornice.tofq.utils.CargoIterator;
 import xyz.aornice.tofq.harbour.LocalHarbour;
+import xyz.aornice.tofq.utils.CargoIterator;
 import xyz.aornice.tofq.utils.ExtractionHelper;
 import xyz.aornice.tofq.utils.TopicCenter;
-import xyz.aornice.tofq.utils.cache.ContentCache;
-import xyz.aornice.tofq.utils.cache.OffsetCache;
-import xyz.aornice.tofq.utils.cache.StartIndexCache;
 import xyz.aornice.tofq.utils.impl.LocalExtractionHelper;
 import xyz.aornice.tofq.utils.impl.LocalTopicCenter;
 
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 

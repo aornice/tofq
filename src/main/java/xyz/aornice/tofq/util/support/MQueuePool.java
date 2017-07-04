@@ -18,7 +18,7 @@ public class MQueuePool<E> implements Pool<E> {
 
     @Override
     public void put(E o) throws InterruptedException {
-            queue.put(o);
+        queue.put(o);
     }
 
     @Override

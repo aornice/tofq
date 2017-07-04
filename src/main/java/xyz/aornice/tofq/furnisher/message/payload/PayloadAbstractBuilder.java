@@ -14,6 +14,6 @@ public abstract class PayloadAbstractBuilder<E extends Payload> extends Abstract
 
     @SuppressWarnings("unchecked")
     protected E build() {
-        return (E)super.build();
+        return (E) super.build();
     }
 }

@@ -3,9 +3,7 @@ package xyz.aornice.tofq.utils.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.aornice.tofq.Topic;
-import xyz.aornice.tofq.TopicFileFormat;
 import xyz.aornice.tofq.TopicFileFormat.FileName;
-import xyz.aornice.tofq.depostion.support.AbstractDeposition;
 import xyz.aornice.tofq.harbour.Harbour;
 import xyz.aornice.tofq.harbour.LocalHarbour;
 import xyz.aornice.tofq.utils.TopicCenter;
@@ -104,14 +102,14 @@ public class LocalTopicCenter implements TopicCenter, TopicFileChangeListener {
     /**
      * Danger, only used in junit test
      */
-    public static void TEST_InitFields(){
+    public static void TEST_InitFields() {
         init(Singleton.INSTANCE);
     }
 
 
-    private static void initVariables(LocalTopicCenter instance){
-        instance.topicPathMap  = new ConcurrentHashMap<>();
-        instance.topicObjMap  = new ConcurrentHashMap<>();
+    private static void initVariables(LocalTopicCenter instance) {
+        instance.topicPathMap = new ConcurrentHashMap<>();
+        instance.topicObjMap = new ConcurrentHashMap<>();
         instance.topicListeners = new ConcurrentLinkedQueue<>();
         instance.harbour = new LocalHarbour();
         instance.topicFileFullNameMap = new HashMap<>();

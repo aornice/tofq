@@ -6,7 +6,7 @@ import xyz.aornice.tofq.furnisher.util.Varint32;
 import xyz.aornice.tofq.furnisher.util.support.AbstractBuilder;
 
 
-public class PutBuilder extends PayloadAbstractBuilder<Put>{
+public class PutBuilder extends PayloadAbstractBuilder<Put> {
 
     public PutBuilder() {
         super();

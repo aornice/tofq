@@ -2,7 +2,6 @@ package xyz.aornice.tofq.furnisher.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
@@ -13,7 +12,7 @@ import xyz.aornice.tofq.furnisher.message.Message;
 import java.util.List;
 
 @ChannelHandler.Sharable
-public class FurnisherMessageEncoder extends MessageToMessageEncoder<Message>{
+public class FurnisherMessageEncoder extends MessageToMessageEncoder<Message> {
 
     private static final Logger logger = LogManager.getLogger(FurnisherMessageEncoder.class);
 
