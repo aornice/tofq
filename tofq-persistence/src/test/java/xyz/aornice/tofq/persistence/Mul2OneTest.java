@@ -4,10 +4,14 @@ import com.lmax.disruptor.EventFactory;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.Sequence;
 import com.lmax.disruptor.SequenceBarrier;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,6 +35,7 @@ public class Mul2OneTest {
     private int count;
     private int size;
     private Lock lock = new ReentrantLock();
+    private FileWriter fileWriter;
 
     public Mul2OneTest(int threadNum, int count, int size) {
         this.threadNum = threadNum;
@@ -40,10 +45,22 @@ public class Mul2OneTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        int count = 1 << 20;
+        int count = 1 << 21;
         return Arrays.asList(new Object[][]{
-                {1, count, 1 << 10}
+                {2, count, 1 << 7}, {4, count, 1 << 7}, {8, count, 1 << 7}
+                // indexoutofbound
+//                ,{2, count, 1 << 10}, {4, count, 1 << 10}, {8, count, 1 << 10}
         });
+    }
+
+    @Before
+    public void setup() {
+        String file = "/tmp/test.tofq";
+        try {
+            Files.delete(Paths.get(file));
+        } catch (IOException e) {
+        }
+        fileWriter = new FileWriter(file);
     }
 
     @Test
@@ -69,7 +86,7 @@ public class Mul2OneTest {
         long end = System.currentTimeMillis();
         long timeCost = end - start;
         int tps = (int) (count / (double) timeCost * 1000);
-        out.printf("LockFile [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %s", threadNum, count, size, timeCost, intToStr(tps));
+        out.printf("LockFile [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %s\n", threadNum, count, size, timeCost, intToStr(tps));
     }
 
     @Test
@@ -110,7 +127,7 @@ public class Mul2OneTest {
         long end = System.currentTimeMillis();
         long timeCost = end - start;
         int tps = (int) (count / (double) timeCost * 1000);
-        out.printf("BlockingcQueue [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %s", threadNum, count, size, timeCost, intToStr(tps));
+        out.printf("BlockingcQueue [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %s\n", threadNum, count, size, timeCost, intToStr(tps));
     }
 
     @Test
@@ -165,11 +182,11 @@ public class Mul2OneTest {
         long end = System.currentTimeMillis();
         long timeCost = end - start;
         int tps = (int) (count / timeCost * 1000);
-        out.printf("Disruptor [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %s", threadNum, count, size, timeCost, intToStr(tps));
+        out.printf("Disruptor [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %s\n", threadNum, count, size, timeCost, intToStr(tps));
     }
 
     private void write(byte[] bytes) {
-
+        fileWriter.write(bytes);
     }
 
     private void writeWithLock(byte[] bytes) {
