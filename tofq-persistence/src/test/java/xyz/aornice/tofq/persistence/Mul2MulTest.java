@@ -2,7 +2,7 @@
  * Alipay.com Inc.
  * Copyright (c) 2004-2017 All Rights Reserved.
  */
-package java.xyz.aornice.tofq.persistence;
+package xyz.aornice.tofq.persistence;
 
 /**
  * @author robin
