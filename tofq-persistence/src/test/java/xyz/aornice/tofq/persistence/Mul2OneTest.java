@@ -59,9 +59,9 @@ public class Mul2OneTest {
 
         Thread[] threads = new Thread[threadNum];
         long start = System.currentTimeMillis();
-        for (Thread t : threads) {
-            t = new Thread(writer);
-            t.start();
+        for (int i = 0; i < threadNum; i++) {
+            threads[i] = new Thread(writer);
+            threads[i].start();
         }
         for (Thread t : threads) {
             t.join();
