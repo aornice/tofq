@@ -4,58 +4,70 @@
  */
 package xyz.aornice.tofq.persistence;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Random;
 
 @RunWith(Parameterized.class)
 public class One2OneTest {
     private int dataSize;
     private String fileName;
-    private int loopCount;
+    private int totalCount;
+    private int threadNum;
+    private Thread[] threads;
 
     private static final int K_SHIFT=10;
 
-    public One2OneTest(int dataSize, String fileName, int loopCount){
+    public One2OneTest(int dataSize, String fileName, int totalCount, int threadNum){
         this.dataSize = dataSize;
         this.fileName = fileName;
-        this.loopCount = loopCount;
+        this.totalCount = totalCount;
+        this.threadNum = threadNum;
     }
 
     @Parameterized.Parameters
     public static Collection dataSizes(){
         return Arrays.asList(new Object[][]{
-                {1, "B_file", 10_000_000},           // 1B
-                {1<<K_SHIFT, "KB_file", 1_000_000},   // 1KB
-                {(1<<K_SHIFT)<<K_SHIFT,"MB_file", 1_000},    // 1MB
-                {(10<<K_SHIFT)<<K_SHIFT,"10MB_file", 100}    // 10MB
+                {1, "B_file", 10_000_000, 100},           // 1B
+                {1<<K_SHIFT, "KB_file", 1_000_000, 100},   // 1KB
+                {(1<<K_SHIFT)<<K_SHIFT,"MB_file", 1_000,100},    // 1MB
+                {(10<<K_SHIFT)<<K_SHIFT,"10MB_file", 100,100}    // 10MB
 
         });
     }
 
-    public static byte[] getRandomByteArray(int size){
-        byte[] result= new byte[size];
-        Random random= new Random();
-        random.nextBytes(result);
-        return result;
+    @Before
+    public void init(){
+        threads = new Thread[threadNum];
+        byte[] data = new byte[dataSize];
+        int loopCount = totalCount / threadNum;
+        for (int i=0;i<threadNum;i++){
+            FileWriter writer = new FileWriter("tmp/"+fileName+i);
+            threads[i] = new Thread(() -> {
+                    for (int j=0;j<loopCount;j++) {
+                        writer.write(data);
+                    }
+                }
+            );
+        }
     }
 
     @Test
-    public void testWriteFile(){
-        FileWriter writer = new FileWriter(fileName);
-        byte[] randomBytes = getRandomByteArray(dataSize);
-
+    public void testWriteFile() throws InterruptedException {
         long start = System.currentTimeMillis();
-        for (int i=0;i<loopCount;i++) {
-            writer.write(randomBytes);
+        for (Thread t: threads){
+            t.start();
+        }
+        for (Thread t: threads){
+            t.join();
         }
         long end = System.currentTimeMillis();
         double timeCost =(end-start)/1000.0;
-        int tps = (int)(loopCount/timeCost);
-        System.out.println(fileName+" tps: "+tps+",write "+loopCount+" times cost "+(end-start)+" milli seconds");
+        int tps = (int)(totalCount /timeCost);
+        System.out.println(fileName+" tps: "+tps+","+threadNum+" threads writes "+ totalCount +" times cost "+(end-start)+" milli seconds");
     }
 }
