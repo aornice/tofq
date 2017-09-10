@@ -16,21 +16,23 @@ import java.util.Random;
 public class One2OneTest {
     private int dataSize;
     private String fileName;
+    private int loopCount;
 
     private static final int K_SHIFT=10;
 
-    public One2OneTest(int dataSize, String fileName){
+    public One2OneTest(int dataSize, String fileName, int loopCount){
         this.dataSize = dataSize;
         this.fileName = fileName;
+        this.loopCount = loopCount;
     }
 
     @Parameterized.Parameters
     public static Collection dataSizes(){
         return Arrays.asList(new Object[][]{
-                {1, "B_file"},           // 1B
-                {1<<K_SHIFT, "KB_file"},   // 1KB
-                {(1<<K_SHIFT)<<K_SHIFT,"MB_file"},    // 1MB
-                {(10<<K_SHIFT)<<K_SHIFT,"10MB_file"}    // 10MB
+                {1, "B_file", 10_000_000},           // 1B
+                {1<<K_SHIFT, "KB_file", 1_000_000},   // 1KB
+                {(1<<K_SHIFT)<<K_SHIFT,"MB_file", 1_000},    // 1MB
+                {(10<<K_SHIFT)<<K_SHIFT,"10MB_file", 100}    // 10MB
 
         });
     }
@@ -48,8 +50,12 @@ public class One2OneTest {
         byte[] randomBytes = getRandomByteArray(dataSize);
 
         long start = System.currentTimeMillis();
-        writer.write(randomBytes);
+        for (int i=0;i<loopCount;i++) {
+            writer.write(randomBytes);
+        }
         long end = System.currentTimeMillis();
-        System.out.println(fileName+" cost "+(end-start)+" milli seconds");
+        double timeCost =(end-start)/1000.0;
+        int tps = (int)(loopCount/timeCost);
+        System.out.println(fileName+" tps: "+tps+",write "+loopCount+" times cost "+(end-start)+" milli seconds");
     }
 }
