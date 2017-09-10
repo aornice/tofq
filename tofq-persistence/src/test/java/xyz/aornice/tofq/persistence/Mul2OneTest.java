@@ -68,8 +68,8 @@ public class Mul2OneTest {
         }
         long end = System.currentTimeMillis();
         long timeCost = end - start;
-        int tps = (int) (timeCost / count);
-        out.printf("LockFile [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %d", threadNum, count, size, timeCost, tps);
+        int tps = (int) (count / (double) timeCost * 1000);
+        out.printf("LockFile [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %s", threadNum, count, size, timeCost, intToStr(tps));
     }
 
     @Test
@@ -109,7 +109,7 @@ public class Mul2OneTest {
         }
         long end = System.currentTimeMillis();
         long timeCost = end - start;
-        int tps = (int) (count / timeCost * 1000);
+        int tps = (int) (count / (double) timeCost * 1000);
         out.printf("BlockingcQueue [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %s", threadNum, count, size, timeCost, intToStr(tps));
     }
 
