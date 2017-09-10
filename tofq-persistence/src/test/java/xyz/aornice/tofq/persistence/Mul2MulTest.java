@@ -5,8 +5,6 @@
 package xyz.aornice.tofq.persistence;
 
 /**
- * @author robin
- * @version $Id: Mul2MulTest.java, v 0.1 2017年09月10日 9:04 PM robin Exp $
  */
 public class Mul2MulTest {
 }
