@@ -47,8 +47,9 @@ public class Mul2OneTest {
     public static Collection<Object[]> data() {
         int count = 1 << 21;
         return Arrays.asList(new Object[][]{
-                {2, count, 1 << 7}, {4, count, 1 << 7}, {8, count, 1 << 7}
-                ,{2, count, 1 << 10}, {4, count, 1 << 10}, {8, count, 1 << 10}
+                {1, count, 1 << 7}, {2, count, 1 << 7}, {4, count, 1 << 7}, {8, count, 1 << 7}
+                , {2, count, 1 << 7}, {4, count, 1 << 7}, {8, count, 1 << 7}
+                , {2, count, 1 << 10}, {4, count, 1 << 10}, {8, count, 1 << 10}
         });
     }
 
@@ -131,7 +132,12 @@ public class Mul2OneTest {
 
     @Test
     public void disruptor() throws InterruptedException {
-        RingBuffer<Event<byte[]>> ringBuffer = RingBuffer.createMultiProducer(new Factory<>(), 1 << 16);
+        RingBuffer<Event<byte[]>> ringBuffer;
+        if (threadNum == 1) {
+            ringBuffer = RingBuffer.createSingleProducer(new Factory<>(), 1 << 16);
+        } else {
+            ringBuffer = RingBuffer.createMultiProducer(new Factory<>(), 1 << 16);
+        }
 
         int cnt = count / threadNum;
         Runnable producer = () -> {
