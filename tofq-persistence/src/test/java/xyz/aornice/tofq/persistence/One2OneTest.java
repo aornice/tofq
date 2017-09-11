@@ -32,10 +32,10 @@ public class One2OneTest {
     @Parameterized.Parameters
     public static Collection dataSizes(){
         return Arrays.asList(new Object[][]{
-                {1, "B_file", 10_000_000, 100},           // 1B
-                {1<<K_SHIFT, "KB_file", 1_000_000, 100},   // 1KB
-                {(1<<K_SHIFT)<<K_SHIFT,"MB_file", 1_000,100},    // 1MB
-                {(10<<K_SHIFT)<<K_SHIFT,"10MB_file", 100,100}    // 10MB
+                {1, "B_file", 10_000_000, 10},           // 1B
+                {1<<K_SHIFT, "KB_file", 1_000_000, 10},   // 1KB
+                {(1<<K_SHIFT)<<K_SHIFT,"MB_file", 1_000,10},    // 1MB
+                {(10<<K_SHIFT)<<K_SHIFT,"10MB_file", 100,10}    // 10MB
 
         });
     }
@@ -46,7 +46,7 @@ public class One2OneTest {
         byte[] data = new byte[dataSize];
         int loopCount = totalCount / threadNum;
         for (int i=0;i<threadNum;i++){
-            FileWriter writer = new FileWriter("tmp/"+fileName+i);
+            FileWriter writer = new FileWriter(fileName+i);
             threads[i] = new Thread(() -> {
                     for (int j=0;j<loopCount;j++) {
                         writer.write(data);
