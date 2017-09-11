@@ -55,7 +55,7 @@ public class Mul2OneTest {
 
     @Before
     public void setup() {
-        String file = "/tmp/test.tofq";
+        String file = "/tmp/test";
         try {
             Files.delete(Paths.get(file));
         } catch (IOException e) {
