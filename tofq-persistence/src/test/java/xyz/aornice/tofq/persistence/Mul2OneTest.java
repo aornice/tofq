@@ -48,8 +48,7 @@ public class Mul2OneTest {
         int count = 1 << 21;
         return Arrays.asList(new Object[][]{
                 {2, count, 1 << 7}, {4, count, 1 << 7}, {8, count, 1 << 7}
-                // indexoutofbound
-//                ,{2, count, 1 << 10}, {4, count, 1 << 10}, {8, count, 1 << 10}
+                ,{2, count, 1 << 10}, {4, count, 1 << 10}, {8, count, 1 << 10}
         });
     }
 
