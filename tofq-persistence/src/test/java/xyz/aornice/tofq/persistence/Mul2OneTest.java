@@ -86,7 +86,8 @@ public class Mul2OneTest {
         long end = System.currentTimeMillis();
         long timeCost = end - start;
         int tps = (int) (count / (double) timeCost * 1000);
-        out.printf("LockFile [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %s\n", threadNum, count, size, timeCost, intToStr(tps));
+        out.printf("LockFile [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %s\n", threadNum, count, size,
+                timeCost, intToStr(tps));
     }
 
     @Test
@@ -127,7 +128,8 @@ public class Mul2OneTest {
         long end = System.currentTimeMillis();
         long timeCost = end - start;
         int tps = (int) (count / (double) timeCost * 1000);
-        out.printf("BlockingcQueue [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %s\n", threadNum, count, size, timeCost, intToStr(tps));
+        out.printf("BlockingcQueue [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %s\n", threadNum, count,
+                size, timeCost, intToStr(tps));
     }
 
     @Test
@@ -187,7 +189,8 @@ public class Mul2OneTest {
         long end = System.currentTimeMillis();
         long timeCost = end - start;
         int tps = (int) (count / timeCost * 1000);
-        out.printf("Disruptor [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %s\n", threadNum, count, size, timeCost, intToStr(tps));
+        out.printf("Disruptor [ThreadNum: %d, Count: %d, Size: %d] cost %dms with tps %s\n", threadNum, count, size,
+                timeCost, intToStr(tps));
     }
 
     private void write(byte[] bytes) {

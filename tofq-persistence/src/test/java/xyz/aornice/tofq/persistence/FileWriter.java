@@ -16,6 +16,7 @@ public class FileWriter {
 
     private static final String TMP_OUTPUT_FOLDER = "tmp/";
     private static final String TOFQ_FILE_SUFFIX = "tofq";
+    private static final String FILE_NAME_FORMAT = "%s_%d.tofq";
     private static final int FILE_SIZE = 1024 * 1024 * 1024;
 
     static {
@@ -31,7 +32,7 @@ public class FileWriter {
     }
 
     private static String generateFileName(String fileName, int index) {
-        String fullFileName = fileName + index + "." + TOFQ_FILE_SUFFIX;
+        String fullFileName = String.format(FILE_NAME_FORMAT, fileName, index);
         if (!fullFileName.contains("/")) {
             fullFileName = TMP_OUTPUT_FOLDER + fullFileName;
         }
